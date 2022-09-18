@@ -1,0 +1,8 @@
+\.gitignore
+^\.project$
+^\.Rproj\.user$
+^\.Rprofile$
+^.*\.Rproj$
+^Meta$
+^doc$
+^workspace$

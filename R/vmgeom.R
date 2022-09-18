@@ -1,0 +1,397 @@
+#' @name vmgeom
+#' @aliases dvmgeom
+#' @aliases pvmgeom
+#' @aliases qvmgeom
+#' @aliases rvmgeom
+#' @title Visual magnitude distribution of geometric distributed meteor magnitudes
+#' @description
+#' Density, distribution function, quantile function and random generation for the
+#' visual magnitude distribution of geometric distributed meteor magnitudes.
+#' @param r numeric; the population index. It is the only parameter of the distribution.
+#' @param m numeric; difference between the limiting magnitude and the meteor magnitude.
+#' @param lm numeric; limiting magnitude (optional).
+#' @param p numeric; probability.
+#' @param n numeric; count of meteor magnitudes.
+#' @param log logical; if `TRUE`, probabilities p are given as `log(p)`.
+#' @param lower.tail logical; if `TRUE` (default) probabilities are
+#'     \eqn{P[M \le m]}, otherwise, \eqn{P[M > m]}.
+#' @details
+#' In visual meteor observation, it is common to estimate meteor magnitudes in integer values.
+#' Hence, this distribution is discrete and has the density
+#' \deqn{
+#'     P[M = m] \sim f(m) \, \mathrm r^{-m} \,\mathrm{,}
+#' }
+#' where \eqn{m \ge -0.5} is the difference between the limiting magnitude and the meteor magnitude and
+#' \eqn{f(m)} is the perception probability.
+#' This distribution is thus a convolution of the
+#' [perception probabilities][vismeteor::vmperception] with the
+#' actual [geometric distribution][stats::Geometric] of the meteor magnitudes.
+#' Therefore, the parameter `p` of the geometric distribution is `p = 1 - 1/r`.
+#'
+#' The parameter `lm` indicate what the parameter `m` refers to.
+#'
+#' If `lm` is passed, then `m` must be an integer meteor magnitude.
+#' The length of the vector `lm` must then be equal to the length of the vector `m`
+#' or `lm` is a scalar value.
+#' In case of `rvmgeom`, the length of the vector `lm` must be `n` or `lm` is a scalar value.
+#' Otherwise `m` is the difference between the limiting magnitude and the meteor magnitude.
+#' @return
+#' `dvmgeom` gives the density, `pvmgeom` gives the distribution function,
+#' `qvmgeom` gives the quantile function, and `rvmgeom` generates random deviates.
+#'
+#' The length of the result is determined by `n` for `rvmgeom`, and is the maximum
+#' of the lengths of the numerical vector arguments for the other functions.
+#'
+#' Since the distribution is discrete, `pvmgeom` and `rvmgeom` always return integer values.
+#' `qvmgeom` can return `NaN` value with a warning.
+#' @seealso [vismeteor::vmperception]
+#'   [stats::Geometric]
+#' @examples
+#' N <- 100
+#' r <- 2.0
+#' limmag <- 6.5
+#' (m <- seq(6, -4))
+#'
+#' # discrete density of `N` meteor magnitudes
+#' (freq <- round(N * dvmgeom(m, r, lm=limmag)))
+#'
+#' # log likelihood function
+#' lld <- function(r) {
+#'     -sum(freq * dvmgeom(m, r, lm=limmag, log=TRUE))
+#' }
+#'
+#' # maximum likelihood estimation (MLE) of r
+#' est <- optim(1, lld, method='Brent', lower=1.1, upper=4, hessian=TRUE)
+#'
+#' # estimations
+#' est$par # mean of r
+#'
+#' # generate random meteor magnitudes
+#' m <- rvmgeom(N, r, lm=limmag)
+#'
+#' # log likelihood function
+#' llr <- function(r) {
+#'     -sum(dvmgeom(m, r, lm=limmag, log=TRUE))
+#' }
+#'
+#' # maximum likelihood estimation (MLE) of r
+#' est <- optim(1, llr, method='Brent', lower=1.1, upper=4, hessian=TRUE)
+#'
+#' # estimations
+#' est$par # mean of r
+#' sqrt(1/est$hessian[1][1]) # standard deviation of r
+
+#' @rdname vmgeom
+#' @export
+dvmgeom <- function(m, r, lm = NULL, log = FALSE) {
+    if (1.0 > r) {
+        stop(paste0('r must be greater than 1.0 instead of "', r, '"!'))
+    }
+
+    if (anyNA(m) | anyNA(lm) ) {
+        stop("NA's are not allowed!")
+    }
+
+    m.max <- 15L
+    p.geom <- 1.0 - 1.0/r
+
+    if (! is.null(lm)) {
+        m = lm - m
+    }
+
+    m.round <- round(m)
+    offset <- rep(0.0, length(m))
+    idx <- is.infinite(m)
+    offset[! idx] <- m[! idx] - m.round[! idx]
+    m <- m.round
+
+    idx <- -0.5 == offset
+    m[idx] <- m[idx] - 1L
+    offset[idx] <- offset[idx] + 1.0
+
+    if (1 == length(offset)) {
+        offset <- rep(offset, length(m))
+    }
+
+    f.norm <- function(offset){
+        m <- as.integer(seq(0, m.max))
+        sum(stats::dgeom(m, p.geom) * vismeteor::vmperception(m + offset)) +
+            stats::pgeom(m.max, p.geom, lower.tail = FALSE)
+    }
+
+    f.density <- function(m, offset) {
+        idx <- m <= m.max
+        d <- stats::dgeom(m, p.geom, log = TRUE)
+        d[idx] <- d[idx] + vismeteor::vmperception(m[idx] + offset, log = TRUE)
+
+        d - base::log(f.norm(offset))
+    }
+
+    arg.data <- data.frame(
+        m = m,
+        offset = offset
+    )
+    rownames(arg.data) <- seq_along(m)
+
+    os <- split(arg.data, offset)
+    d <- Reduce(c, lapply(os, function(data){
+        m <- data$m
+        offset <- data$offset[1]
+        d <- rep(-Inf, length(m))
+
+        idx <- m > -1
+        if(any(idx)) {
+            d[idx] <- f.density(m[idx], offset)
+        }
+
+        if (! log) {
+            d[idx] <- exp(d[idx])
+            d[!idx] <- 0.0
+        }
+
+        names(d) <- rownames(data)
+        d
+    }))
+
+    d <- d[order(as.integer(names(d)))]
+    names(d) <- NULL
+
+    d
+}
+
+#' @rdname vmgeom
+#' @export
+pvmgeom <- function(m, r, lm = NULL, lower.tail = TRUE, log = FALSE) {
+    if (1.0 > r) {
+        stop(paste0('r must be greater than 1.0 instead of "', r, '"!'))
+    }
+
+    if (anyNA(m) | anyNA(lm) ) {
+        stop("NA's are not allowed!")
+    }
+
+    m.max <- 15L
+    p.geom <- 1.0 - 1.0/r
+
+    if (! is.null(lm)) {
+        m = lm - m
+    }
+
+    m.round <- round(m)
+    offset <- rep(0.0, length(m))
+    idx <- is.infinite(m)
+    offset[! idx] <- m[! idx] - m.round[! idx]
+    m <- m.round
+
+    idx <- -0.5 == offset
+    m[idx] <- m[idx] - 1L
+    offset[idx] <- offset[idx] + 1.0
+
+    if (1 == length(offset)) {
+        offset <- rep(offset, length(m))
+    }
+
+    f.norm <- function(offset){
+        m <- as.integer(seq(0, m.max))
+        sum(stats::dgeom(m, p.geom) * vismeteor::vmperception(m + offset)) +
+            stats::pgeom(m.max, p.geom, lower.tail = FALSE)
+    }
+
+    f.density <- function(m, offset) {
+        stats::dgeom(m, p.geom) *
+            vismeteor::vmperception(m + offset)
+    }
+
+    f.sum <- Vectorize(function(m, offset) {
+        m <- as.integer(seq(0, m))
+        sum(f.density(m, offset))
+    })
+
+    f.prob <- function(m, offset) {
+        norm <- f.norm(offset)
+        p <- rep(0.0, length(m))
+
+        if (lower.tail) {
+            idx <- m <= m.max
+            if(any(idx)) {
+                p[idx] <- f.sum(m[idx], offset)/norm
+            }
+
+            idx <- m > m.max
+            if(any(idx)) {
+                p[idx] <- 1.0 - stats::pgeom(m[idx], p.geom, lower.tail = FALSE)/norm
+            }
+        } else {
+            idx <- m <= m.max
+            if(any(idx)) {
+                p[idx] <- 1 - f.sum(m[idx], offset)/norm
+            }
+
+            idx <- m > m.max
+            if(any(idx)) {
+                p[idx] <- stats::pgeom(m[idx], p.geom, lower.tail = FALSE)/norm
+            }
+        }
+
+        p
+    }
+
+    arg.data <- data.frame(
+        m = m,
+        offset = offset
+    )
+    rownames(arg.data) <- seq_along(m)
+
+    os <- split(arg.data, offset)
+    p <- Reduce(c, lapply(os, function(data){
+        m <- data$m
+        offset <- data$offset[1]
+        if (lower.tail) {
+            p <- rep(0.0, length(m))
+        } else {
+            p <- rep(1.0, length(m))
+        }
+
+        idx <- m > -1
+        p[idx] <- f.prob(m[idx], offset)
+
+        if (log) {
+            p[idx] <- base::log(p[idx])
+            if (lower.tail) {
+                p[!idx] <- -Inf
+            } else {
+                p[!idx] <- 0.0
+            }
+        }
+
+        names(p) <- rownames(data)
+        p
+    }))
+
+    p <- p[order(as.integer(names(p)))]
+    names(p) <- NULL
+
+    p
+}
+
+#' @rdname vmgeom
+#' @export
+qvmgeom <- function(p, r, lm = NULL, lower.tail = TRUE) {
+    if (1.0 > r) {
+        stop(paste0('r must be greater than 1.0 instead of "', r, '"!'))
+    }
+
+    if (anyNA(p) | anyNA(lm) ) {
+        stop("NA's are not allowed!")
+    }
+
+    m.max <- 15L
+    p.geom <- 1.0 - 1.0/r
+
+    offset <- 0.0
+    if (! is.null(lm)) {
+        lm.round <- round(lm)
+        offset <- rep(0.0, length(lm))
+        idx <- is.infinite(lm)
+        offset[! idx] <- lm[! idx] - lm.round[! idx]
+        lm <- lm.round
+    }
+
+    idx <- -0.5 == offset
+    lm[idx] <- lm[idx] - 1L
+    offset[idx] <- offset[idx] + 1.0
+
+    if (1 == length(offset)) {
+        offset <- rep(offset, length(p))
+    }
+
+    f.norm <- function(offset){
+        m <- as.integer(seq(0, m.max))
+        sum(stats::dgeom(m, p.geom) * vismeteor::vmperception(m + offset)) +
+            stats::pgeom(m.max, p.geom, lower.tail = FALSE)
+    }
+
+    arg.data <- data.frame(
+        p = p,
+        offset = offset
+    )
+    rownames(arg.data) <- seq_along(p)
+
+    os <- split(arg.data, offset)
+    m <- Reduce(c, lapply(os, function(data){
+        p <- data$p
+        offset <- data$offset[1]
+        m <- rep(NA, length(p))
+
+        if(lower.tail) {
+            m[0.0 == p] <- 0
+            p.max <- vismeteor::pvmgeom(m.max + offset, r)
+            idx <- p>p.max & p<=1.0
+            if (any(idx)) {
+                m[idx] <- m.max + 1 + stats::qgeom((p[idx] - p.max)/(1.0 - p.max), p.geom)
+            }
+
+            idx <- p>0.0 & p<=p.max
+            if (any(idx)) {
+                m0 <- seq(1, -m.max, -1)
+                p0 <- vismeteor::pvmgeom(m0, r, lm = offset)
+                p.idx <- findInterval(p[idx], p0, left.open = TRUE) + 1
+                m[idx] <- -m0[p.idx]
+                m[m<0] <- NA
+            }
+        } else {
+            m[1.0 == p] <- 0
+            p.max <- 1.0 - vismeteor::pvmgeom(m.max + offset, r)
+
+            idx <- p>=0.0 & p<p.max
+            if (any(idx)) {
+                m[idx] <- m.max + 1 + stats::qgeom(p[idx]/p.max, p.geom, lower.tail = FALSE)
+            }
+
+            idx <- p>=p.max & p<1.0
+            if (any(idx)) {
+                m0 <- seq(-m.max, 0, 1)
+                p0 <- c(vismeteor::pvmgeom(m0, r, lm = offset, lower.tail = FALSE), 1.0)
+                m0 <- c(m0, 1)
+                p.idx <- findInterval(p[idx], p0, left.open = FALSE)
+                m[idx] <- -m0[p.idx]
+            }
+        }
+
+        names(m) <- rownames(data)
+        m
+    }))
+
+    m <- m[order(as.integer(names(m)))]
+    names(m) <- NULL
+
+    if (! is.null(lm)) {
+        m <- lm - m
+    }
+
+    if (anyNA(m)) {
+        warning('NaNs produced')
+    }
+
+    as.numeric(m)
+}
+
+#' @rdname vmgeom
+#' @export
+rvmgeom <- function(n, r, lm = NULL) {
+    if (1.0 > r) {
+        stop(paste0('r must be greater than 1.0 instead of "', r, '"!'))
+    }
+
+    if (1 == length(lm)) {
+        lm <- rep(lm, n)
+    }
+
+    p <- stats::runif(n)
+    m <- rep(NA, n)
+    idx <- p < 0.5
+    m[idx] <- vismeteor::qvmgeom(p[idx], r, lm = lm[idx], lower.tail = TRUE)
+    m[!idx] <- vismeteor::qvmgeom(1.0 - p[!idx], r, lm = lm[!idx], lower.tail = FALSE)
+
+    m
+}

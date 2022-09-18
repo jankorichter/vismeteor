@@ -1,0 +1,23 @@
+Package: vismeteor
+Type: Package
+Title: Analysis of visual meteor data
+Version: 1.0.0
+Author: Janko Richter <janko@richtej.de>
+Maintainer: Janko Richter <janko@richtej.de>
+Description: This package provides tools for the analysis of
+    visual meteor observations from the Visual Meteor Database (VMDB)
+    of the International Meteor Organization <https://www.imo.net/>.
+License: MIT + file LICENSE
+Encoding: UTF-8
+LazyData: true
+Depends: R (>= 3.5)
+Imports: methods, stats, DBI
+RoxygenNote: 7.2.1
+Roxygen: list(markdown = TRUE)
+Suggests:
+    usethis (>= 2.1.1),
+    testthat (>= 3.0.0),
+    RSQLite (>= 2.2.1),
+    RPostgreSQL (>= 0.7),
+    RMySQL (>= 0.10.1)
+Config/testthat/edition: 3

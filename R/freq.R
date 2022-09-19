@@ -1,3 +1,55 @@
+#' @title Form groups of equal minimum count of frequencies
+#' @description
+#' This function generates quantiles with a minimum frequency.
+#' These quantiles are formed from a vector `freq` of frequencies.
+#' Each quantile then has the minimum total frequency `freq.min`.
+#' @param freq integer; A vector of frequencies.
+#' @param min integer; Minimum total frequency per quantile.
+#' @details
+#' The frequencies `freq` are grouped in the order in which they
+#' are passed as a vector.
+#' The minimum `min` must be greater than `0`.
+#' @return
+#' A factor of indices is returned.
+#' The index references the corresponding passed frequency.
+#' @examples
+#' freq <- c(1,2,3,4,5,6,7,8,9)
+#' cumsum(freq)
+#' (f <- freq.quantile(freq, 10))
+#' sapply(split(freq, f), sum)
+#' @export
+freq.quantile <- function(freq, min) {
+    if (0 >= min) {
+        stop(paste0('min must be greater than 0 instead of "', min, '"!'))
+    }
+
+    n.sum <- 0
+    id.last <- 1L
+    id <- integer(length(freq))
+    for (i in seq_along(freq)) {
+        n.i <- freq[i]
+        if ((n.i + n.sum) < min) {
+            id[i] <- id.last
+            n.sum <- n.i + n.sum
+        } else {
+            id[i] <- id.last
+            n.sum <- 0
+            id.last <- id.last + 1L
+        }
+    }
+
+    if (0 == n.sum) {
+        id.last <- id.last - 1L
+    }
+
+    id.max <- id[length(id)]
+    if (id.max > 1 & n.sum > 0 & sum(freq[id == id.last]) < min) {
+        id[id == id.max] <- id.max - 1L
+    }
+
+    factor(id, ordered = TRUE)
+}
+
 #' @title Convert a contingency table of meteor magnitudes into integer values
 #' @description
 #' The meteor magnitude contingency table of VMDB contains half meteor counts (e.g. `3.5`).

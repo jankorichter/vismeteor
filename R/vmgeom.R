@@ -61,7 +61,7 @@
 #' }
 #'
 #' # maximum likelihood estimation (MLE) of r
-#' est <- optim(1, lld, method='Brent', lower=1.1, upper=4, hessian=TRUE)
+#' est <- optim(2, lld, method='Brent', lower=1.1, upper=4, hessian=TRUE)
 #'
 #' # estimations
 #' est$par # mean of r
@@ -75,7 +75,7 @@
 #' }
 #'
 #' # maximum likelihood estimation (MLE) of r
-#' est <- optim(1, llr, method='Brent', lower=1.1, upper=4, hessian=TRUE)
+#' est <- optim(2, llr, method='Brent', lower=1.1, upper=4, hessian=TRUE)
 #'
 #' # estimations
 #' est$par # mean of r

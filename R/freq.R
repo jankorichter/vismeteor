@@ -2,7 +2,7 @@
 #' @description
 #' This function generates quantiles with a minimum frequency.
 #' These quantiles are formed from a vector `freq` of frequencies.
-#' Each quantile then has the minimum total frequency `freq.min`.
+#' Each quantile then has the minimum total frequency `min`.
 #' @param freq integer; A vector of frequencies.
 #' @param min integer; Minimum total frequency per quantile.
 #' @details
@@ -11,12 +11,12 @@
 #' The minimum `min` must be greater than `0`.
 #' @return
 #' A factor of indices is returned.
-#' The index references the corresponding passed frequency.
+#' The index references the corresponding passed frequency `freq`.
 #' @examples
 #' freq <- c(1,2,3,4,5,6,7,8,9)
 #' cumsum(freq)
 #' (f <- freq.quantile(freq, 10))
-#' sapply(split(freq, f), sum)
+#' tapply(freq, f, sum)
 #' @export
 freq.quantile <- function(freq, min) {
     if (0 >= min) {

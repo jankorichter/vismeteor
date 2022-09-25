@@ -274,6 +274,10 @@ WITH selection as (
     ")
     query <- paste0(with_query, "SELECT * FROM selection")
     observations <- DBI::dbGetQuery(dbcon, query)
+    row.names(observations) <- observations$rate.id
+    observations$shower.code <- factor(observations$shower.code)
+    observations$session.id <- factor(observations$session.id)
+    observations$magn.id <- factor(observations$magn.id)
 
     magnitudes <- NULL
     if (withMagnitudes) {
@@ -288,7 +292,13 @@ WITH selection as (
                     WHERE \"magn.id\" IS NOT NULL
                 )
             ")
-        magnitudes <- stats::xtabs(freq ~ magn.id + magn, data=DBI::dbGetQuery(dbcon, query))
+        magnitudes = DBI::dbGetQuery(dbcon, query)
+        magnitudes$magn <- factor(
+            magnitudes$magn,
+            levels = sort(unique(magnitudes$magn), decreasing = TRUE),
+            ordered = TRUE
+        )
+        magnitudes <- stats::xtabs(freq ~ magn.id + magn, data = magnitudes)
     }
 
     sessions <- NULL
@@ -312,11 +322,12 @@ WITH selection as (
 
         sessions <- DBI::dbGetQuery(dbcon, query)
         row.names(sessions) <- sessions$session.id
-        sessions$session.id <- NULL
+        sessions$country <- factor(sessions$country)
+        sessions$location.name <- factor(sessions$location.name)
+        sessions$observer.id <- factor(sessions$observer.id)
+        sessions$observer.name <- factor(sessions$observer.name)
     }
 
-    row.names(observations) <- observations$rate.id
-    observations$rate.id <- NULL
     list(observations=observations, sessions=sessions, magnitudes=magnitudes)
 }
 
@@ -440,6 +451,9 @@ WITH selection as (
     ")
     query <- paste0(with_query, "SELECT * FROM selection")
     observations <- DBI::dbGetQuery(dbcon, query)
+    row.names(observations) <- observations$magn.id
+    observations$shower.code <- factor(observations$shower.code)
+    observations$session.id <- factor(observations$session.id)
 
     magnitudes <- NULL
     if (withMagnitudes) {
@@ -453,7 +467,13 @@ WITH selection as (
                     SELECT \"magn.id\" FROM selection
                 )
             ")
-        magnitudes <- stats::xtabs(freq ~ magn.id + magn, data=DBI::dbGetQuery(dbcon, query))
+        magnitudes = DBI::dbGetQuery(dbcon, query)
+        magnitudes$magn <- factor(
+            magnitudes$magn,
+            levels = sort(unique(magnitudes$magn), decreasing = TRUE),
+            ordered = TRUE
+        )
+        magnitudes <- stats::xtabs(freq ~ magn.id + magn, data = magnitudes)
     }
 
     sessions <- NULL
@@ -476,10 +496,11 @@ WITH selection as (
             ")
         sessions <- DBI::dbGetQuery(dbcon, query)
         row.names(sessions) <- sessions$session.id
-        sessions$session.id <- NULL
+        sessions$country <- factor(sessions$country)
+        sessions$location.name <- factor(sessions$location.name)
+        sessions$observer.id <- factor(sessions$observer.id)
+        sessions$observer.name <- factor(sessions$observer.name)
     }
 
-    row.names(observations) <- observations$magn.id
-    observations$magn.id <- NULL
     list(observations=observations, sessions=sessions, magnitudes=magnitudes)
 }

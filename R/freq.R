@@ -50,103 +50,87 @@ freq.quantile <- function(freq, min) {
     factor(id, ordered = TRUE)
 }
 
-#' @title Convert a contingency table of meteor magnitudes into integer values
+#' @title Rounds a contingency table of meteor magnitude frequencies
 #' @description
 #' The meteor magnitude contingency table of VMDB contains half meteor counts (e.g. `3.5`).
-#' This function converts these values to integer values.
-#' @param mt table; A two-dimensional contingency table of meteor magnitudes.
-#' @param expand logical; If `TRUE` expand meteor magnitudes.
+#' This function converts these frequencies to integer values.
+#' @param mt table; A two-dimensional contingency table of meteor magnitude frequencies.
 #' @details
 #' The contingency table of meteor magnitudes `mt` must be two-dimensional.
-#' Column names must be integer meteor magnitude values.
 #' The row names refer to the magnitude observations.
-#' @return
-#' if `expand` is `FALSE`, contingency table of meteor magnitudes is returned.
+#' Column names must be integer meteor magnitude values.
+#' Also, the columns must be sorted in ascending or descending order of meteor magnitude.
 #'
-#' Otherwise, a list of individual meteor magnitudes is returned.
-#' The name of elements refer to the magnitude observations.
+#' A sum-preserving algorithm is used for rounding.
+#' It ensures that the total frequency of meteors per observation is preserved.
+#' The marginal frequencies of the magnitudes are also preserved with
+#' the restriction that the deviation is at most \eqn{\pm 1}.
+#' If the total sum of a meteor magnitude is not integer,
+#' then the deviation is even only \eqn{\pm 0.5}.
+#' @return
+#' A rounded contingency table of meteor magnitudes is returned.
 #' @examples
 #' # For example, create a contingency table of meteor magnitudes
-#' data <- data.frame(
-#'     obs.id = rep(c("A", "B"), each=4),
-#'     m = c(2, 3, 4, 5, -1, 3, 4, 5),
-#'     freq = c(2.5, 0.5, 0, 3, 1, 3, 2.5, 1.5)
-#' )
-#' (mt <- xtabs(freq ~ obs.id + m, data=data))
+#' mt <- as.table(matrix(
+#'     c(
+#'         0.0, 0.0, 2.5, 0.5, 0.0, 3.0,
+#'         1.0, 0.0, 0.0, 3.0, 2.5, 1.5
+#'     ), nrow = 2, ncol = 6, byrow = TRUE
+#' ))
+#' colnames(mt) <- seq(6)
+#' rownames(mt) <- c('A', 'B')
+#' mt
+#' margin.table(mt, 1)
+#' margin.table(mt, 2)
 #'
 #' # contingency table with integer values
-#' vmtable(mt)
-#'
-#' # list of individual meteor magnitudes
-#' vmtable(mt, expand = TRUE )
+#' (mt.int <- vmmtable(mt))
+#' margin.table(mt.int, 1)
+#' margin.table(mt.int, 2)
 #' @export
-vmtable <- function(mt, expand = FALSE) {
+vmmtable <- function(mt) {
     if (! methods::is(mt, 'table')) {
         stop(paste0('Magnitude table is not a table!'))
     }
 
-    if (2 != length(dim(mt))) {
+    if (2L != length(dim(mt))) {
         stop(paste0('Magnitude table is not two-dimensional!'))
     }
 
-    if ((is.integer(as.vector(mt)))) {
-        mt.new <- mt
-    } else {
-        mt.list <- apply(mt, 1, function(mt) {
-            list(
-                m = as.numeric(names(mt)),
-                freq = as.vector(mt)
-            )
-        }, simplify = FALSE)
+    mt.m <- as.matrix(mt)
+    mt2c <- round(2L * mt.m) # "half" meteors
+    mt2c.v <- as.integer(as.vector(mt2c)) # column-wise
+    mt2c.cs <- cumsum(mt2c.v) # due to sum preserving rounding
+    mt2c.cs <- mapply(function(freq, row.id) {
+        c(freq = freq, row.id = row.id)
+    }, mt2c.cs, rep(seq_len(nrow(mt.m)), times=ncol(mt.m)), SIMPLIFY = FALSE)
+    rows.reminder <- rep(0L, nrow(mt.m))
+    mt2c.f <- sapply(mt2c.cs, function(cs) {
+        row.id <- cs['row.id']
+        freq <- cs['freq']
+        freq.reminder <- freq %% 2L
+        freq.quotient <- freq %/% 2L
 
-        data <- do.call(
-            rbind.data.frame,
-            mapply(function(id, mt) {
-                m <- as.numeric(mt$m)
-                freq <- mt$freq
+        freq <- 2L * freq.quotient
+        if (0L == freq.reminder) {
+            return(freq)
+        }
 
-                # random order of magnitudes (asc. or desc.?)
-                set.seed(19 + sum(m) + sum(freq))
-                decr <- stats::rbinom(1, 1, c(0.5, 0.5))
-                o <- order(m, decreasing = as.logical(decr))
+        row.reminder <- 1L
+        if (1L == rows.reminder[row.id]) {
+            freq <- freq + 2L
+            freq.reminder <- row.reminder <- 0L
+        }
 
-                m <- m[o]
-                freq.dup <- 2 * freq[o]
-                i <- seq_len(length(freq.dup))
-                i <- rep(i, freq.dup)
-                i <- i[seq_len(length(i)) %% 2 == 0]
-                mt <- table(m[i])
-                freq <- as.vector(mt)
-                list(
-                    id = rep(id, length(freq)),
-                    m = names(mt),
-                    freq = as.integer(freq)
-                )
-            }, rownames(mt), mt.list, SIMPLIFY = FALSE)
-        )
+        rows.reminder[row.id] <<- row.reminder
+        return(freq)
+    })
 
-        mt.new <- stats::xtabs(freq ~ id + m, data=data)
-    }
+    mt2c.v <- diff(append(mt2c.f, 0L, after = 0L)) # inverse of cumsum
+    mt2c.m <- matrix(mt2c.v, ncol = ncol(mt2c))
 
-    if (expand) {
-        data <- data.frame(
-            id = rep(rownames(mt.new), each=ncol(mt.new)),
-            m = rep(as.numeric(colnames(mt.new)), times=nrow(mt.new)),
-            freq = as.vector(t(mt.new[,1:ncol(mt.new)]))
-        )
-        data <- subset(data, data$freq != 0)
+    result <- as.table(mt2c.m %/% 2L)
+    dimnames(result) <- dimnames(mt) # restore dimnames
 
-        mt.list <- do.call(
-            list,
-            lapply(split(data, data$id), function(d){
-                as.integer(rep(d$m, d$freq))
-            })
-        )
-
-        return(mt.list)
-    }
-
-    dimnames(mt.new) <- dimnames(mt)
-
-    return(mt.new)
+    return(result)
 }

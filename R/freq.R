@@ -101,15 +101,16 @@ vmmtable <- function(mt) {
     mt2c <- round(2L * mt.m) # "half" meteors
     mt2c.v <- as.integer(as.vector(mt2c)) # column-wise
     mt2c.cs <- cumsum(mt2c.v) # due to sum preserving rounding
-    mt2c.cs <- mapply(function(freq, row.id) {
+    mt2c.cs <- mapply(function(freq, row.id) { # add row index
         c(freq = freq, row.id = row.id)
     }, mt2c.cs, rep(seq_len(nrow(mt.m)), times=ncol(mt.m)), SIMPLIFY = FALSE)
-    rows.reminder <- rep(0L, nrow(mt.m))
+    rows.reminder <- rep(0L, nrow(mt.m)) # row reminder
+    # apply each frequency column-wise, starting from upper left
     mt2c.f <- sapply(mt2c.cs, function(cs) {
         row.id <- cs['row.id']
         freq <- cs['freq']
-        freq.reminder <- freq %% 2L
         freq.quotient <- freq %/% 2L
+        freq.reminder <- freq %% 2L
 
         freq <- 2L * freq.quotient
         if (0L == freq.reminder) {

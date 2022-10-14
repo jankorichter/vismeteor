@@ -1,7 +1,7 @@
-test_that("vmmtable", {
+test_that("vmtable", {
 
     test.mt <- function(mt) {
-        mt.int <- vismeteor::vmmtable(mt)
+        mt.int <- vismeteor::vmtable(mt)
         expect_type(mt.int, 'integer')
         expect_true(isa(mt.int, 'table'))
         expect_equal(

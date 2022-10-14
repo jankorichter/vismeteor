@@ -84,11 +84,11 @@ freq.quantile <- function(freq, min) {
 #' margin.table(mt, 2)
 #'
 #' # contingency table with integer values
-#' (mt.int <- vmmtable(mt))
+#' (mt.int <- vmtable(mt))
 #' margin.table(mt.int, 1)
 #' margin.table(mt.int, 2)
 #' @export
-vmmtable <- function(mt) {
+vmtable <- function(mt) {
     if (! methods::is(mt, 'table')) {
         stop(paste0('Magnitude table is not a table!'))
     }

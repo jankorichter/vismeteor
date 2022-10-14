@@ -15,6 +15,8 @@
 #' @param log logical; if `TRUE`, probabilities p are given as `log(p)`.
 #' @param lower.tail logical; if `TRUE` (default) probabilities are
 #'     \eqn{P[M \le m]}, otherwise, \eqn{P[M > m]}.
+#' @param perception.fun function; perception probability function (optional).
+#'     Default is [vismeteor::vmperception].
 #' @details
 #' In visual meteor observation, it is common to estimate meteor magnitudes in integer values.
 #' Hence, this distribution is discrete and has the density
@@ -35,6 +37,13 @@
 #' or `lm` is a scalar value.
 #' In case of `rvmgeom`, the length of the vector `lm` must be `n` or `lm` is a scalar value.
 #' Otherwise `m` is the difference between the limiting magnitude and the meteor magnitude.
+#'
+#' If the perception probabilities function `perception.fun` is given,
+#' it must have the signature `function(m, log = FALSE)` and must return the perception probabilities of
+#' the difference `m` between the limiting magnitude and the meteor magnitude.
+#' If `m >= 15.0`, the `perception.fun` function should return the perception probability of `1.0`.
+#' If `log = TRUE` is given, the logarithm value of the perception probabilities
+#' must be returned. `perception.fun` is resolved using [match.fun].
 #' @return
 #' `dvmgeom` gives the density, `pvmgeom` gives the distribution function,
 #' `qvmgeom` gives the quantile function, and `rvmgeom` generates random deviates.
@@ -83,13 +92,19 @@
 
 #' @rdname vmgeom
 #' @export
-dvmgeom <- function(m, r, lm = NULL, log = FALSE) {
+dvmgeom <- function(m, r, lm = NULL, log = FALSE, perception.fun = NULL) {
     if (1.0 > r) {
         stop(paste0('r must be greater than 1.0 instead of "', r, '"!'))
     }
 
     if (anyNA(m) | anyNA(lm) ) {
         stop("NA's are not allowed!")
+    }
+
+    if (is.null(perception.fun)) {
+        perception.fun <- vismeteor::vmperception
+    } else {
+        perception.fun <- match.fun(perception.fun)
     }
 
     m.max <- 15L
@@ -115,14 +130,14 @@ dvmgeom <- function(m, r, lm = NULL, log = FALSE) {
 
     f.norm <- function(offset){
         m <- as.integer(seq(0, m.max))
-        sum(stats::dgeom(m, p.geom) * vismeteor::vmperception(m + offset)) +
+        sum(stats::dgeom(m, p.geom) * perception.fun(m + offset, log = FALSE)) +
             stats::pgeom(m.max, p.geom, lower.tail = FALSE)
     }
 
     f.density <- function(m, offset) {
         idx <- m <= m.max
         d <- stats::dgeom(m, p.geom, log = TRUE)
-        d[idx] <- d[idx] + vismeteor::vmperception(m[idx] + offset, log = TRUE)
+        d[idx] <- d[idx] + perception.fun(m[idx] + offset, log = TRUE)
 
         d - base::log(f.norm(offset))
     }
@@ -161,13 +176,19 @@ dvmgeom <- function(m, r, lm = NULL, log = FALSE) {
 
 #' @rdname vmgeom
 #' @export
-pvmgeom <- function(m, r, lm = NULL, lower.tail = TRUE, log = FALSE) {
+pvmgeom <- function(m, r, lm = NULL, lower.tail = TRUE, log = FALSE, perception.fun = NULL) {
     if (1.0 > r) {
         stop(paste0('r must be greater than 1.0 instead of "', r, '"!'))
     }
 
     if (anyNA(m) | anyNA(lm) ) {
         stop("NA's are not allowed!")
+    }
+
+    if (is.null(perception.fun)) {
+        perception.fun <- vismeteor::vmperception
+    } else {
+        perception.fun <- match.fun(perception.fun)
     }
 
     m.max <- 15L
@@ -193,13 +214,12 @@ pvmgeom <- function(m, r, lm = NULL, lower.tail = TRUE, log = FALSE) {
 
     f.norm <- function(offset){
         m <- as.integer(seq(0, m.max))
-        sum(stats::dgeom(m, p.geom) * vismeteor::vmperception(m + offset)) +
+        sum(stats::dgeom(m, p.geom) * perception.fun(m + offset, log = FALSE)) +
             stats::pgeom(m.max, p.geom, lower.tail = FALSE)
     }
 
     f.density <- function(m, offset) {
-        stats::dgeom(m, p.geom) *
-            vismeteor::vmperception(m + offset)
+        stats::dgeom(m, p.geom) * perception.fun(m + offset, log = FALSE)
     }
 
     f.sum <- Vectorize(function(m, offset) {
@@ -276,13 +296,19 @@ pvmgeom <- function(m, r, lm = NULL, lower.tail = TRUE, log = FALSE) {
 
 #' @rdname vmgeom
 #' @export
-qvmgeom <- function(p, r, lm = NULL, lower.tail = TRUE) {
+qvmgeom <- function(p, r, lm = NULL, lower.tail = TRUE, perception.fun = NULL) {
     if (1.0 > r) {
         stop(paste0('r must be greater than 1.0 instead of "', r, '"!'))
     }
 
     if (anyNA(p) | anyNA(lm) ) {
         stop("NA's are not allowed!")
+    }
+
+    if (is.null(perception.fun)) {
+        perception.fun <- vismeteor::vmperception
+    } else {
+        perception.fun <- match.fun(perception.fun)
     }
 
     m.max <- 15L
@@ -307,7 +333,7 @@ qvmgeom <- function(p, r, lm = NULL, lower.tail = TRUE) {
 
     f.norm <- function(offset){
         m <- as.integer(seq(0, m.max))
-        sum(stats::dgeom(m, p.geom) * vismeteor::vmperception(m + offset)) +
+        sum(stats::dgeom(m, p.geom) * perception.fun(m + offset, log = FALSE)) +
             stats::pgeom(m.max, p.geom, lower.tail = FALSE)
     }
 
@@ -325,7 +351,7 @@ qvmgeom <- function(p, r, lm = NULL, lower.tail = TRUE) {
 
         if(lower.tail) {
             m[0.0 == p] <- 0
-            p.max <- vismeteor::pvmgeom(m.max + offset, r)
+            p.max <- vismeteor::pvmgeom(m.max + offset, r, perception.fun = perception.fun)
             idx <- p>p.max & p<=1.0
             if (any(idx)) {
                 m[idx] <- m.max + 1 + stats::qgeom((p[idx] - p.max)/(1.0 - p.max), p.geom)
@@ -334,14 +360,14 @@ qvmgeom <- function(p, r, lm = NULL, lower.tail = TRUE) {
             idx <- p>0.0 & p<=p.max
             if (any(idx)) {
                 m0 <- seq(1, -m.max, -1)
-                p0 <- vismeteor::pvmgeom(m0, r, lm = offset)
+                p0 <- vismeteor::pvmgeom(m0, r, lm = offset, perception.fun = perception.fun)
                 p.idx <- findInterval(p[idx], p0, left.open = TRUE) + 1
                 m[idx] <- -m0[p.idx]
                 m[m<0] <- NA
             }
         } else {
             m[1.0 == p] <- 0
-            p.max <- 1.0 - vismeteor::pvmgeom(m.max + offset, r)
+            p.max <- 1.0 - vismeteor::pvmgeom(m.max + offset, r, perception.fun = perception.fun)
 
             idx <- p>=0.0 & p<p.max
             if (any(idx)) {
@@ -351,7 +377,7 @@ qvmgeom <- function(p, r, lm = NULL, lower.tail = TRUE) {
             idx <- p>=p.max & p<1.0
             if (any(idx)) {
                 m0 <- seq(-m.max, 0, 1)
-                p0 <- c(vismeteor::pvmgeom(m0, r, lm = offset, lower.tail = FALSE), 1.0)
+                p0 <- c(vismeteor::pvmgeom(m0, r, lm = offset, lower.tail = FALSE, perception.fun = perception.fun), 1.0)
                 m0 <- c(m0, 1)
                 p.idx <- findInterval(p[idx], p0, left.open = FALSE)
                 m[idx] <- -m0[p.idx]
@@ -378,7 +404,7 @@ qvmgeom <- function(p, r, lm = NULL, lower.tail = TRUE) {
 
 #' @rdname vmgeom
 #' @export
-rvmgeom <- function(n, r, lm = NULL) {
+rvmgeom <- function(n, r, lm = NULL, perception.fun = NULL) {
     if (1.0 > r) {
         stop(paste0('r must be greater than 1.0 instead of "', r, '"!'))
     }
@@ -387,11 +413,17 @@ rvmgeom <- function(n, r, lm = NULL) {
         lm <- rep(lm, n)
     }
 
+    if (is.null(perception.fun)) {
+        perception.fun <- vismeteor::vmperception
+    } else {
+        perception.fun <- match.fun(perception.fun)
+    }
+
     p <- stats::runif(n)
     m <- rep(NA, n)
     idx <- p < 0.5
-    m[idx] <- vismeteor::qvmgeom(p[idx], r, lm = lm[idx], lower.tail = TRUE)
-    m[!idx] <- vismeteor::qvmgeom(1.0 - p[!idx], r, lm = lm[!idx], lower.tail = FALSE)
+    m[idx] <- vismeteor::qvmgeom(p[idx], r, lm = lm[idx], lower.tail = TRUE, perception.fun = perception.fun)
+    m[!idx] <- vismeteor::qvmgeom(1.0 - p[!idx], r, lm = lm[!idx], lower.tail = FALSE, perception.fun = perception.fun)
 
     m
 }

@@ -1,5 +1,8 @@
 test_that("qvmgeom", {
     r <- 1.8
+    perception.const <- function(m, log = FALSE) {
+        rep(ifelse(log, 0.0, 1.0), length(m))
+    }
 
     ####################################
     # Tests without limiting magnitude #
@@ -86,4 +89,19 @@ test_that("qvmgeom", {
         q <- qvmgeom(c(p + 1e-06, p - 1e-06), r, lm = lm, lower.tail = FALSE)
         expect_equal(q, c(5, 4), label = paste('lm =', lm))
     }
+
+    # quantile of meteor magnitudes equals geometric distribution
+    m <- as.integer(seq(0, 17, 1))
+    p <- round(pvmgeom(m, r, perception.fun = perception.const), 6)
+    m <- qvmgeom(p, r, perception.fun = perception.const)
+    expect_type(m, 'double')
+    expect_length(m, length(m))
+    expect_equal(stats::qgeom(p, 1 - 1/r), m)
+
+    m <- as.integer(seq(10, 30, 1))
+    p <- round(pvmgeom(m, r, lower.tail = FALSE, perception.fun = perception.const), 6)
+    m <- qvmgeom(p, r, lower.tail = FALSE, perception.fun = perception.const)
+    expect_type(m, 'double')
+    expect_length(m, length(m))
+    expect_equal(stats::qgeom(p, 1 - 1/r, lower.tail = FALSE), m)
 })

@@ -1,5 +1,8 @@
 test_that("pvmgeom", {
     r <- 1.8
+    perception.const <- function(m, log = FALSE) {
+        rep(ifelse(log, 0.0, 1.0), length(m))
+    }
 
     # probability of (limmag - m) = 2
     f <- function(m) {
@@ -119,4 +122,17 @@ test_that("pvmgeom", {
         dvmgeom(rep(5L, length(lm)), r, lm = lm)
     p2 <- pvmgeom(rep(5L, length(lm)), r, lm = lm)
     expect_equal(p1, p2)
+
+    # probability of meteor magnitudes equals geometric distribution
+    m <- as.integer(seq(0, 30, 1))
+    p <- pvmgeom(m, r, perception.fun = perception.const)
+    expect_type(p, 'double')
+    expect_length(p, length(m))
+    expect_equal(stats::pgeom(m, 1 - 1/r), p)
+    m <- as.integer(seq(0, 30, 1))
+
+    p <- pvmgeom(m, r, lower.tail = FALSE, perception.fun = perception.const)
+    expect_type(p, 'double')
+    expect_length(p, length(m))
+    expect_equal(stats::pgeom(m, 1 - 1/r, lower.tail = FALSE), p)
 })

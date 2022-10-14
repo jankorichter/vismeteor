@@ -1,6 +1,9 @@
 test_that("dvmgeom", {
     r <- 1.8
     expected_p <- 0.113972
+    perception.const <- function(m, log = FALSE) {
+        rep(ifelse(log, 0.0, 1.0), length(m))
+    }
 
     # density of meteor magnitudes
     p <- dvmgeom(c(-0.5, 2.0), r)
@@ -93,4 +96,11 @@ test_that("dvmgeom", {
     m <- as.integer(seq(8, -60, -1))
     p <- dvmgeom(m, r, lm = lm)
     expect_equal(round(exp(sum(p * vismeteor::vmperception(lm - m, log = TRUE, deriv = TRUE))), 3), 1.799)
+
+    # density of meteor magnitudes equals geometric distribution
+    m <- as.integer(seq(0, 30, 1))
+    p <- dvmgeom(m, r, perception.fun = perception.const)
+    expect_type(p, 'double')
+    expect_length(p, length(m))
+    expect_equal(stats::dgeom(m, 1 - 1/r), p)
 })

@@ -5,11 +5,11 @@ test_that("vmmtable", {
         expect_type(mt.int, 'integer')
         expect_true(isa(mt.int, 'table'))
         expect_equal(
-            as.vector(margin.table(mt, 1)),
-            as.vector(margin.table(mt.int, 1))
+            as.vector(margin.table(mt, 1L)),
+            as.vector(margin.table(mt.int, 1L))
         )
 
-        diff <- as.vector(margin.table(mt, 2)) - as.vector(margin.table(mt.int, 2))
+        diff <- as.vector(margin.table(mt, 2L)) - as.vector(margin.table(mt.int, 2L))
         expect_true(any(abs(diff) <= 1L))
 
         diff <- sum(mt - mt.int)
@@ -99,6 +99,19 @@ test_that("vmmtable", {
     mt.margin <- as.data.frame(margin.table(mt, 1))
     colnames(mt.margin)[2] <- 'freq0'
     mt.int <- test.mt(mt)
+
+    parts <- 10L
+    # split by row
+    f <- floor(parts * (seq(1L:nrow(mt)) - 1L)/nrow(mt))
+    for (i in (seq_len(parts) - 1L)) {
+        mti <- mt[i == f,]
+        test.mt(mti)
+        mti.int <- mt.int[i == f,]
+        diff <- as.vector(margin.table(mti, 2L)) - as.vector(margin.table(mti.int, 2L))
+        expect_true(any(abs(diff) <= 1L))
+        diff <- sum(mti - mti.int)
+        expect_true(0.0 == diff)
+    }
 
     if (FALSE) {
         # create meteors from gamma distribution

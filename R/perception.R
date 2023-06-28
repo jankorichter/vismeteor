@@ -26,10 +26,10 @@
 #' vmperception(5.6 - 6.0)
 #' @export
 vmperception <- function(m, log = FALSE, deriv = FALSE) {
-    p.inner <- -6.01 + 3.54*m - 1.655*m^2 + 0.5468*m^3 - 0.0832*m^4 + 0.0046*m^5
+    p.inner <- -6.1 + 4.05*m - 2.15*m^2 + 0.72*m^3 - 0.1087*m^4 + 0.00595*m^5
 
     if (deriv) {
-        p.inner.derived <- 3.54 - 3.31*m + 1.6404*m^2 - 0.3328*m^3 + 0.023*m^4
+        p.inner.derived <- 4.05 - 4.3*m + 2.16*m^2 - 0.4348*m^3 + 0.02975*m^4
 
         if (log) {
             p.inner.derived/(1 + exp(p.inner))

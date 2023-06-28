@@ -21,7 +21,7 @@
 #' In visual meteor observation, it is common to estimate meteor magnitudes in integer values.
 #' Hence, this distribution is discrete and has the density
 #' \deqn{
-#'     P[M = m] \sim f(m) \, \mathrm r^{-m} \,\mathrm{,}
+#'     {\displaystyle P[M = m] \sim f(m) \, \mathrm r^{-m}} \,\mathrm{,}
 #' }
 #' where \eqn{m \ge -0.5} is the difference between the limiting magnitude and the meteor magnitude and
 #' \eqn{f(m)} is the perception probability.
@@ -51,7 +51,7 @@
 #' The length of the result is determined by `n` for `rvmgeom`, and is the maximum
 #' of the lengths of the numerical vector arguments for the other functions.
 #'
-#' Since the distribution is discrete, `pvmgeom` and `rvmgeom` always return integer values.
+#' Since the distribution is discrete, `qvmgeom` and `rvmgeom` always return integer values.
 #' `qvmgeom` can return `NaN` value with a warning.
 #' @seealso [vismeteor::vmperception]
 #'   [stats::Geometric]
@@ -93,12 +93,16 @@
 #' @rdname vmgeom
 #' @export
 dvmgeom <- function(m, r, lm = NULL, log = FALSE, perception.fun = NULL) {
-    if (1.0 > r) {
-        stop(paste0('r must be greater than 1.0 instead of "', r, '"!'))
+    if (1 == length(r)) {
+        r <- rep(r, length(m))
     }
 
-    if (anyNA(m) | anyNA(lm) ) {
+    if (anyNA(m) | anyNA(r) | anyNA(lm) ) {
         stop("NA's are not allowed!")
+    }
+
+    if (any(1.0 > r)) {
+        stop(paste0('r must be greater than 1.0 instead of "', r, '"!'))
     }
 
     if (is.null(perception.fun)) {
@@ -128,35 +132,37 @@ dvmgeom <- function(m, r, lm = NULL, log = FALSE, perception.fun = NULL) {
         offset <- rep(offset, length(m))
     }
 
-    f.norm <- function(offset){
+    f.norm <- function(m, offset, p.geom) {
         m <- as.integer(seq(0, m.max))
         sum(stats::dgeom(m, p.geom) * perception.fun(m + offset, log = FALSE)) +
             stats::pgeom(m.max, p.geom, lower.tail = FALSE)
     }
 
-    f.density <- function(m, offset) {
+    f.density <- function(m, offset, p.geom) {
         idx <- m <= m.max
         d <- stats::dgeom(m, p.geom, log = TRUE)
         d[idx] <- d[idx] + perception.fun(m[idx] + offset, log = TRUE)
 
-        d - base::log(f.norm(offset))
+        d - base::log(f.norm(m, offset, p.geom))
     }
 
     arg.data <- data.frame(
         m = m,
-        offset = offset
+        offset = offset,
+        p.geom = p.geom
     )
-    rownames(arg.data) <- seq_along(m)
 
-    os <- split(arg.data, offset)
-    d <- Reduce(c, lapply(os, function(data){
+    data.f <- as.factor(paste0(offset, '/', p.geom))
+    data.s <- split(arg.data, data.f)
+    d <- lapply(data.s, function(data) {
         m <- data$m
         offset <- data$offset[1]
+        p.geom <- data$p.geom[1]
         d <- rep(-Inf, length(m))
 
         idx <- m > -1
         if(any(idx)) {
-            d[idx] <- f.density(m[idx], offset)
+            d[idx] <- f.density(m[idx], offset, p.geom)
         }
 
         if (! log) {
@@ -164,25 +170,25 @@ dvmgeom <- function(m, r, lm = NULL, log = FALSE, perception.fun = NULL) {
             d[!idx] <- 0.0
         }
 
-        names(d) <- rownames(data)
         d
-    }))
+    })
 
-    d <- d[order(as.integer(names(d)))]
-    names(d) <- NULL
-
-    d
+    unsplit(d, data.f)
 }
 
 #' @rdname vmgeom
 #' @export
 pvmgeom <- function(m, r, lm = NULL, lower.tail = TRUE, log = FALSE, perception.fun = NULL) {
-    if (1.0 > r) {
-        stop(paste0('r must be greater than 1.0 instead of "', r, '"!'))
+    if (1 == length(r)) {
+        r <- rep(r, length(m))
     }
 
-    if (anyNA(m) | anyNA(lm) ) {
+    if (anyNA(m) | anyNA(r) | anyNA(lm) ) {
         stop("NA's are not allowed!")
+    }
+
+    if (any(1.0 > r)) {
+        stop(paste0('r must be greater than 1.0 instead of "', r, '"!'))
     }
 
     if (is.null(perception.fun)) {
@@ -212,29 +218,29 @@ pvmgeom <- function(m, r, lm = NULL, lower.tail = TRUE, log = FALSE, perception.
         offset <- rep(offset, length(m))
     }
 
-    f.norm <- function(offset){
+    f.norm <- function(offset, p.geom){
         m <- as.integer(seq(0, m.max))
         sum(stats::dgeom(m, p.geom) * perception.fun(m + offset, log = FALSE)) +
             stats::pgeom(m.max, p.geom, lower.tail = FALSE)
     }
 
-    f.density <- function(m, offset) {
+    f.density <- function(m, offset, p.geom) {
         stats::dgeom(m, p.geom) * perception.fun(m + offset, log = FALSE)
     }
 
-    f.sum <- Vectorize(function(m, offset) {
+    f.sum <- Vectorize(function(m, offset, p.geom) {
         m <- as.integer(seq(0, m))
-        sum(f.density(m, offset))
+        sum(f.density(m, offset, p.geom))
     })
 
-    f.prob <- function(m, offset) {
-        norm <- f.norm(offset)
+    f.prob <- function(m, offset, p.geom) {
+        norm <- f.norm(offset, p.geom)
         p <- rep(0.0, length(m))
 
         if (lower.tail) {
             idx <- m <= m.max
             if(any(idx)) {
-                p[idx] <- f.sum(m[idx], offset)/norm
+                p[idx] <- f.sum(m[idx], offset, p.geom)/norm
             }
 
             idx <- m > m.max
@@ -244,7 +250,7 @@ pvmgeom <- function(m, r, lm = NULL, lower.tail = TRUE, log = FALSE, perception.
         } else {
             idx <- m <= m.max
             if(any(idx)) {
-                p[idx] <- 1 - f.sum(m[idx], offset)/norm
+                p[idx] <- 1 - f.sum(m[idx], offset, p.geom)/norm
             }
 
             idx <- m > m.max
@@ -258,14 +264,17 @@ pvmgeom <- function(m, r, lm = NULL, lower.tail = TRUE, log = FALSE, perception.
 
     arg.data <- data.frame(
         m = m,
-        offset = offset
+        offset = offset,
+        p.geom = p.geom
     )
-    rownames(arg.data) <- seq_along(m)
 
-    os <- split(arg.data, offset)
-    p <- Reduce(c, lapply(os, function(data){
+    data.f <- as.factor(paste0(offset, '/', p.geom))
+    data.s <- split(arg.data, data.f)
+    p <- lapply(data.s, function(data) {
         m <- data$m
         offset <- data$offset[1]
+        p.geom <- data$p.geom[1]
+
         if (lower.tail) {
             p <- rep(0.0, length(m))
         } else {
@@ -273,7 +282,9 @@ pvmgeom <- function(m, r, lm = NULL, lower.tail = TRUE, log = FALSE, perception.
         }
 
         idx <- m > -1
-        p[idx] <- f.prob(m[idx], offset)
+        if(any(idx)) {
+            p[idx] <- f.prob(m[idx], offset, p.geom)
+        }
 
         if (log) {
             p[idx] <- base::log(p[idx])
@@ -284,25 +295,25 @@ pvmgeom <- function(m, r, lm = NULL, lower.tail = TRUE, log = FALSE, perception.
             }
         }
 
-        names(p) <- rownames(data)
         p
-    }))
+    })
 
-    p <- p[order(as.integer(names(p)))]
-    names(p) <- NULL
-
-    p
+    unsplit(p, data.f)
 }
 
 #' @rdname vmgeom
 #' @export
 qvmgeom <- function(p, r, lm = NULL, lower.tail = TRUE, perception.fun = NULL) {
-    if (1.0 > r) {
-        stop(paste0('r must be greater than 1.0 instead of "', r, '"!'))
+    if (1 == length(r)) {
+        r <- rep(r, length(p))
     }
 
-    if (anyNA(p) | anyNA(lm) ) {
+    if (anyNA(p) | anyNA(r) | anyNA(lm) ) {
         stop("NA's are not allowed!")
+    }
+
+    if (any(1.0 > r)) {
+        stop(paste0('r must be greater than 1.0 instead of "', r, '"!'))
     }
 
     if (is.null(perception.fun)) {
@@ -331,22 +342,20 @@ qvmgeom <- function(p, r, lm = NULL, lower.tail = TRUE, perception.fun = NULL) {
         offset <- rep(offset, length(p))
     }
 
-    f.norm <- function(offset){
-        m <- as.integer(seq(0, m.max))
-        sum(stats::dgeom(m, p.geom) * perception.fun(m + offset, log = FALSE)) +
-            stats::pgeom(m.max, p.geom, lower.tail = FALSE)
-    }
-
     arg.data <- data.frame(
         p = p,
-        offset = offset
+        offset = offset,
+        p.geom = p.geom,
+        r = r
     )
-    rownames(arg.data) <- seq_along(p)
 
-    os <- split(arg.data, offset)
-    m <- Reduce(c, lapply(os, function(data){
+    data.f <- as.factor(paste0(offset, '/', p.geom))
+    data.s <- split(arg.data, data.f)
+    m <- lapply(data.s, function(data) {
         p <- data$p
         offset <- data$offset[1]
+        p.geom <- data$p.geom[1]
+        r <- data$r[1]
         m <- rep(NA, length(p))
 
         if(lower.tail) {
@@ -384,12 +393,10 @@ qvmgeom <- function(p, r, lm = NULL, lower.tail = TRUE, perception.fun = NULL) {
             }
         }
 
-        names(m) <- rownames(data)
         m
-    }))
+    })
 
-    m <- m[order(as.integer(names(m)))]
-    names(m) <- NULL
+    m <- unsplit(m, data.f)
 
     if (! is.null(lm)) {
         m <- lm - m
@@ -409,10 +416,6 @@ rvmgeom <- function(n, r, lm = NULL, perception.fun = NULL) {
         stop(paste0('r must be greater than 1.0 instead of "', r, '"!'))
     }
 
-    if (1 == length(lm)) {
-        lm <- rep(lm, n)
-    }
-
     if (is.null(perception.fun)) {
         perception.fun <- vismeteor::vmperception
     } else {
@@ -422,8 +425,14 @@ rvmgeom <- function(n, r, lm = NULL, perception.fun = NULL) {
     p <- stats::runif(n)
     m <- rep(NA, n)
     idx <- p < 0.5
-    m[idx] <- vismeteor::qvmgeom(p[idx], r, lm = lm[idx], lower.tail = TRUE, perception.fun = perception.fun)
-    m[!idx] <- vismeteor::qvmgeom(1.0 - p[!idx], r, lm = lm[!idx], lower.tail = FALSE, perception.fun = perception.fun)
+
+    if (any(idx)) {
+        m[idx] <- vismeteor::qvmgeom(p[idx], r, lm = lm, lower.tail = TRUE, perception.fun = perception.fun)
+    }
+
+    if (any(!idx)) {
+        m[!idx] <- vismeteor::qvmgeom(1.0 - p[!idx], r, lm = lm, lower.tail = FALSE, perception.fun = perception.fun)
+    }
 
     m
 }

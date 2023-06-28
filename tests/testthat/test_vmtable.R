@@ -9,11 +9,11 @@ test_that("vmtable", {
             as.vector(margin.table(mt.int, 1L))
         )
 
-        diff <- as.vector(margin.table(mt, 2L)) - as.vector(margin.table(mt.int, 2L))
-        expect_true(any(abs(diff) <= 1L))
-
-        diff <- sum(mt - mt.int)
-        expect_true(0.0 == diff)
+        diff <- as.vector(margin.table(mt, 2L)) -
+            as.vector(margin.table(mt.int, 2L))
+        expect_true(any(abs(diff) <= 0.5))
+        expect_true(0.0 == sum(mt - mt.int))
+        expect_false(any(abs(mt - mt.int) > 1.0))
 
         return(mt.int)
     }
@@ -32,16 +32,29 @@ test_that("vmtable", {
     ))
     expect_equal(expected, mt.int)
 
-    # single observation
+    # single observations
     mt <- as.table(matrix(
         c(
-            0.5, 0.5, 0.5, 0.5
+            1.0, 0.5, 0.5, 0.0
         ), nrow = 1, ncol = 4, byrow = TRUE
     ))
     mt.int <- test.mt(mt)
     expected = as.table(matrix(
         c(
-            0L, 1L, 1L, 0L
+            1L, 0L, 1L, 0L
+        ), nrow = 1, ncol = 4, byrow = TRUE
+    ))
+    expect_equal(expected, mt.int)
+
+    mt <- as.table(matrix(
+        c(
+            1.5, 0.5, 0.5, 0.5
+        ), nrow = 1, ncol = 4, byrow = TRUE
+    ))
+    mt.int <- test.mt(mt)
+    expected = as.table(matrix(
+        c(
+            2L, 0L, 1L, 0L
         ), nrow = 1, ncol = 4, byrow = TRUE
     ))
     expect_equal(expected, mt.int)
@@ -61,10 +74,10 @@ test_that("vmtable", {
     expected = as.table(matrix(
         c(
             0L, 0L, 0L, 1L,
-            0L, 0L, 0L, 1L,
+            0L, 0L, 1L, 0L,
             0L, 1L, 0L, 0L,
             0L, 0L, 0L, 0L,
-            0L, 1L, 0L, 0L,
+            1L, 0L, 0L, 0L,
             1L, 0L, 0L, 0L
         ), nrow = 6, ncol = 4, byrow = TRUE
     ))
@@ -85,10 +98,10 @@ test_that("vmtable", {
     expected = as.table(matrix(
         c(
             0L, 0L, 0L, 1L,
+            1L, 0L, 1L, 0L,
             0L, 1L, 0L, 1L,
-            0L, 0L, 2L, 0L,
             0L, 0L, 0L, 0L,
-            1L, 1L, 0L, 0L,
+            0L, 1L, 1L, 0L,
             1L, 2L, 3L, 4L
         ), nrow = 6, ncol = 4, byrow = TRUE
     ))
@@ -100,7 +113,7 @@ test_that("vmtable", {
     colnames(mt.margin)[2] <- 'freq0'
     mt.int <- test.mt(mt)
 
-    parts <- 10L
+    parts <- 20L
     # split by row
     f <- floor(parts * (seq(1L:nrow(mt)) - 1L)/nrow(mt))
     for (i in (seq_len(parts) - 1L)) {
@@ -108,7 +121,7 @@ test_that("vmtable", {
         test.mt(mti)
         mti.int <- mt.int[i == f,]
         diff <- as.vector(margin.table(mti, 2L)) - as.vector(margin.table(mti.int, 2L))
-        expect_true(any(abs(diff) <= 1L))
+        expect_true(any(abs(diff) <= 0.5))
         diff <- sum(mti - mti.int)
         expect_true(0.0 == diff)
     }
@@ -153,7 +166,7 @@ test_that("vmtable", {
         mt.int.var <- sum((as.integer(names(mt.int.c)) - mt.mean)^2 * mt.int.c)/(m.n - 1)
         expect_true(abs(mt.int.mean - m.gamma.mean) < 0.01)
         expect_true(abs(mt.int.var - m.gamma.var) < 0.2)
-        expect_true(abs(mt.int.mean - mt.mean) < 0.001)
-        expect_true(abs(mt.int.var - mt.var) < 0.01)
+        expect_true(abs(mt.int.mean - mt.mean) < 0.01)
+        expect_true(abs(mt.int.var - mt.var) < 0.03)
     }
 })

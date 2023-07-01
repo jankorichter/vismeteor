@@ -118,8 +118,16 @@
 #' @rdname vmideal
 #' @export
 dvmideal <- function(m, lm, psi, log = FALSE, perception.fun = NULL) {
-    if (anyNA(m) | anyNA(lm) ) {
+    if (anyNA(m) | anyNA(lm) | anyNA(psi)) {
         stop("NA's are not allowed!")
+    }
+
+    if (any(is.infinite(lm))) {
+        stop("Infinite limiting magnitudes are not allowed!")
+    }
+
+    if (any(is.infinite(psi))) {
+        stop("Infinite psi values are not allowed!")
     }
 
     is.wholenumber <- function(x, tol = .Machine$double.eps^0.5) all(is.infinite(x) | abs(x - round(x)) < tol)
@@ -133,10 +141,6 @@ dvmideal <- function(m, lm, psi, log = FALSE, perception.fun = NULL) {
         perception.fun <- match.fun(perception.fun)
     }
 
-    psi.exp <- 10.0
-    r.lower <- 10^0.4
-    p.geom.lower <- 1 - 1/r.lower
-
     if (1 == length(lm)) {
         lm <- rep(lm, length(m))
     }
@@ -146,25 +150,47 @@ dvmideal <- function(m, lm, psi, log = FALSE, perception.fun = NULL) {
     }
 
     # density function
-    f.density <- function(m, lm, psi) {
+    f.density <- function(m, lm, psi, log) {
+        psi.exp <- 10.0
         if (lm + psi.exp < psi) {
-            return(vismeteor::dvmgeom(m, r.lower, lm))
+            return(vismeteor::dvmgeom(m, 10^0.4, lm, log = log))
         }
 
         norm.res <- vmideal.norm(lm, psi, perception.fun)
         p <- norm.res$p
         m.lower <- norm.res$m.lower
         m.upper <- norm.res$m.upper
-        d <- rep(0.0, length(m))
+
+        if (log) {
+            d <- rep(-Inf, length(m))
+        } else {
+            d <- rep(0.0, length(m))
+        }
 
         idx <- m >= m.lower & m <= m.upper
         if (any(idx)) {
-            d[idx] <- p[as.character(m[idx])]
+            d.tmp <- p[as.character(m[idx])]
+
+            if (log) {
+                d.tmp[0.0 == d.tmp] <- -Inf
+
+                log.idx <- -Inf != d.tmp
+                if (any(log.idx)) {
+                    d.tmp[log.idx] <- base::log(d.tmp[log.idx])
+                }
+            }
+
+            d[idx] <- d.tmp
+
         }
 
-        idx <- m < m.lower
+        idx <- m > -Inf & m < m.lower
         if (any(idx)) {
-            d[idx] <- stats::dgeom(m.lower - m[idx] - 1, p.geom.lower) * norm.res$p.lower.tail
+            if (log) {
+                d[idx] <- dmideal.int(m[idx], psi, log = TRUE) - base::log(norm.res$norm)
+            } else {
+                d[idx] <- dmideal.int(m[idx], psi)/norm.res$norm
+            }
         }
 
         d
@@ -182,18 +208,7 @@ dvmideal <- function(m, lm, psi, log = FALSE, perception.fun = NULL) {
         m <- data$m
         lm <- data$lm[1]
         psi <- data$psi[1]
-        d <- f.density(m, lm, psi)
-
-        if (log) {
-            d[0.0 == d] <- -Inf
-
-            idx <- -Inf != d
-            if (any(idx)) {
-                d[idx] <- base::log(d[idx])
-            }
-        }
-
-        d
+        f.density(m, lm, psi, log = log)
     })
 
     unsplit(d, data.f)
@@ -202,8 +217,16 @@ dvmideal <- function(m, lm, psi, log = FALSE, perception.fun = NULL) {
 #' @rdname vmideal
 #' @export
 pvmideal <- function(m, lm, psi, lower.tail = TRUE, log = FALSE, perception.fun = NULL) {
-    if (anyNA(m) | anyNA(lm) ) {
+    if (anyNA(m) | anyNA(lm) | anyNA(psi)) {
         stop("NA's are not allowed!")
+    }
+
+    if (any(is.infinite(lm))) {
+        stop("Infinite limiting magnitudes are not allowed!")
+    }
+
+    if (any(is.infinite(psi))) {
+        stop("Infinite psi values are not allowed!")
     }
 
     is.wholenumber <- function(x, tol = .Machine$double.eps^0.5) all(is.infinite(x) | abs(x - round(x)) < tol)
@@ -217,11 +240,6 @@ pvmideal <- function(m, lm, psi, lower.tail = TRUE, log = FALSE, perception.fun 
         perception.fun <- match.fun(perception.fun)
     }
 
-    m.max <- 15L
-    psi.exp <- 10.0
-    r.lower <- 10^0.4
-    p.geom.lower <- 1 - 1/r.lower
-
     if (1 == length(lm)) {
         lm <- rep(lm, length(m))
     }
@@ -231,55 +249,72 @@ pvmideal <- function(m, lm, psi, lower.tail = TRUE, log = FALSE, perception.fun 
     }
 
     # probability function
-    f.prob <- function(m, lm, psi) {
+    f.prob <- function(m, lm, psi, log) {
+        psi.exp <- 10.0
         if (lm + psi.exp < psi) {
-            return(vismeteor::pvmgeom(m, r.lower, lm, lower.tail = !lower.tail))
+            return(vismeteor::pvmgeom(m, 10^0.4, lm, log = log, lower.tail = !lower.tail))
         }
 
         norm.res <- vmideal.norm(lm, psi, perception.fun)
-        p <- norm.res$p
         m.lower <- norm.res$m.lower
         m.upper <- norm.res$m.upper
-        p.lower.tail <- norm.res$p.lower.tail
 
-        # lower tail
         if (lower.tail) {
-            p <- rep(1.0, length(m))
+            if (log) {
+                p <- rep(0.0, length(m))
+                p[-Inf == m] <- -Inf
+            } else {
+                p <- rep(1.0, length(m))
+                p[-Inf == m] <- 0.0
+            }
 
-            idx <- m <= m.lower
+            idx <- m > -Inf & m <= m.lower
             if (any(idx)) {
-                p[idx] <- stats::pgeom(m.lower - m[idx] - 1, p.geom.lower, lower.tail = FALSE) * p.lower.tail
+                if (log) {
+                    p[idx] <- vismeteor::pmideal(m[idx] - 0.5, psi, lower.tail = TRUE, log = TRUE) -
+                        base::log(norm.res$norm)
+                } else {
+                    p[idx] <- vismeteor::pmideal(m[idx] - 0.5, psi, lower.tail = TRUE, log = FALSE) / norm.res$norm
+                }
             }
 
             idx <- m > m.lower & m <= m.upper
             if (any(idx)) {
                 p.gen <- cumsum(norm.res$p)
-                p[idx] <- p.lower.tail + p.gen[as.character(m[idx] - 1)]
+                p[idx] <- norm.res$p.lower.tail + p.gen[as.character(m[idx] - 1)]
+                p[p>1.0] <- 1.0
+                if (log) {
+                    log.idx <- p > 0.0
+                    if (any(log.idx)) {
+                        p[log.idx] <- base::log(p[log.idx])
+                    }
+                }
             }
         } else {
             p <- rep(0.0, length(m))
+            p[-Inf == m] <- 1.0
 
-            idx <- m <= m.lower
+            idx <- m > -Inf & m < m.lower
             if (any(idx)) {
-                p[idx] <- (1 - p.lower.tail) +
-                    stats::pgeom(m.lower - m[idx] - 1, p.geom.lower, lower.tail = TRUE) * p.lower.tail
+                p[idx] <- 1.0 - vismeteor::pmideal(m[idx] - 0.5, psi, lower.tail = TRUE) / norm.res$norm
             }
 
-            idx <- m > m.lower & m <= m.upper
+            idx <- m >= m.lower & m <= m.upper
             if (any(idx)) {
                 p.gen <- base::rev(cumsum(base::rev(norm.res$p)))
                 p[idx] <- p.gen[as.character(m[idx])]
             }
 
-            p[m < 0 & is.infinite(m)] <- 1.0
-            p[m > 0 & is.infinite(m)] <- 0.0
-        }
+            p[m > 0.0 & is.infinite(m)] <- 0.0
+            p[p>1.0] <- 1.0
 
-        p[p>1.0] <- 1.0
-        idx <- p > 0.0
-        if (log & any(idx)) {
-            p[idx] <- base::log(p[idx])
-            p[!idx] <- -Inf
+            if (log) {
+                log.idx <- p > 0.0
+                if (any(log.idx)) {
+                    p[log.idx] <- base::log(p[log.idx])
+                }
+                p[!log.idx] <- -Inf
+            }
         }
 
         p
@@ -297,7 +332,7 @@ pvmideal <- function(m, lm, psi, lower.tail = TRUE, log = FALSE, perception.fun 
         m <- data$m
         lm <- data$lm[1]
         psi <- data$psi[1]
-        f.prob(m, lm, psi)
+        f.prob(m, lm, psi, log = log)
     })
 
     unsplit(p, data.f)
@@ -306,8 +341,16 @@ pvmideal <- function(m, lm, psi, lower.tail = TRUE, log = FALSE, perception.fun 
 #' @rdname vmideal
 #' @export
 qvmideal <- function(p, lm, psi, lower.tail = TRUE, perception.fun = NULL) {
-    if (anyNA(p) | anyNA(lm) ) {
+    if (anyNA(p) | anyNA(lm) | anyNA(psi)) {
         stop("NA's are not allowed!")
+    }
+
+    if (any(is.infinite(lm))) {
+        stop("Infinite limiting magnitudes are not allowed!")
+    }
+
+    if (any(is.infinite(psi))) {
+        stop("Infinite psi values are not allowed!")
     }
 
     if (is.null(perception.fun)) {
@@ -315,11 +358,6 @@ qvmideal <- function(p, lm, psi, lower.tail = TRUE, perception.fun = NULL) {
     } else {
         perception.fun <- match.fun(perception.fun)
     }
-
-    m.max <- 15L
-    psi.exp <- 10.0
-    r.lower <- 10^0.4
-    p.geom.lower <- 1 - 1/r.lower
 
     if (1 == length(lm)) {
         lm <- rep(lm, length(p))
@@ -331,46 +369,58 @@ qvmideal <- function(p, lm, psi, lower.tail = TRUE, perception.fun = NULL) {
 
     # quantile function
     f.q <- function(p, lm, psi) {
+        m.max <- 15L
+        psi.exp <- 10.0
+
         if (lm + psi.exp < psi) {
+            r.lower <- 10^0.4
             return(vismeteor::qvmgeom(p, r.lower, lm, lower.tail = !lower.tail))
         }
 
-        a <- -base::log(r.lower)
-        m.lower <- floor(min(lm - m.max, psi - psi.exp))
         m.upper <- vmideal.upper.lm(lm)
+        m.lower <- m.upper - m.max
         m <- rep(NA, length(p))
 
         if(lower.tail) {
             m[0.0 == p] <- -Inf
             m[1.0 == p] <- m.upper
-            p.max <- pvmideal(m.lower, lm, psi, lower.tail = TRUE, perception.fun = perception.fun)
+            p.max <- vismeteor::pvmideal(m.lower, lm, psi, lower.tail = TRUE, perception.fun = perception.fun)
 
             idx <- p > 0.0 & p < p.max
             if (any(idx)) {
-                m[idx] <- m.lower - 1 - stats::qgeom(p[idx]/p.max, p.geom.lower, lower.tail = FALSE)
+                p.max.ideal <- vismeteor::pmideal(m.lower - 0.5, psi, lower.tail = TRUE)
+                m[idx] <- floor(0.5 + vismeteor::qmideal(
+                    p.max.ideal * p[idx] / p.max,
+                    psi,
+                    lower.tail = TRUE
+                ))
             }
-
             idx <- p>=p.max & p<1.0
             if (any(idx)) {
                 m.gen <- seq(m.lower, m.upper + 1)
-                p.gen <- pvmideal(m.gen, lm, psi, lower.tail = lower.tail, perception.fun = perception.fun)
+                p.gen <- vismeteor::pvmideal(m.gen, lm, psi, lower.tail = lower.tail, perception.fun = perception.fun)
                 p.idx <- findInterval(p[idx], p.gen, left.open = FALSE)
                 m[idx] <- m.gen[p.idx]
             }
         } else {
             m[0.0 == p] <- m.upper
             m[1.0 == p] <- -Inf
-            p.max <- pvmideal(m.lower, lm, psi, lower.tail = FALSE, perception.fun = perception.fun)
+            p.max <- vismeteor::pvmideal(m.lower, lm, psi, lower.tail = FALSE, perception.fun = perception.fun)
 
             idx <- p > p.max & p < 1.0
             if (any(idx)) {
-                m[idx] <- m.lower - 1 - stats::qgeom((p[idx] - p.max)/(1.0 - p.max), p.geom.lower, lower.tail = TRUE)
+                p.max.ideal <- vismeteor::pmideal(m.lower - 0.5, psi, lower.tail = FALSE)
+                m[idx] <- floor(0.5 + vismeteor::qmideal(
+                    1.0 - (1.0 - p[idx]) * ((1.0 - p.max.ideal) / (1.0 - p.max)),
+                    psi,
+                    lower.tail = FALSE
+                ))
             }
 
-            idx <- p>0 & p<=p.max
+            idx <- p>0.0 & p<=p.max
             if (any(idx)) {
                 m.gen <- seq(m.upper + 1, m.lower)
-                p.gen <- pvmideal(m.gen, lm, psi, lower.tail = lower.tail, perception.fun = perception.fun)
+                p.gen <- vismeteor::pvmideal(m.gen, lm, psi, lower.tail = FALSE, perception.fun = perception.fun)
                 p.idx <- findInterval(p[idx], p.gen, left.open = TRUE) + 1
                 m[idx] <- m.gen[p.idx]
             }
@@ -406,6 +456,17 @@ qvmideal <- function(p, lm, psi, lower.tail = TRUE, perception.fun = NULL) {
 #' @rdname vmideal
 #' @export
 rvmideal <- function(n, lm, psi, perception.fun = NULL) {
+    if (anyNA(lm) | anyNA(psi)) {
+        stop("NA's are not allowed!")
+    }
+
+    if (any(is.infinite(lm))) {
+        stop("Infinite limiting magnitudes are not allowed!")
+    }
+
+    if (any(is.infinite(psi))) {
+        stop("Infinite psi values are not allowed!")
+    }
 
     if (is.null(perception.fun)) {
         perception.fun <- vismeteor::vmperception
@@ -418,11 +479,11 @@ rvmideal <- function(n, lm, psi, perception.fun = NULL) {
 
     idx <- p < 0.5
     if (any(idx)) {
-        m[idx] <- vismeteor::qvmideal(p[idx], lm = lm, psi, lower.tail = TRUE, perception.fun = perception.fun)
+        m[idx] <- vismeteor::qvmideal(p[idx], lm, psi, lower.tail = TRUE, perception.fun = perception.fun)
     }
 
     if (any(!idx)) {
-        m[!idx] <- vismeteor::qvmideal(1.0 - p[!idx], lm = lm, psi, lower.tail = FALSE, perception.fun = perception.fun)
+        m[!idx] <- vismeteor::qvmideal(1.0 - p[!idx], lm, psi, lower.tail = FALSE, perception.fun = perception.fun)
     }
 
     m
@@ -431,7 +492,7 @@ rvmideal <- function(n, lm, psi, perception.fun = NULL) {
 #' @rdname vmideal
 #' @export
 cvmideal <- function(lm, psi, log = FALSE, perception.fun = NULL) {
-    if (anyNA(lm) | anyNA(psi) ) {
+    if (anyNA(lm) | anyNA(psi)) {
         stop("NA's are not allowed!")
     }
 
@@ -441,26 +502,22 @@ cvmideal <- function(lm, psi, log = FALSE, perception.fun = NULL) {
         perception.fun <- match.fun(perception.fun)
     }
 
-    m.max <- 15L
-    psi.exp <- 10.0
-    r.lower <- 10^0.4
-
     if (1 == length(psi)) {
         psi <- rep(psi, length(lm))
     }
 
     # Integration - similar to vmideal.norm()
     f.integrate <- function(lm, psi) {
-        a <- -base::log(r.lower)
-        m.lower <- floor(min(lm - m.max, psi - psi.exp))
+        m.max <- 15L
         m.upper <- vmideal.upper.lm(lm)
+        m.lower <- m.upper - m.max
         m <- as.integer(seq(m.lower, m.upper))
         p <- dmideal.int(m, psi) * perception.fun(lm - m)
-        p.lower.tail <- 1.5 * base::exp(a * (psi - m.lower + 0.5))
+        p.lower.tail <- vismeteor::pmideal(m.lower - 0.5, psi, lower.tail = TRUE)
         sum(p) + p.lower.tail
     }
 
-    mapply(function(lm, psi){
+    p <- mapply(function(lm, psi){
         if (Inf == lm & Inf == psi) return(NA)
         if (-Inf == lm & -Inf == psi) return(NA)
         if (Inf == lm & -Inf == psi) return(if(log) 0.0 else 1.0)
@@ -472,6 +529,12 @@ cvmideal <- function(lm, psi, log = FALSE, perception.fun = NULL) {
             f.integrate(lm, psi)
         }
     }, lm, psi, SIMPLIFY = TRUE)
+
+    if (anyNA(p)) {
+        warning('NaNs produced')
+    }
+
+    p
 }
 
 #' upper available magnitude
@@ -480,9 +543,8 @@ cvmideal <- function(lm, psi, log = FALSE, perception.fun = NULL) {
 vmideal.upper.lm <- function(lm) {
     lm.round <- round(lm)
     offset <- lm - lm.round
-    idx <- -0.5 == offset
-    if (any(idx)) {
-        lm.round[idx] <- lm.round[idx] - 1L
+    if (-0.5 == offset) {
+        lm.round <- lm.round - 1L
     }
 
     lm.round
@@ -491,30 +553,41 @@ vmideal.upper.lm <- function(lm) {
 #' density of ideal integer magnitude distribution
 #'
 #' @noRd
-dmideal.int <- function(m, psi) {
+dmideal.int <- function(m, psi, log = FALSE) {
     psi.exp <- 10.0
     r.lower <- 10^0.4
-    p.geom.lower <- 1 - 1/r.lower
 
     a <- -base::log(r.lower)
     d <- rep(NA, length(m))
 
     idx <- m > (psi + psi.exp)
     if (any(idx)) {
-        d[idx] <- base::exp(a * (1.5 * (m[idx] - psi) - 0.75)) -
-            base::exp(a * (1.5 * (m[idx] - psi) + 0.75))
+        if (log) {
+            d[idx] <- base::log(1 - base::exp(1.5 * a)) + a * (1.5 * (m[idx] - psi) - 0.75)
+        } else {
+            d[idx] <- base::exp(a * (1.5 * (m[idx] - psi) - 0.75)) -
+                base::exp(a * (1.5 * (m[idx] - psi) + 0.75))
+        }
     }
 
     idx <- m < (psi - psi.exp)
     if (any(idx)) {
-        d[idx] <- 1.5 * base::exp(a * (psi - m[idx] - 0.5)) -
-            1.5 * base::exp(a * (psi - m[idx] + 0.5))
+        if (log) {
+            d[idx] <- base::log(1.5) + a * (psi - m[idx] - 0.5) + base::log(1 - base::exp(a))
+        } else {
+            d[idx] <- 1.5 * base::exp(a * (psi - m[idx] - 0.5)) -
+                1.5 * base::exp(a * (psi - m[idx] + 0.5))
+        }
     }
 
     idx <- is.na(d)
     if (any(idx)) {
         d[idx] <- vismeteor::pmideal(m[idx] + 0.5, psi, lower.tail = TRUE) -
             vismeteor::pmideal(m[idx] - 0.5, psi, lower.tail = TRUE)
+
+        if (log) {
+            d[idx] <- base::log(d[idx])
+        }
     }
 
     d
@@ -525,18 +598,12 @@ dmideal.int <- function(m, psi) {
 #' @noRd
 vmideal.norm <- function(lm, psi, perception.fun) {
     m.max <- 15L
-
-    psi.exp <- 10.0
-    r.lower <- 10^0.4
-    p.geom.lower <- 1 - 1/r.lower
-
-    a <- -base::log(r.lower)
-    m.lower <- floor(min(lm - m.max, psi - psi.exp))
     m.upper <- vmideal.upper.lm(lm)
+    m.lower <- m.upper - m.max
     m <- as.integer(seq(m.lower, m.upper))
     p <- dmideal.int(m, psi) * perception.fun(lm - m)
     names(p) <- as.character(m)
-    p.lower.tail <- 1.5 * base::exp(a * (psi - m.lower + 0.5))
+    p.lower.tail <- vismeteor::pmideal(m.lower - 0.5, psi, lower.tail = TRUE)
     norm <- sum(p) + p.lower.tail
 
     list(

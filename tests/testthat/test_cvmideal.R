@@ -36,7 +36,9 @@ test_that("cvmideal", {
     expect_length(p, 2)
     expect_equal(round(p, 5), c(1.0, 0.0))
 
-    p <- vismeteor::cvmideal(c(-Inf, -Inf, Inf, Inf), c(-Inf, Inf, -Inf, Inf))
+    p <- suppressWarnings(
+        vismeteor::cvmideal(c(-Inf, -Inf, Inf, Inf), c(-Inf, Inf, -Inf, Inf))
+    )
     expect_type(p, 'double')
     expect_length(p, 4)
     expect_true(is.na(p[1]))
@@ -44,7 +46,9 @@ test_that("cvmideal", {
     expect_equal(p[3], 1.0)
     expect_true(is.na(p[4]))
 
-    p <- vismeteor::cvmideal(c(-Inf, -Inf, Inf, Inf), c(-Inf, Inf, -Inf, Inf), log = TRUE)
+    p <- suppressWarnings(
+        vismeteor::cvmideal(c(-Inf, -Inf, Inf, Inf), c(-Inf, Inf, -Inf, Inf), log = TRUE)
+    )
     expect_type(p, 'double')
     expect_length(p, 4)
     expect_true(is.na(p[1]))

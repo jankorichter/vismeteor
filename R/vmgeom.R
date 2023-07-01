@@ -115,7 +115,7 @@ dvmgeom <- function(m, r, lm = NULL, log = FALSE, perception.fun = NULL) {
     p.geom <- 1.0 - 1.0/r
 
     if (! is.null(lm)) {
-        m = lm - m
+        m <- lm - m
     }
 
     m.round <- round(m)
@@ -201,7 +201,7 @@ pvmgeom <- function(m, r, lm = NULL, lower.tail = TRUE, log = FALSE, perception.
     p.geom <- 1.0 - 1.0/r
 
     if (! is.null(lm)) {
-        m = lm - m
+        m <- lm - m
     }
 
     m.round <- round(m)

@@ -1,5 +1,61 @@
 test_that("pvmideal", {
+    lm <- 6.5
     psi <- 4.0
+
+    # from documentation
+    dp.fun <- function(m, psi) {
+        r <- 10^0.4
+        1.5 * log(r) * sqrt(r^(3 * psi + 2 * m)/((r^psi + r^m)^5))
+    }
+
+    for (current.psi in c(-10.0, psi, 5)) {
+        # test probabilities lower.tail
+
+        m <- seq(current.psi - 25, 6)
+        expected_p <- sapply(m, function(m) {
+            stats::integrate(function(m) dp.fun(m, current.psi), m - 0.5, m + 0.5)$value *
+                vismeteor::vmperception(lm - m)
+        })
+        expected_p[1] <- expected_p[1] + vismeteor::pmideal(m[1] - 0.5, current.psi, lower.tail = TRUE)
+        expected_p <- cumsum(expected_p)/sum(expected_p)
+
+        p <- vismeteor::pvmideal(m + 1, lm, current.psi, lower.tail = TRUE)
+        expect_type(p, 'double')
+        expect_length(p, length(m))
+        expect_false(any(abs(log(p) - log(expected_p)) > 0.02), label = paste('psi =', current.psi))
+
+        p <- vismeteor::pvmideal(m + 1, lm, current.psi, lower.tail = TRUE, log = TRUE)
+        expect_type(p, 'double')
+        expect_length(p, length(m))
+        expect_false(any(abs(p - log(expected_p)) > 0.02), label = paste('psi =', current.psi))
+
+        # test probabilities upper.tail
+
+        m <- seq(6, current.psi - 25, -1)
+        expected_p <- sapply(m, function(m) {
+            stats::integrate(function(m) dp.fun(m, current.psi), m - 0.5, m + 0.5)$value *
+                vismeteor::vmperception(lm - m)
+        })
+        expected_p <- cumsum(expected_p)/sum(expected_p)
+
+        p <- vismeteor::pvmideal(m, lm, current.psi, lower.tail = FALSE)
+        expect_type(p, 'double')
+        expect_length(p, length(m))
+        expect_false(any(abs(log(p) - log(expected_p)) > 0.02), label = paste('psi =', current.psi))
+
+        p <- vismeteor::pvmideal(m, lm, current.psi, lower.tail = FALSE, log = TRUE)
+        expect_type(p, 'double')
+        expect_length(p, length(m))
+        expect_false(any(abs(p - log(expected_p)) > 0.02), label = paste('psi =', current.psi))
+
+        # test sum is 1.0
+        m <- seq(current.psi - 25, 6)
+        p <- vismeteor::pvmideal(m, lm, current.psi, lower.tail = TRUE) +
+            vismeteor::pvmideal(m, lm, current.psi, lower.tail = FALSE)
+        expect_type(p, 'double')
+        expect_length(p, length(m))
+        expect_false(any(abs(1.0 - p) > 1e-06), label = paste('psi =', current.psi))
+    }
 
     # probability of m >= 3
     expected_p <- round(sum(vismeteor::dvmideal(as.integer(seq(3, 6)), 6.3, psi)), 6)
@@ -61,14 +117,15 @@ test_that("pvmideal", {
 
     # density of meteor magnitudes equals geometric distribution
     lm <- 5.8
+    psi <- 30
     m <- as.integer(seq(-20, 6))
-    p <- vismeteor::pvmideal(m, lm, 30, lower.tail = TRUE)
+    p <- vismeteor::pvmideal(m, lm, psi, lower.tail = TRUE)
     expect_type(p, 'double')
     expect_length(p, length(m))
-    expect_equal(pvmgeom(m, 10^(1/2.5), lm = lm, lower.tail = FALSE), p)
+    expect_equal(pvmgeom(m, 10^0.4, lm = lm, lower.tail = FALSE), p)
 
-    p <- vismeteor::pvmideal(m, lm, 30, lower.tail = FALSE)
+    p <- vismeteor::pvmideal(m, lm, psi, lower.tail = FALSE)
     expect_type(p, 'double')
     expect_length(p, length(m))
-    expect_equal(pvmgeom(m, 10^(1/2.5), lm = lm, lower.tail = TRUE), p)
+    expect_equal(pvmgeom(m, 10^0.4, lm = lm, lower.tail = TRUE), p)
 })

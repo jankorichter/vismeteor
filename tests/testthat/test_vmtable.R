@@ -25,7 +25,7 @@ test_that("vmtable", {
         ), nrow = 1, ncol = 4, byrow = TRUE
     ))
     mt.int <- test.mt(mt)
-    expected = as.table(matrix(
+    expected <- as.table(matrix(
         c(
             0L, 0L, 0L, 0L
         ), nrow = 1, ncol = 4, byrow = TRUE
@@ -39,7 +39,7 @@ test_that("vmtable", {
         ), nrow = 1, ncol = 4, byrow = TRUE
     ))
     mt.int <- test.mt(mt)
-    expected = as.table(matrix(
+    expected <- as.table(matrix(
         c(
             1L, 0L, 1L, 0L
         ), nrow = 1, ncol = 4, byrow = TRUE
@@ -52,7 +52,7 @@ test_that("vmtable", {
         ), nrow = 1, ncol = 4, byrow = TRUE
     ))
     mt.int <- test.mt(mt)
-    expected = as.table(matrix(
+    expected <- as.table(matrix(
         c(
             2L, 0L, 1L, 0L
         ), nrow = 1, ncol = 4, byrow = TRUE
@@ -71,7 +71,7 @@ test_that("vmtable", {
         ), nrow = 6, ncol = 4, byrow = TRUE
     ))
     mt.int <- test.mt(mt)
-    expected = as.table(matrix(
+    expected <- as.table(matrix(
         c(
             0L, 0L, 0L, 1L,
             0L, 0L, 1L, 0L,
@@ -95,7 +95,7 @@ test_that("vmtable", {
         ), nrow = 6, ncol = 4, byrow = TRUE
     ))
     mt.int <- test.mt(mt)
-    expected = as.table(matrix(
+    expected <- as.table(matrix(
         c(
             0L, 0L, 0L, 1L,
             1L, 0L, 1L, 0L,
@@ -115,7 +115,7 @@ test_that("vmtable", {
 
     parts <- 20L
     # split by row
-    f <- floor(parts * (seq(1L:nrow(mt)) - 1L)/nrow(mt))
+    f <- floor(parts * (seq(1L, nrow(mt)) - 1L)/nrow(mt))
     for (i in (seq_len(parts) - 1L)) {
         mti <- mt[i == f,]
         test.mt(mti)

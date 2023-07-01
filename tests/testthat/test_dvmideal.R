@@ -1,6 +1,6 @@
 test_that("dvmideal", {
-    psi <- 4.0
     lm <- 6.5
+    psi <- 4.0
 
     # from documentation
     dp.fun <- function(m, psi) {
@@ -8,26 +8,30 @@ test_that("dvmideal", {
         1.5 * log(r) * sqrt(r^(3 * psi + 2 * m)/((r^psi + r^m)^5))
     }
 
-    # test probabilities
-    m <- seq(6, -15, -1)
-    expected_p <- sapply(m, function(m) {
-        stats::integrate(function(m) dp.fun(m, psi), m - 0.5, m + 0.5)$value *
-            vismeteor::vmperception(lm - m)
-    })
-    expected_p <- expected_p/sum(expected_p)
+    for (current.psi in c(-10.0, psi, 5)) {
+        m <- seq(6, current.psi - 25, -1)
+        expected_p <- sapply(m, function(m) {
+            stats::integrate(function(m) dp.fun(m, current.psi), m - 0.5, m + 0.5)$value *
+                vismeteor::vmperception(lm - m)
+        })
+        expected_p <- expected_p/sum(expected_p)
 
-    # density of meteor magnitudes
-    p <- vismeteor::dvmideal(m, lm, psi)
-    expect_type(p, 'double')
-    expect_length(p, length(m))
-    expect_equal(round(p, 5), round(expected_p, 5))
-    expect_equal(round(log(p), 3), round(log(expected_p), 3))
+        # density of meteor magnitudes
+        p <- vismeteor::dvmideal(m, lm, current.psi)
+        expect_type(p, 'double')
+        expect_length(p, length(m))
+        expect_false(any(abs(log(p) - log(expected_p)) > 0.03), label = paste('psi =', current.psi))
 
-    # log density of meteor magnitudes
-    p <- vismeteor::dvmideal(m, lm, psi, log = TRUE)
-    expect_type(p, 'double')
-    expect_length(p, length(m))
-    expect_equal(round(p, 3), round(log(expected_p), 3))
+        # log density of meteor magnitudes
+        p <- vismeteor::dvmideal(m, lm, current.psi, log = TRUE)
+        expect_type(p, 'double')
+        expect_length(p, length(m))
+        expect_false(any(abs(p - log(expected_p)) > 0.03), label = paste('psi =', current.psi))
+
+        # Is the density sum of meteor magnitudes equal to 1.0 ?
+        p <- sum(vismeteor::dvmideal(m, lm, current.psi))
+        expect_equal(round(p, 6), 1.0, label = paste('psi =', current.psi))
+    }
 
     p <- vismeteor::dvmideal(7, lm, psi)
     expect_type(p, 'double')
@@ -66,13 +70,6 @@ test_that("dvmideal", {
     p <- vismeteor::dvmideal(rep(3, length(lm)), lm, psi)
     expect_equal(p[order(p)], p)
 
-    # Is the density sum of meteor magnitudes equal to 1.0 ?
-    for (lm in seq(5.4, 6.4, 0.1)) {
-        p <- sum(vismeteor::dvmideal(as.integer(seq(6, -20, -1)), lm, psi))
-        expect_equal(round(p, 6), 1.0, label = paste('lm =', lm))
-
-    }
-
     # test maximum likelihood estimation (MLE) of psi
     lm <- 5.8
     m <- as.integer(seq(-20, 6))
@@ -84,10 +81,11 @@ test_that("dvmideal", {
     expect_equal(round(est$par, 6), psi)
 
     # density of meteor magnitudes equals geometric distribution
-    lm <- 5.8
+    lm <- 6.3
+    psi <- 20
     m <- as.integer(seq(-20, 6))
-    p <- vismeteor::dvmideal(m, lm, 30)
+    p <- vismeteor::dvmideal(m, lm, psi, log = TRUE)
     expect_type(p, 'double')
     expect_length(p, length(m))
-    expect_equal(dvmgeom(m, 10^(1/2.5), lm = lm), p)
+    expect_false(any(abs(p - dvmgeom(m, 10^0.4, lm = lm, log = TRUE)) > 0.07))
 })

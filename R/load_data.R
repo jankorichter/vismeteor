@@ -292,7 +292,7 @@ WITH selection as (
                     WHERE \"magn.id\" IS NOT NULL
                 )
             ")
-        magnitudes = DBI::dbGetQuery(dbcon, query)
+        magnitudes <- DBI::dbGetQuery(dbcon, query)
         magnitudes$magn <- factor(
             magnitudes$magn,
             levels = sort(unique(magnitudes$magn), decreasing = TRUE),
@@ -467,7 +467,7 @@ WITH selection as (
                     SELECT \"magn.id\" FROM selection
                 )
             ")
-        magnitudes = DBI::dbGetQuery(dbcon, query)
+        magnitudes <- DBI::dbGetQuery(dbcon, query)
         magnitudes$magn <- factor(
             magnitudes$magn,
             levels = sort(unique(magnitudes$magn), decreasing = TRUE),

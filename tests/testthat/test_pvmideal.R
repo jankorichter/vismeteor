@@ -9,7 +9,7 @@ test_that("pvmideal", {
     }
 
     for (current.psi in c(-10.0, psi, 5)) {
-        # test probabilities lower.tail
+        # test probabilities lower tail
 
         m <- seq(current.psi - 25, 6)
         expected_p <- sapply(m, function(m) {
@@ -17,7 +17,7 @@ test_that("pvmideal", {
                 vismeteor::vmperception(lm - m)
         })
         expected_p[1] <- expected_p[1] + vismeteor::pmideal(m[1] - 0.5, current.psi, lower.tail = TRUE)
-        expected_p <- cumsum(expected_p)/sum(expected_p)
+        expected_p <- cumsum(expected_p)/sum(expected_p) # lower tail
 
         p <- vismeteor::pvmideal(m + 1, lm, current.psi, lower.tail = TRUE)
         expect_type(p, 'double')
@@ -29,14 +29,14 @@ test_that("pvmideal", {
         expect_length(p, length(m))
         expect_false(any(abs(p - log(expected_p)) > 0.02), label = paste('psi =', current.psi))
 
-        # test probabilities upper.tail
+        # test probabilities upper tail
 
         m <- seq(6, current.psi - 25, -1)
         expected_p <- sapply(m, function(m) {
             stats::integrate(function(m) dp.fun(m, current.psi), m - 0.5, m + 0.5)$value *
                 vismeteor::vmperception(lm - m)
         })
-        expected_p <- cumsum(expected_p)/sum(expected_p)
+        expected_p <- cumsum(expected_p)/sum(expected_p) # upper tail
 
         p <- vismeteor::pvmideal(m, lm, current.psi, lower.tail = FALSE)
         expect_type(p, 'double')
@@ -96,11 +96,11 @@ test_that("pvmideal", {
     # test order of probabilities
     lm <- seq(2.5, 6.5, 0.1)
     p <- vismeteor::pvmideal(rep(3L, length(lm)), lm, psi, lower.tail = TRUE)
-    expect_equal(p[order(p, decreasing = TRUE)], p)
+    expect_equal(p, p[order(p, decreasing = TRUE)])
 
     lm <- seq(2.5, 6.5, 0.1)
     p <- vismeteor::pvmideal(rep(3L, length(lm)), lm, psi, lower.tail = FALSE)
-    expect_equal(p[order(p, decreasing = FALSE)], p)
+    expect_equal(p, p[order(p, decreasing = FALSE)])
 
     # test lower probabilities
     lm <- seq(5.4, 6.4, 0.1)
@@ -116,16 +116,26 @@ test_that("pvmideal", {
     expect_equal(p1, p2)
 
     # density of meteor magnitudes equals geometric distribution
-    lm <- 5.8
-    psi <- 30
+    lm <- 6.3
     m <- as.integer(seq(-20, 6))
-    p <- vismeteor::pvmideal(m, lm, psi, lower.tail = TRUE)
-    expect_type(p, 'double')
-    expect_length(p, length(m))
-    expect_equal(pvmgeom(m, 10^0.4, lm = lm, lower.tail = FALSE), p)
 
-    p <- vismeteor::pvmideal(m, lm, psi, lower.tail = FALSE)
+    p <- vismeteor::pvmideal(m, lm, 16.25, lower.tail = TRUE, log = TRUE)
     expect_type(p, 'double')
     expect_length(p, length(m))
-    expect_equal(pvmgeom(m, 10^0.4, lm = lm, lower.tail = TRUE), p)
+    expect_equal(p, pvmgeom(m, lm, 10^0.4, lower.tail = TRUE, log = TRUE))
+
+    p <- vismeteor::pvmideal(m, lm, 16.25, lower.tail = FALSE, log = TRUE)
+    expect_type(p, 'double')
+    expect_length(p, length(m))
+    expect_equal(p, pvmgeom(m, lm, 10^0.4, lower.tail = FALSE, log = TRUE))
+
+    p <- vismeteor::pvmideal(m, lm, 16.35, lower.tail = TRUE, log = TRUE)
+    expect_type(p, 'double')
+    expect_length(p, length(m))
+    expect_equal(p, pvmgeom(m, lm, 10^0.4, lower.tail = TRUE, log = TRUE))
+
+    p <- vismeteor::pvmideal(m, lm, 16.35, lower.tail = FALSE, log = TRUE)
+    expect_type(p, 'double')
+    expect_length(p, length(m))
+    expect_equal(p, pvmgeom(m, lm, 10^0.4, lower.tail = FALSE, log = TRUE))
 })

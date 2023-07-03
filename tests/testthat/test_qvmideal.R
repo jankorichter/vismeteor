@@ -1,4 +1,4 @@
-test_that("qvmgeom", {
+test_that("qvmideal", {
     lm <- 6.0
     psi <- 4.0
 
@@ -65,12 +65,12 @@ test_that("qvmgeom", {
     m <- vismeteor::qvmideal(p, lm, psi, lower.tail = TRUE)
     expect_type(m, 'double')
     expect_length(m, length(m))
-    expect_equal(qvmgeom(p, 10^0.4, lm = lm, lower.tail = FALSE), m)
+    expect_equal(qvmgeom(p, lm, 10^0.4, lower.tail = TRUE), m)
 
     m <- as.integer(seq(-10, 6, 1))
     p <- round(vismeteor::pvmideal(m, lm, psi, lower.tail = FALSE), 6)
     m <- vismeteor::qvmideal(p, lm, psi, lower.tail = FALSE)
     expect_type(m, 'double')
     expect_length(m, length(m))
-    expect_equal(vismeteor::qvmgeom(p, 10^0.4, lm = lm, lower.tail = TRUE), m)
+    expect_equal(vismeteor::qvmgeom(p, lm, 10^0.4, lower.tail = FALSE), m)
 })

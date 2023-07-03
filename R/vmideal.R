@@ -16,7 +16,7 @@
 #' @param n numeric; count of meteor magnitudes.
 #' @param log logical; if `TRUE`, probabilities p are given as `log(p)`.
 #' @param lower.tail logical; if `TRUE` (default) probabilities are
-#'     \eqn{P[M \le m]}, otherwise, \eqn{P[M > m]}.
+#'     \eqn{P[M < m]}, otherwise, \eqn{P[M \ge m]}.
 #' @param perception.fun function; perception probability function (optional).
 #'     Default is [vismeteor::vmperception].
 #' @details
@@ -153,7 +153,7 @@ dvmideal <- function(m, lm, psi, log = FALSE, perception.fun = NULL) {
     f.density <- function(m, lm, psi, log) {
         psi.exp <- 10.0
         if (lm + psi.exp < psi) {
-            return(vismeteor::dvmgeom(m, 10^0.4, lm, log = log))
+            return(vismeteor::dvmgeom(m, lm, 10^0.4, log = log))
         }
 
         norm.res <- vmideal.norm(lm, psi, perception.fun)
@@ -252,7 +252,7 @@ pvmideal <- function(m, lm, psi, lower.tail = TRUE, log = FALSE, perception.fun 
     f.prob <- function(m, lm, psi, log) {
         psi.exp <- 10.0
         if (lm + psi.exp < psi) {
-            return(vismeteor::pvmgeom(m, 10^0.4, lm, log = log, lower.tail = !lower.tail))
+            return(vismeteor::pvmgeom(m, lm, 10^0.4, lower.tail = lower.tail, log = log))
         }
 
         norm.res <- vmideal.norm(lm, psi, perception.fun)
@@ -374,7 +374,7 @@ qvmideal <- function(p, lm, psi, lower.tail = TRUE, perception.fun = NULL) {
 
         if (lm + psi.exp < psi) {
             r.lower <- 10^0.4
-            return(vismeteor::qvmgeom(p, r.lower, lm, lower.tail = !lower.tail))
+            return(vismeteor::qvmgeom(p, lm, r.lower, lower.tail = lower.tail))
         }
 
         m.upper <- vmideal.upper.lm(lm)

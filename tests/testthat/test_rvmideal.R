@@ -27,6 +27,6 @@ test_that("rvmideal", {
     expect_false(any(is.infinite(m)))
     expect_true(all(m <= 6))
     expect_equal(as.integer(m), m)
-    m.geom <- with_seed(8, rvmgeom(100000, 10^(1/2.5), lm = lm))
+    m.geom <- with_seed(8, rvmgeom(100000, lm, 10^(1/2.5)))
     expect_equal(round(mean(m.geom), 2), round(mean(m), 2))
 })

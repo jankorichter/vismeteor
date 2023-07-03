@@ -82,10 +82,17 @@ test_that("dvmideal", {
 
     # density of meteor magnitudes equals geometric distribution
     lm <- 6.3
-    psi <- 20
     m <- as.integer(seq(-20, 6))
-    p <- vismeteor::dvmideal(m, lm, psi, log = TRUE)
+
+    p <- vismeteor::dvmideal(m, lm, 16.25, log = TRUE)
     expect_type(p, 'double')
     expect_length(p, length(m))
-    expect_false(any(abs(p - dvmgeom(m, 10^0.4, lm = lm, log = TRUE)) > 0.07))
+    diff.p <- abs(p - dvmgeom(m, lm, 10^0.4, log = TRUE))
+    expect_true(any(diff.p > 0.0))
+    expect_false(any(diff.p > 1e-08))
+
+    p <- vismeteor::dvmideal(m, lm, 16.35, log = TRUE)
+    expect_type(p, 'double')
+    expect_length(p, length(m))
+    expect_equal(p, dvmgeom(m, lm, 10^0.4, log = TRUE))
 })

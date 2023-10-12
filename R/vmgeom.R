@@ -37,7 +37,7 @@
 #' In case of `rvmgeom`, the length of the vector `lm` must be `n` or `lm` is a scalar value.
 #'
 #' If the perception probabilities function `perception.fun` is given,
-#' it must have the signature `function(x, log = FALSE)` and must return the perception probabilities of
+#' it must have the signature `function(x)` and must return the perception probabilities of
 #' the difference `x` between the limiting magnitude and the meteor magnitude.
 #' If `x >= 15.0`, the `perception.fun` function should return the perception probability of `1.0`.
 #' If `log = TRUE` is given, the logarithm value of the perception probabilities
@@ -125,6 +125,7 @@ dvmgeom <- function(m, lm, r, log = FALSE, perception.fun = NULL) {
         p.geom <- rep(p.geom, length(m))
     }
 
+    offset <- 0.0
     list2env(vmgeom.std(m, lm), environment())
 
     f.density <- function(m, offset, p.geom) {
@@ -132,7 +133,7 @@ dvmgeom <- function(m, lm, r, log = FALSE, perception.fun = NULL) {
         idx <- m <= m.max
         d <- stats::dgeom(m, p.geom, log = TRUE)
         if (any(idx)) {
-            d[idx] <- d[idx] + perception.fun(m[idx] + offset, log = TRUE)
+            d[idx] <- d[idx] + base::log(perception.fun(m[idx] + offset))
         }
 
         d - base::log(vmgeom.norm(offset, p.geom, m.max, perception.fun))
@@ -205,10 +206,11 @@ pvmgeom <- function(m, lm, r, lower.tail = TRUE, log = FALSE, perception.fun = N
         p.geom <- rep(p.geom, length(m))
     }
 
+    offset <- 0.0
     list2env(vmgeom.std(m, lm), environment())
 
     f.density <- function(m, offset, p.geom) {
-        stats::dgeom(m, p.geom) * perception.fun(m + offset, log = FALSE)
+        stats::dgeom(m, p.geom) * perception.fun(m + offset)
     }
 
     f.sum <- Vectorize(function(m, offset, p.geom) {
@@ -458,6 +460,6 @@ vmgeom.std <- function(m, lm) {
 #' @noRd
 vmgeom.norm <- function(offset, p.geom, m.max, perception.fun){
     m <- as.integer(seq(0, m.max))
-    sum(stats::dgeom(m, p.geom) * perception.fun(m + offset, log = FALSE)) +
+    sum(stats::dgeom(m, p.geom) * perception.fun(m + offset)) +
         stats::pgeom(m.max, p.geom, lower.tail = FALSE)
 }

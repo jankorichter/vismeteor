@@ -38,7 +38,7 @@
 #' actual [ideal distribution][vismeteor::mideal] of the meteor magnitudes.
 #'
 #' If the perception probabilities function `perception.fun` is given,
-#' it must have the signature `function(M, log = FALSE)` and must return the perception probabilities of
+#' it must have the signature `function(M)` and must return the perception probabilities of
 #' the difference `M` between the limiting magnitude and the meteor magnitude.
 #' If `m >= 15.0`, the `perception.fun` function should return the perception probability of `1.0`.
 #' If `log = TRUE` is given, the logarithm value of the perception probabilities

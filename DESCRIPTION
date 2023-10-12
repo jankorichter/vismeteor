@@ -1,7 +1,7 @@
 Package: vismeteor
 Type: Package
 Title: Analysis of Visual Meteor Data
-Version: 1.3.0
+Version: 1.4.0
 Author: Janko Richter <janko@richtej.de>
 Maintainer: Janko Richter <janko@richtej.de>
 Description: Tools for the analysis of
@@ -9,6 +9,7 @@ Description: Tools for the analysis of
     of the International Meteor Organization <https://www.imo.net/>.
 License: MIT + file LICENSE
 URL: https://github.com/jankorichter/vismeteor
+BugReports: https://github.com/jankorichter/vismeteor/issues
 Encoding: UTF-8
 LazyData: true
 Depends: R (>= 3.5)

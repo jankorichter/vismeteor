@@ -15,8 +15,8 @@ test_that("dvmgeom", {
     p <- vismeteor::dvmgeom(m, lm, r)
     expect_type(p, 'double')
     expect_length(p, length(m))
-    expect_equal(p, expected_p)
-    expect_equal(log(p), log(expected_p))
+    expect_true(all(abs(p - expected_p) < 1e-10))
+    expect_true(all(abs(log(p) - log(expected_p)) < 1e-09))
 
     p <- vismeteor::dvmgeom(c(6, 6, 6), lm = c(5.4, 5.5, 5.6), r)
     expect_type(p, 'double')
@@ -29,7 +29,7 @@ test_that("dvmgeom", {
     p <- vismeteor::dvmgeom(m, lm, r, log = TRUE)
     expect_type(p, 'double')
     expect_length(p, length(m))
-    expect_equal(p, log(expected_p))
+    expect_true(all(abs(p - log(expected_p)) < 1e-09))
 
     # density of infinite meteor magnitudes
     p <- vismeteor::dvmgeom(c(-Inf, Inf), lm, r)
@@ -94,7 +94,7 @@ test_that("dvmgeom", {
     lm <- 5.8
     m <- as.integer(seq(8, -60, -1))
     p <- vismeteor::dvmgeom(m, lm, r)
-    expect_equal(round(exp(sum(p * vismeteor::vmperception(lm - m, log = TRUE, deriv = TRUE))), 3), 1.798)
+    expect_equal(round(exp(sum(p * vismeteor::vmperception(lm - m, deriv.degree = 1)/vismeteor::vmperception(lm - m))), 3), 1.798)
 
     # density of meteor magnitudes equals geometric distribution
 

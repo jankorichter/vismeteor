@@ -31,17 +31,18 @@ test_that("vmperception", {
 
     # test first derivation
     f <- function(m) {
-        vmperception(m, deriv = TRUE)
+        vmperception(m, deriv.degree = 1)
     }
-    p <- vmperception(4.0, deriv = FALSE) -
-        vmperception(1.0, deriv = FALSE)
-    expect_equal(p, stats::integrate(f, 1.0, 4.0)$value)
+    p <- vmperception(4.0) - vmperception(1.0)
 
-    # test log first derivation
+    expect_true(abs(p - stats::integrate(f, 1.0, 4.0)$value) < 1e-15)
+
+    # test second derivation
     f <- function(m) {
-        vmperception(m, deriv = TRUE, log = TRUE)
+        vmperception(m, deriv.degree = 2)
     }
-    p <- vmperception(4.0, deriv = FALSE, log = TRUE) -
-        vmperception(1.0, deriv = FALSE, log = TRUE)
-    expect_equal(p, stats::integrate(f, 1.0, 4.0)$value)
+    p <- vmperception(4.0, deriv.degree = 1) -
+        vmperception(1.0, deriv.degree = 1)
+
+    expect_true(abs(p - stats::integrate(f, 1.0, 4.0)$value) < 1e-15)
 })

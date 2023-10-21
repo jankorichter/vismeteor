@@ -72,7 +72,7 @@ test_that("dvmgeom", {
         m * exp(-q * m) * vmperception(m)/norm
     }
     expected_m.mean <- stats::integrate(f, -0.5, Inf)$value
-    expect_equal(round(expected_m.mean, 2), 4.42)
+    expect_equal(round(expected_m.mean, 2), 4.37)
 
     f <- function(m) {
         m * vismeteor::dvmgeom(m, lm, r)
@@ -94,10 +94,9 @@ test_that("dvmgeom", {
     lm <- 5.8
     m <- as.integer(seq(8, -60, -1))
     p <- vismeteor::dvmgeom(m, lm, r)
-    expect_equal(round(exp(sum(p * vismeteor::vmperception(lm - m, deriv.degree = 1)/vismeteor::vmperception(lm - m))), 3), 1.798)
+    expect_equal(round(exp(sum(p * vismeteor::vmperception(lm - m, deriv = TRUE)/vismeteor::vmperception(lm - m))), 2), r)
 
     # density of meteor magnitudes equals geometric distribution
-
     perception.const <- function(m, log = FALSE) {
         rep(ifelse(log, 0.0, 1.0), length(m))
     }

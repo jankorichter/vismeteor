@@ -1,7 +1,7 @@
 Package: vismeteor
 Type: Package
 Title: Analysis of Visual Meteor Data
-Version: 1.5.0
+Version: 1.6.0
 Author: Janko Richter <janko@richtej.de>
 Maintainer: Janko Richter <janko@richtej.de>
 Description: Tools for the analysis of

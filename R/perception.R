@@ -7,11 +7,14 @@
 #' The perception probabilities according to _Koschack R., Rendtel J., 1990b_
 #' are approximated with the formula
 #' \deqn{
-#' p(m) = (1 + \exp\left(-z(m)\right))^{-1}
+#'     p(m) = \begin{cases}
+#'         1.0 - \exp\left(-z(m + 0.5)\right)\  & \text{ if } m > -0.5,\\
+#'         0.0 \  & \text{ otherwise,}
+#'     \end{cases}
 #' }
 #' with
 #' \deqn{
-#' z(m) = -6.24 + 3.33 \, m - 1.03 \, m^2 + 0.241 \, m^3 - 0.03 \, m^4 + 0.0015 \, m^5
+#' z(x) = 0.004 \, x + 0.0012 \, x^2 + 0.0035 \, x^3 + 0.0007 \, x^4
 #' }
 #' where `m` is the difference between the limiting magnitude and the meteor magnitude.
 #' @return This function returns the visual perception probabilities.
@@ -24,29 +27,50 @@
 #' vmperception(5.6 - 6.0)
 #' @export
 vmperception <- function(m, deriv = FALSE) {
-    deriv.polynomial <- function(poly.coef, degree) {
-        if (0 == degree)
+    deriv.polynomial <- function(poly.coef, degree = 1L) {
+        if (0L == degree)
             return(poly.coef)
 
         if (1 == length(poly.coef))
             return(0)
 
-        poly.coef <- poly.coef[-1]
-        deriv.polynomial(poly.coef * seq(along = poly.coef), degree - 1)
+        exponents <- as.numeric(names(poly.coef))
+        poly.coef <- poly.coef * exponents
+        if (0L %in% exponents) {
+            intercept.idx <- 0L == exponents
+            poly.coef <- poly.coef[! intercept.idx]
+            exponents <- exponents[! intercept.idx]
+        }
+        exponents <- exponents - 1L
+        names(poly.coef) <- exponents
+
+        deriv.polynomial(poly.coef, degree - 1L)
     }
 
     f.inner <- function(m, poly.coef) {
-        margin.table(poly.coef * t(outer(m, seq(along=poly.coef) - 1, "^")), 2)
+        exponents <- as.numeric(names(poly.coef))
+        margin.table(poly.coef * t(outer(m, exponents, "^")), 2)
     }
 
-    poly.coef <- c(-6.24, 3.33, -1.03, 0.241, -0.03, 0.0015)
+    m <- m + 0.5
+    poly.coef <- c(0.004, 0.0012, 0.0035, 0.0007)
+    names(poly.coef) <- seq(along = poly.coef) # exponents
 
+    p <- rep(0.0, length(m))
     if (deriv) {
-        inner0 <- f.inner(m, poly.coef)
-        inner1 <- f.inner(m, deriv.polynomial(poly.coef, 1))
-        exp.inner0 <- exp(-inner0)
-        inner1 * exp.inner0/(exp.inner0 + 1)^2
+        idx <- m > .Machine$double.eps
+        if (any(idx)) {
+            inner0 <- f.inner(m[idx], poly.coef)
+            inner1 <- f.inner(m[idx], deriv.polynomial(poly.coef, degree = 1L))
+            p[idx] <- exp(-inner0) * inner1
+        }
     } else {
-        1/(1 + exp(-f.inner(m, poly.coef)))
+        idx <- m > .Machine$double.eps
+        if (any(idx)) {
+            inner0 <- f.inner(m[idx], poly.coef)
+            p[idx] <- 1.0 - exp(-inner0)
+        }
     }
+
+    p
 }

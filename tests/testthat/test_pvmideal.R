@@ -59,8 +59,7 @@ test_that("pvmideal", {
 
     # probability of m >= 3
     expected_p <- round(sum(vismeteor::dvmideal(as.integer(seq(3, 6)), 6.3, psi)), 6)
-    print(expected_p)
-    expect_equal(expected_p, 0.356671)
+    expect_equal(expected_p, 0.351107)
 
     # probability
     p <- vismeteor::pvmideal(c(3, 7, -100, -Inf), 6.3, psi, lower.tail = TRUE)

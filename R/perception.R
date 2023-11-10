@@ -14,7 +14,7 @@
 #' }
 #' with
 #' \deqn{
-#' z(x) = 0.004 \, x + 0.0012 \, x^2 + 0.0035 \, x^3 + 0.0007 \, x^4
+#' z(x) = 0.00028 \, x + 0.0081 \, x^2 + 0.0012 \, x^4
 #' }
 #' where `m` is the difference between the limiting magnitude and the meteor magnitude.
 #' @return This function returns the visual perception probabilities.
@@ -47,27 +47,27 @@ vmperception <- function(m, deriv = FALSE) {
         deriv.polynomial(poly.coef, degree - 1L)
     }
 
-    f.inner <- function(m, poly.coef) {
+    f.polynomial <- function(m, poly.coef) {
         exponents <- as.numeric(names(poly.coef))
         margin.table(poly.coef * t(outer(m, exponents, "^")), 2)
     }
 
     m <- m + 0.5
-    poly.coef <- c(0.004, 0.0012, 0.0035, 0.0007)
+    poly.coef <- c(0.00028, 0.0081, 0, 0.0012)
     names(poly.coef) <- seq(along = poly.coef) # exponents
 
     p <- rep(0.0, length(m))
     if (deriv) {
         idx <- m > .Machine$double.eps
         if (any(idx)) {
-            inner0 <- f.inner(m[idx], poly.coef)
-            inner1 <- f.inner(m[idx], deriv.polynomial(poly.coef, degree = 1L))
+            inner0 <- f.polynomial(m[idx], poly.coef)
+            inner1 <- f.polynomial(m[idx], deriv.polynomial(poly.coef, degree = 1L))
             p[idx] <- exp(-inner0) * inner1
         }
     } else {
         idx <- m > .Machine$double.eps
         if (any(idx)) {
-            inner0 <- f.inner(m[idx], poly.coef)
+            inner0 <- f.polynomial(m[idx], poly.coef)
             p[idx] <- 1.0 - exp(-inner0)
         }
     }

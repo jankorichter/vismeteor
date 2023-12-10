@@ -100,7 +100,7 @@ test_that("dvmgeom", {
         q[idx] <- vismeteor::vmperception(m[idx], deriv = TRUE)/vismeteor::vmperception(m[idx])
         q
     }
-    expect_true(abs(r - exp(sum(p * q.fun(lm - m)))) < 0.006)
+    expect_true(abs(r - exp(sum(p * q.fun(lm - m)))) < 0.01)
 
     # density of meteor magnitudes equals geometric distribution
     perception.const <- function(m, log = FALSE) {

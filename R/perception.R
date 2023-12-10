@@ -2,7 +2,7 @@
 #' @description
 #' Provides the perception probability of visual meteor magnitudes and its first derivative.
 #' @param m numerical; difference between the limiting magnitude and the meteor magnitude.
-#' @param deriv boolean; when set to true, it returns the first derivative of the the perception probability.
+#' @param deriv.degree integer; degree of derivative of the perception probability.
 #' @details
 #' The perception probabilities of _Koschack R., Rendtel J., 1990b_
 #' are estimated with the formula
@@ -18,14 +18,15 @@
 #' }
 #' and `m` is the difference between the limiting magnitude and the meteor magnitude.
 #' @return This function returns the visual perception probabilities.
-#' If `deriv` is set to `TRUE`, it will return the first derivative of these probabilities.
+#' If `deriv.degree` is specified, it will return the `deriv.degree`-th order derivative
+#' of the perception probability.
 #' @references Koschack R., Rendtel J., 1990b _Determination of spatial number density and mass index from visual meteor observations (II)._ WGN 18, 119–140.
 #' @examples
 #' # Perception probability of visually estimated meteor of magnitude 6.0
 #' # with a limiting magnitude of 5.6.
 #' vmperception(5.6 - 6.0)
 #' @export
-vmperception <- function(m, deriv = FALSE) {
+vmperception <- function(m, deriv.degree = 0L) {
     poly.coef <- c(0.0, 0.003, 0.0056, 0, 0.0014)
     names(poly.coef) <- seq(along = poly.coef) - 1 # exponents
 
@@ -33,14 +34,24 @@ vmperception <- function(m, deriv = FALSE) {
     p <- rep(0.0, length(m))
     idx <- m > .Machine$double.eps
     if (any(idx)) {
-        if (deriv) {
-            inner0 <- f.polynomial(m[idx], poly.coef)
+        f0 <- f.polynomial(m[idx], poly.coef)
+        if (0L == deriv.degree) {
+            # 1 - exp(-f(x))
+            p[idx] <- 1.0 - exp(-f0)
+        } else if (1L == deriv.degree) {
+            # f'(x) * exp(-f(x))
             poly.coef1 <- f.polynomial.coef(poly.coef, deriv.degree = 1L)
-            inner1 <- f.polynomial(m[idx], poly.coef1)
-            p[idx] <- exp(-inner0) * inner1
+            f1 <- f.polynomial(m[idx], poly.coef1)
+            p[idx] <- exp(-f0) * f1
+        } else if (2L == deriv.degree) {
+            # (f''(x) -f'(x)^2) * exp(-f(x))
+            poly.coef1 <- f.polynomial.coef(poly.coef, deriv.degree = 1L)
+            f1 <- f.polynomial(m[idx], poly.coef1)
+            poly.coef2 <- f.polynomial.coef(poly.coef, deriv.degree = 2L)
+            f2 <- f.polynomial(m[idx], poly.coef2)
+            p[idx] <- exp(-f0) * (f2 - f1^2)
         } else {
-            inner0 <- f.polynomial(m[idx], poly.coef)
-            p[idx] <- 1.0 - exp(-inner0)
+            stop(paste('deriv.degree', deriv.degree, 'not implemented!'))
         }
     }
 
@@ -52,7 +63,8 @@ vmperception <- function(m, deriv = FALSE) {
 #' Provides the Laplace-transformed perception probability of visual meteor magnitudes
 #' and its first derivative.
 #' @param s numerical; Real (non-complex) parameter for the Laplace transformation.
-#' @param deriv boolean; when set to true, it returns the first derivative of the transformation.
+#' @param deriv.degree integer; degree of derivative of the transformation.
+#' @param l.log logical; If set to `TRUE`, logarithmic values will be returned.
 #' @details
 #' The Laplace-transformed [perception probabilities][vismeteor::vmperception] `P(s)`, given as
 #' \deqn{
@@ -75,32 +87,40 @@ vmperception <- function(m, deriv = FALSE) {
 #' On the other hand, \eqn{s^{-1} \, P(s)} yields the two-sided Laplace transform
 #' of the perception probabilities.
 #' @return This function returns the Laplace-transformed of the first derivative of
-#' the perception probabilities. If `deriv` is set to `TRUE`, it will return the
-#' first derivative of these Laplace-transformed values.
+#' the perception probabilities.
+#' If `deriv.degree` is specified, it will return the `deriv.degree`-th order derivative
+#' of these Laplace-transformed values.
 #' @seealso [vismeteor::vmperception]
 #' @examples
 #' vmperception.l(c(0, 0.5, Inf))
 #' @export
-vmperception.l <- function(s, deriv = FALSE) {
+vmperception.l <- function(s, deriv.degree = 0L, l.log = FALSE) {
     poly.coef <- c(0.0, -4.11, 1.32, -0.15)
     names(poly.coef) <- seq(along = poly.coef) - 1 # exponents
 
     L <- rep(NA, length(s))
     idx <- s >= -.Machine$double.eps & s != Inf
     if (any(idx)) {
-        if (deriv) {
+        f0 <- f.polynomial(s[idx], poly.coef)
+        if (0L == deriv.degree) {
+            # exp(f(s))
+            L[idx] <- if (l.log) f0 else exp(f0)
+        } else if (1L == deriv.degree) {
             # exp(f(s)) * f'(s)
-            f0 <- f.polynomial(s[idx], poly.coef)
             poly.coef1 <- f.polynomial.coef(poly.coef, deriv.degree = 1L)
             f1 <- f.polynomial(s[idx], poly.coef1)
-            L[idx] <- exp(f0) * f1
+            L[idx] <- if (l.log) f0 + log(f1) else exp(f0) * f1
+        } else if (2L == deriv.degree) {
+            # exp(f[s]) * (f'(s)^2 + f''(s))
+            poly.coef1 <- f.polynomial.coef(poly.coef, deriv.degree = 1L)
+            f1 <- f.polynomial(s[idx], poly.coef1)
+            poly.coef2 <- f.polynomial.coef(poly.coef, deriv.degree = 2L)
+            f2 <- f.polynomial(s[idx], poly.coef2)
+            L[idx] <- if (l.log) f0 + log(f1^2 + f2(s)) else exp(f0) * (f1^2 + f2(s))
         } else {
-            # exp(f(s))
-            f0 <- f.polynomial(s[idx], poly.coef)
-            L[idx] <- exp(f0)
+            stop(paste('deriv.degree', deriv.degree, 'not implemented!'))
         }
     }
-    L[Inf == s] <- 0.0
 
     L
 }

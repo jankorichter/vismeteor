@@ -88,24 +88,22 @@ if(FALSE) {
     #library(ggplot2)
 
     # exact like vmperception(), but with polynomial coefficients as argument
-    perception.fun <- function(poly.coef, m, deriv = FALSE) {
+    perception.fun <- function(poly.coef, m, deriv.degree = 0L) {
         names(poly.coef) <- seq(along = poly.coef) # exponents
 
         m <- m + 0.5
         p <- rep(0.0, length(m))
-        if (deriv) {
-            idx <- m > .Machine$double.eps
-            if (any(idx)) {
-                inner0 <- vismeteor:::f.polynomial(m[idx], poly.coef)
+        idx <- m > .Machine$double.eps
+        if (any(idx)) {
+            f0 <- vismeteor:::f.polynomial(m[idx], poly.coef)
+            if (0L == deriv.degree) {
+                p[idx] <- 1.0 - exp(-f0)
+            } else if (1L == deriv.degree) {
                 poly.coef1 <- vismeteor:::f.polynomial.coef(poly.coef, deriv.degree = 1L)
-                inner1 <- vismeteor:::f.polynomial(m[idx], poly.coef1)
-                p[idx] <- exp(-inner0) * inner1
-            }
-        } else {
-            idx <- m > .Machine$double.eps
-            if (any(idx)) {
-                inner0 <- vismeteor:::f.polynomial(m[idx], poly.coef)
-                p[idx] <- 1.0 - exp(-inner0)
+                f1 <- vismeteor:::f.polynomial(m[idx], poly.coef1)
+                p[idx] <- exp(-f0) * f1
+            } else {
+                stop('Not implemented')
             }
         }
 
@@ -136,8 +134,8 @@ if(FALSE) {
                 m <- seq(-100, 6, 1)
                 poly.coef <- exp(params)
 
-                vmperception.local <- function(m, deriv = FALSE) {
-                    perception.fun(poly.coef, m, deriv)
+                vmperception.local <- function(m, deriv.degree = 0L) {
+                    perception.fun(poly.coef, m, deriv.degree)
                 }
 
                 result <- do.call(
@@ -226,7 +224,7 @@ if(FALSE) {
     if (TRUE) {
         with(new.env(), {
             m <- c(-0.499, seq(-0.45, 8.5, 0.05))
-            g.model <- perception.fun(coef.model, m, deriv = TRUE)
+            g.model <- perception.fun(coef.model, m, deriv.degree = 1L)
             plot.data <- data.frame(
                 m = m,
                 g.model = g.model
@@ -283,8 +281,8 @@ if(FALSE) {
             r <- seq(1.2, 4.0, 0.1)
             limmag <- seq(5.6, 6.5, 0.2)
             m <- seq(-100, 6, 1)
-            vmperception.local <- function(m, deriv = FALSE) {
-                perception.fun(coef.model, m, deriv)
+            vmperception.local <- function(m, deriv.degree = 0L) {
+                perception.fun(coef.model, m, deriv.degree)
             }
 
             result <- do.call(

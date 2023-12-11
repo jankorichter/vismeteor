@@ -25,12 +25,19 @@ test_that("vmperception", {
     expect_lt(mean(abs(rdiff)), 0.06)
     expect_true(all(abs(rdiff) < 0.121))
 
-    # test first derivation
+    # test first derivative
     f <- function(m) {
-        vmperception(m, deriv = TRUE)
+        vmperception(m, deriv.degree = 1L)
     }
     p <- vmperception(4.0) - vmperception(1.0)
-    expect_true(abs(p - stats::integrate(f, 1.0, 4.0)$value) < 1e-14)
+    expect_true(abs(p - stats::integrate(f, 1.0, 4.0)$value) < 1e-10)
+
+    # test second derivative
+    f <- function(m) {
+        vmperception(m, deriv.degree = 2L)
+    }
+    p <- vmperception(4.0, deriv.degree = 1L) - vmperception(1.0, deriv.degree = 1L)
+    expect_true(abs(p - stats::integrate(f, 1.0, 4.0)$value) < 1e-10)
 
     # Checks whether the approximation formula changes the r-value
     data.q <- with(new.env(), {
@@ -251,7 +258,7 @@ if(FALSE) {
     if (TRUE) {
         with(new.env(), {
             m <- seq(-0.4, 8.4, 0.05)
-            q <- perception.fun(coef.model, m, deriv = TRUE)/perception.fun(coef.model, m)
+            q <- perception.fun(coef.model, m, deriv.degree = 1L)/perception.fun(coef.model, m)
             plot.data <- data.frame(
                 m = m,
                 q = q

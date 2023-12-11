@@ -64,7 +64,6 @@ vmperception <- function(m, deriv.degree = 0L) {
 #' and its first derivative.
 #' @param s numerical; Real (non-complex) parameter for the Laplace transformation.
 #' @param deriv.degree integer; degree of derivative of the transformation.
-#' @param l.log logical; If set to `TRUE`, logarithmic values will be returned.
 #' @details
 #' The Laplace-transformed [perception probabilities][vismeteor::vmperception] `P(s)`, given as
 #' \deqn{
@@ -94,7 +93,7 @@ vmperception <- function(m, deriv.degree = 0L) {
 #' @examples
 #' vmperception.l(c(0, 0.5, Inf))
 #' @export
-vmperception.l <- function(s, deriv.degree = 0L, l.log = FALSE) {
+vmperception.l <- function(s, deriv.degree = 0L) {
     poly.coef <- c(0.0, -4.11, 1.32, -0.15)
     names(poly.coef) <- seq(along = poly.coef) - 1 # exponents
 
@@ -104,19 +103,19 @@ vmperception.l <- function(s, deriv.degree = 0L, l.log = FALSE) {
         f0 <- f.polynomial(s[idx], poly.coef)
         if (0L == deriv.degree) {
             # exp(f(s))
-            L[idx] <- if (l.log) f0 else exp(f0)
+            L[idx] <- exp(f0)
         } else if (1L == deriv.degree) {
             # exp(f(s)) * f'(s)
             poly.coef1 <- f.polynomial.coef(poly.coef, deriv.degree = 1L)
             f1 <- f.polynomial(s[idx], poly.coef1)
-            L[idx] <- if (l.log) f0 + log(f1) else exp(f0) * f1
+            L[idx] <- exp(f0) * f1
         } else if (2L == deriv.degree) {
             # exp(f[s]) * (f'(s)^2 + f''(s))
             poly.coef1 <- f.polynomial.coef(poly.coef, deriv.degree = 1L)
             f1 <- f.polynomial(s[idx], poly.coef1)
             poly.coef2 <- f.polynomial.coef(poly.coef, deriv.degree = 2L)
             f2 <- f.polynomial(s[idx], poly.coef2)
-            L[idx] <- if (l.log) f0 + log(f1^2 + f2(s)) else exp(f0) * (f1^2 + f2(s))
+            L[idx] <- exp(f0) * (f1^2 + f2)
         } else {
             stop(paste('deriv.degree', deriv.degree, 'not implemented!'))
         }

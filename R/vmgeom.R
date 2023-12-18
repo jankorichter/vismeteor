@@ -21,10 +21,10 @@
 #' In visual meteor observation, it is common to estimate meteor magnitudes in integer values.
 #' Hence, this distribution is discrete and has the density
 #' \deqn{
-#'     {\displaystyle P[X = x] \sim f(x) \, \mathrm r^{-x}} \,\mathrm{,}
+#'     {\displaystyle P[M = m] \sim f(m) \, \mathrm r^{-m}} \,\mathrm{,}
 #' }
-#' where \eqn{x \ge -0.5} is the difference between the limiting magnitude `lm`
-#' and the meteor magnitude `m` and \eqn{f(x)} is the perception probability.
+#' where \eqn{m \ge -0.5} is the difference between the limiting magnitude `lm`
+#' and the meteor magnitude `m` and \eqn{f(m)} is the perception probability.
 #' This distribution is thus a convolution of the
 #' [perception probabilities][vismeteor::vmperception] with the
 #' actual [geometric distribution][stats::Geometric] of the meteor magnitudes.

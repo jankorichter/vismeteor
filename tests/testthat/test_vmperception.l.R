@@ -32,40 +32,56 @@ test_that("vmperception", {
                     sum((limmag - m) * dvmgeom(m, limmag, exp(q)))
                 })/length(limmag)
 
+                m.var <- with(data.combined, {
+                    x <- (limmag - m - m.mean)^2
+                    sum(x * dvmgeom(m, limmag, exp(q)))
+                })/length(limmag)
+
                 list(
                     q = q,
                     qL = qL,
-                    m.mean = m.mean
+                    m.mean = m.mean,
+                    m.var = m.var
                 )
             }, simplify = FALSE)
         )
     })
 
-    # test LaplateTrans(perception)
-    L <- log(vmperception.l(data.laplace$q)/data.laplace$q)
+    # test LaplaceTrans(perception)
+    L <- log(vmperception.l(data.laplace$q))
     expect_true(all(abs(L - log(data.laplace$qL/data.laplace$q)) < 0.021))
 
-    # test q * LaplateTrans(perception)
-    qL <- vmperception.l(data.laplace$q)
+    # test q * LaplaceTrans(perception)
+    qL <- data.laplace$q * vmperception.l(data.laplace$q)
     expect_true(all(abs(qL - data.laplace$qL) < 0.00189))
 
     # test mean of (limmag - m)
-    m.mean.log <- log(1/data.laplace$q - vmperception.l(data.laplace$q, deriv.degree = 1L)/vmperception.l(data.laplace$q))
+    m.mean.log <- log(-vmperception.l(data.laplace$q, deriv.degree = 1L)/vmperception.l(data.laplace$q))
     expect_true(all(
         abs(m.mean.log - log(data.laplace$m.mean)
     ) < 0.013))
+
+    # test variance of (limmag - m)
+    m.var.log <- log(
+        vmperception.l(data.laplace$q, deriv.degree = 2L)/vmperception.l(data.laplace$q) -
+            (-vmperception.l(data.laplace$q, deriv.degree = 1L)/vmperception.l(data.laplace$q))^2
+    )
+    expect_true(all(
+        abs(m.var.log - log(data.laplace$m.var)
+    ) < 0.03))
 
     # test first derivative
     f <- function(s) {
         vmperception.l(s, deriv.degree = 1L)
     }
     res <- vmperception.l(4.0) - vmperception.l(0.1)
-    expect_true(abs(res - stats::integrate(f, 0.1, 4.0)$value) < 1e-10)
+    expect_true(abs(res - stats::integrate(f, 0.1, 4.0)$value) < 1e-08)
 
     # test second derivative
     f <- function(s) {
         vmperception.l(s, deriv.degree = 2L)
     }
     res <- vmperception.l(4.0, deriv.degree = 1L) - vmperception.l(0.1, deriv.degree = 1L)
-    expect_true(abs(res - stats::integrate(f, 0.1, 4.0)$value) < 1e-10)
+    expect_true(abs(res - stats::integrate(f, 0.1, 4.0)$value) < 1e-08)
+    expect_true(abs(res - stats::integrate(f, 0.1, 4.0)$value) < 1e-08)
 })

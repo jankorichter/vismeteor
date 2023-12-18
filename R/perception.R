@@ -3,6 +3,7 @@
 #' Provides the perception probability of visual meteor magnitudes and its first derivative.
 #' @param m numerical; difference between the limiting magnitude and the meteor magnitude.
 #' @param deriv.degree integer; degree of derivative of the perception probability.
+#' Currently, valid values of `deriv.degree` are `0`, `1` and `2`.
 #' @details
 #' The perception probabilities of _Koschack R., Rendtel J., 1990b_
 #' are estimated with the formula
@@ -64,34 +65,48 @@ vmperception <- function(m, deriv.degree = 0L) {
 #' and its first derivative.
 #' @param s numerical; Real (non-complex) parameter for the Laplace transformation.
 #' @param deriv.degree integer; degree of derivative of the transformation.
+#' Currently, valid values of `deriv.degree` are `0`, `1` and `2`.
 #' @details
-#' The Laplace-transformed [perception probabilities][vismeteor::vmperception] `P(s)`, given as
+#' The Laplace-transformed [perception probabilities][vismeteor::vmperception] `F(s)`, given as
 #' \deqn{
-#' P(s) = s \, \mathcal{B} \left\{p\right\}(s)
-#' = \int_{-\infty}^{\infty} \, p(m) \, s \, \mathrm e^{-s \, m} \,\mathrm{d}m \,,
+#' F(s) = \mathcal{L} \left\{p\right\}(s)
+#' = \int_{-0.5}^{\infty} \, f(m) \, \mathrm e^{-s \, m} \,\mathrm{d}m \,,
 #' }
 #' are approximately
 #' \deqn{
 #'     P(s) = \begin{cases}
-#'         \exp\left(-4.11 \, s + 1.32 \, s^2 - 0.15 \, s^3\right)\ & \text{ if } s >= 0.0,\\
+#'         s^{-1} \, \exp\left(-4.11 \, s + 1.32 \, s^2 - 0.15 \, s^3\right)\ & \text{ if } s >= 0.0,\\
 #'         \text{undefined} \  & \text{ otherwise.}
 #'     \end{cases}
 #' }
 #' Here, `m` is the difference between the limiting magnitude and the meteor magnitude,
-#' and `p(m)` denotes the perception probabilities as a function of `m`.
-#' The \eqn{\mathcal{B}} recalls here the "two-sided Laplace transform" or
-#' "bilateral Laplace transform". The term \eqn{s \, \mathcal{B}} is used to generate
-#' the Laplace transform of the first derivative of the perception probabilities.
-#' This ensures that \eqn{s \, \mathcal{B}} always lies between `0.0` and `1.0`.
-#' On the other hand, \eqn{s^{-1} \, P(s)} yields the two-sided Laplace transform
-#' of the perception probabilities.
-#' @return This function returns the Laplace-transformed of the first derivative of
-#' the perception probabilities.
+#' and `f(m)` denotes the perception probabilities as a function of `m`.
+#' The \eqn{\mathcal{L}} recalls here the one-sided Laplace transform.
+#'
+#' The Laplace transform is notably effective for determining the mean and variance
+#' of observed meteor magnitudes, which are measured relative to the limiting magnitude.
+#' This is just one example of its application.
+#' This approach is valid only when the actual magnitude distribution adheres
+#' to \eqn{p(m) \sim r^{-m}}, where \eqn{s = \log(r)}.
+#' In this scenario, the mean of the observable meteor magnitudes is given by
+#' \eqn{-\mathcal{L}'/\mathcal{L}}, and their variance is calculated as
+#' \eqn{\mathcal{L}''/\mathcal{L} - (\mathcal{L}'/\mathcal{L})^2}.
+#' @return This function returns the Laplace-transformed perception probabilities.
 #' If `deriv.degree` is specified, it will return the `deriv.degree`-th order derivative
 #' of these Laplace-transformed values.
-#' @seealso [vismeteor::vmperception]
+#' @seealso
+#'   [vismeteor::vmperception]
+#'   [vismeteor::vmgeom]
 #' @examples
-#' vmperception.l(c(0, 0.5, Inf))
+#' r <- 2.0
+#' s <- log(r)
+#' F0 <- vmperception.l(s)
+#' F1 <- vmperception.l(s, deriv.degree=1L)
+#' # magnitude mean
+#' -F1/F0
+#' F2 <- vmperception.l(s, deriv.degree=2L)
+#' # magnitude variance
+#' F2/F0 - (F1/F0)^2
 #' @export
 vmperception.l <- function(s, deriv.degree = 0L) {
     poly.coef <- c(0.0, -4.11, 1.32, -0.15)
@@ -102,20 +117,20 @@ vmperception.l <- function(s, deriv.degree = 0L) {
     if (any(idx)) {
         f0 <- f.polynomial(s[idx], poly.coef)
         if (0L == deriv.degree) {
-            # exp(f(s))
-            L[idx] <- exp(f0)
+            # exp(f(s))/s
+            L[idx] <- exp(f0)/s
         } else if (1L == deriv.degree) {
-            # exp(f(s)) * f'(s)
+            # e^f(s) ((f'(s))/s - 1/s^2)
             poly.coef1 <- f.polynomial.coef(poly.coef, deriv.degree = 1L)
             f1 <- f.polynomial(s[idx], poly.coef1)
-            L[idx] <- exp(f0) * f1
+            L[idx] <- exp(f0) * (f1/s - s^-2)
         } else if (2L == deriv.degree) {
-            # exp(f[s]) * (f'(s)^2 + f''(s))
+            # e^f(s) ((f''(s))/s - (2 f'(s))/s^2 + f'(s)^2/s + 2/s^3)
             poly.coef1 <- f.polynomial.coef(poly.coef, deriv.degree = 1L)
             f1 <- f.polynomial(s[idx], poly.coef1)
             poly.coef2 <- f.polynomial.coef(poly.coef, deriv.degree = 2L)
             f2 <- f.polynomial(s[idx], poly.coef2)
-            L[idx] <- exp(f0) * (f1^2 + f2)
+            L[idx] <- exp(f0) * ( f2/s - 2*f1*s^-2 + (f1^2)/s + 2*(s^-3))
         } else {
             stop(paste('deriv.degree', deriv.degree, 'not implemented!'))
         }

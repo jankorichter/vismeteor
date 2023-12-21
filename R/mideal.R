@@ -36,6 +36,7 @@
 #'     function(m) dmideal(m, psi, log = FALSE),
 #'     -5, 10,
 #'     main = paste0('density of ideal meteor magnitude\ndistribution (psi = ', psi, ')'),
+#'     col = "blue",
 #'     xlab = 'm',
 #'     ylab = 'dp/dm'
 #' )
@@ -45,6 +46,7 @@
 #'     function(m) dmideal(m, psi, log = TRUE),
 #'     -5, 10,
 #'     main = paste0('density of ideal meteor magnitude\ndistribution (psi = ', psi, ')'),
+#'     col = "blue",
 #'     xlab = 'm',
 #'     ylab = 'log( dp/dm )'
 #' )
@@ -54,6 +56,7 @@
 #'     function(m) pmideal(m, psi),
 #'     -5, 10,
 #'     main = paste0('probability of ideal meteor magnitude\ndistribution (psi = ', psi, ')'),
+#'     col = "blue",
 #'     xlab = 'm',
 #'     ylab = 'p'
 #' )
@@ -63,6 +66,7 @@
 #'     function(p) qmideal(p, psi),
 #'     0.01, 0.99,
 #'     main = paste('quantile of ideal meteor magnitude\n distribution (psi = ', psi, ')'),
+#'     col = "blue",
 #'     xlab = 'p',
 #'     ylab = 'm'
 #' )

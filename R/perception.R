@@ -23,9 +23,37 @@
 #' of the perception probability.
 #' @references Koschack R., Rendtel J., 1990b _Determination of spatial number density and mass index from visual meteor observations (II)._ WGN 18, 119–140.
 #' @examples
-#' # Perception probability of visually estimated meteor of magnitude 6.0
+#' # Perception probability of visually estimated meteor of magnitude 3.0
 #' # with a limiting magnitude of 5.6.
-#' vmperception(5.6 - 6.0)
+#' vmperception(5.6 - 3.0)
+#'
+#' # plot
+#' par(mfrow = c(1,1))
+#' plot(
+#'     vmperception,
+#'     -0.5, 8,
+#'     main = paste(
+#'         'perception probability of',
+#'         'visual meteor magnitudes'
+#'     ),
+#'     col = "blue",
+#'     xlab = 'm',
+#'     ylab = 'p'
+#' )
+#' plot(
+#'     function(m) {
+#'         vmperception(m, deriv.degree=1L)/vmperception(m)
+#'     },
+#'     -0.3, 8,
+#'     main = paste(
+#'         'q-values of',
+#'         'visual meteor magnitudes'
+#'     ),
+#'     col = "blue",
+#'     log = 'y',
+#'     xlab = 'm',
+#'     ylab = 'q'
+#' )
 #' @export
 vmperception <- function(m, deriv.degree = 0L) {
     poly.coef <- c(0.0, 0.003, 0.0056, 0, 0.0014)
@@ -107,43 +135,57 @@ vmperception <- function(m, deriv.degree = 0L) {
 #' F2 <- vmperception.l(s, deriv.degree=2L)
 #' # magnitude variance
 #' F2/F0 - (F1/F0)^2
+#' # plot the Laplace-transformed perception probabilities
+#' par(mfrow = c(1,1))
+#' plot(
+#'     vmperception.l,
+#'     0.2, 1.1,
+#'     main = paste(
+#'         'Laplace-transformed perception',
+#'         'probability of visual meteor magnitudes'
+#'     ),
+#'     col = "blue",
+#'     log = 'y',
+#'     xlab = 's',
+#'     ylab = 'L'
+#' )
 #' @export
 vmperception.l <- function(s, deriv.degree = 0L) {
     poly.coef <- c(0.0, -4.11, 1.32, -0.15)
     names(poly.coef) <- seq(along = poly.coef) - 1 # exponents
 
-    L <- rep(NA, length(s))
-    idx <- s >= -.Machine$double.eps & s != Inf
-    if (any(idx)) {
-        f0 <- f.polynomial(s[idx], poly.coef)
-        if (0L == deriv.degree) {
-            # exp(f(s))/s
-            L[idx] <- exp(f0)/s
-        } else if (1L == deriv.degree) {
-            # e^f(s) ((f'(s))/s - 1/s^2)
-            poly.coef1 <- f.polynomial.coef(poly.coef, deriv.degree = 1L)
-            f1 <- f.polynomial(s[idx], poly.coef1)
-            L[idx] <- exp(f0) * (f1/s - s^-2)
-        } else if (2L == deriv.degree) {
-            # e^f(s) ((f''(s))/s - (2 f'(s))/s^2 + f'(s)^2/s + 2/s^3)
-            poly.coef1 <- f.polynomial.coef(poly.coef, deriv.degree = 1L)
-            f1 <- f.polynomial(s[idx], poly.coef1)
-            poly.coef2 <- f.polynomial.coef(poly.coef, deriv.degree = 2L)
-            f2 <- f.polynomial(s[idx], poly.coef2)
-            L[idx] <- exp(f0) * ( f2/s - 2*f1*s^-2 + (f1^2)/s + 2*(s^-3))
-        } else {
-            stop(paste('deriv.degree', deriv.degree, 'not implemented!'))
-        }
+    f0 <- f.polynomial(s, poly.coef)
+    if (0L == deriv.degree) {
+        # exp(f(s))/s
+        exp(f0)/s
+    } else if (1L == deriv.degree) {
+        # e^f(s) ((f'(s))/s - 1/s^2)
+        poly.coef1 <- f.polynomial.coef(poly.coef, deriv.degree = 1L)
+        f1 <- f.polynomial(s, poly.coef1)
+        exp(f0) * (f1/s - s^-2)
+    } else if (2L == deriv.degree) {
+        # e^f(s) ((f''(s))/s - (2 f'(s))/s^2 + f'(s)^2/s + 2/s^3)
+        poly.coef1 <- f.polynomial.coef(poly.coef, deriv.degree = 1L)
+        f1 <- f.polynomial(s, poly.coef1)
+        poly.coef2 <- f.polynomial.coef(poly.coef, deriv.degree = 2L)
+        f2 <- f.polynomial(s, poly.coef2)
+        exp(f0) * ( f2/s - 2*f1*s^-2 + (f1^2)/s + 2*(s^-3))
+    } else {
+        stop(paste('deriv.degree', deriv.degree, 'not implemented!'))
     }
-
-    L
 }
 
+#' build polynomial sum
+#'
+#' @noRd
 f.polynomial <- function(m, poly.coef) {
     exponents <- as.numeric(names(poly.coef))
     margin.table(poly.coef * t(outer(m, exponents, "^")), 2)
 }
 
+#' returns polynomial coefficients
+#'
+#' @noRd
 f.polynomial.coef <- function(poly.coef, deriv.degree = 1L) {
     if (0L == deriv.degree)
         return(poly.coef)

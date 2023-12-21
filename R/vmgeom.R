@@ -87,6 +87,21 @@
 #' # estimations
 #' est$par # mean of r
 #' sqrt(1/est$hessian[1][1]) # standard deviation of r
+#'
+#' m <- seq(6, -4, -1)
+#' p <- vismeteor::dvmgeom(m, limmag, r)
+#' barplot(
+#'     p,
+#'     names.arg = m,
+#'     main = paste0('Density (r = ', r, ', limmag = ', limmag, ')'),
+#'     col = "blue",
+#'     xlab = 'm',
+#'     ylab = 'p',
+#'     border = "blue",
+#'     space = 0.3
+#' )
+#' axis(side = 2, at = pretty(p))
+
 
 #' @rdname vmgeom
 #' @export

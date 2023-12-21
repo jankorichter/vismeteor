@@ -46,7 +46,7 @@
 #' @return
 #' `dvmideal` gives the density, `pvmideal` gives the distribution function,
 #' `qvmideal` gives the quantile function, and `rvmideal` generates random deviates.
-#' `cvmideal` gives the convolution of the ideal meteor magnitude distribution
+#' `cvmideal` gives the partial convolution of the ideal meteor magnitude distribution
 #'  with the perception probabilities.
 #'
 #' The length of the result is determined by `n` for `rvmideal`, and is the maximum
@@ -61,7 +61,7 @@
 #'   WGN, Journal of the International Meteor Organization, vol. 46, no. 1, p. 34-38
 #' @examples
 #' N <- 100
-#' psi <- 4.0
+#' psi <- 5.0
 #' limmag <- 6.5
 #' (m <- seq(6, -4))
 #'
@@ -94,24 +94,30 @@
 #' est$par # mean of psi
 #' sqrt(1/est$hessian[1][1]) # standard deviation of psi
 #'
-#' plot(
-#'     seq(-5, 6),
-#'     vismeteor::dvmideal(seq(-5, 6), limmag, psi),
-#'     main = paste0('Density (psi = ', psi, ')'),
+#' m <- seq(6, -4, -1)
+#' p <- vismeteor::dvmideal(m, limmag, psi)
+#' barplot(
+#'     p,
+#'     names.arg = m,
+#'     main = paste0('Density (psi = ', psi, ', limmag = ', limmag, ')'),
+#'     col = "blue",
 #'     xlab = 'm',
 #'     ylab = 'p',
-#'     type = 'h'
+#'     border = "blue",
+#'     space = 0.3
 #' )
+#' axis(side = 2, at = pretty(p))
 #'
 #' plot(
 #'     function(lm) vismeteor::cvmideal(lm, psi, log = TRUE),
 #'     -5, 10,
 #'     main = paste0(
-#'         'Convolution of the ideal meteor magnitude distribution\n',
+#'         'Partial convolution of the ideal meteor magnitude distribution\n',
 #'         'with the perception probabilities (psi = ', psi, ')'
 #'     ),
+#'     col = "blue",
 #'     xlab = 'lm',
-#'     ylab = 'log(f * g)'
+#'     ylab = 'log(rate)'
 #' )
 
 

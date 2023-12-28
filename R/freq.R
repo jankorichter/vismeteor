@@ -1,4 +1,4 @@
-#' @title Form groups of equal minimum count of frequencies
+#' @title Quantiles with a minimum frequency
 #' @description
 #' This function generates quantiles with a minimum frequency.
 #' These quantiles are formed from a vector `freq` of frequencies.

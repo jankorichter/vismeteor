@@ -33,8 +33,8 @@
 #'    {\displaystyle P[M = m] \sim g(m) \, \int_{m-0.5}^{m+0.5} f(m) \, \, \mathrm{d}m} \, \mathrm{,}
 #' }
 #' where \eqn{g(m)} is the perception probability.
-#' This distribution is thus a convolution of the
-#' [perception probabilities][vismeteor::vmperception] with the
+#' This distribution is thus a product of the
+#' [perception probabilities][vismeteor::vmperception] and the
 #' actual [ideal distribution][vismeteor::mideal] of the meteor magnitudes.
 #'
 #' If the perception probabilities function `perception.fun` is given,
@@ -104,7 +104,7 @@
 #'     xlab = 'm',
 #'     ylab = 'p',
 #'     border = "blue",
-#'     space = 0.3
+#'     space = 0.5
 #' )
 #' axis(side = 2, at = pretty(p))
 #'

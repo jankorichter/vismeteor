@@ -3,6 +3,7 @@
 ^\.Rproj\.user$
 ^\.Rprofile$
 ^.*\.Rproj$
+^LICENSE.md$
 ^Meta$
 ^doc$
 ^workspace$

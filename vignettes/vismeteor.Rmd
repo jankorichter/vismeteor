@@ -28,7 +28,7 @@ knitr::opts_chunk$set(
 
 ## Introduction
 
-This package was developed to provide a comprehensive tool for analyzing visually observed
+`vismeteor` was developed to provide a comprehensive tool for analyzing visually observed
 meteors. It takes into account human perception of different meteor magnitudes through
 perception probabilities. Therefore, this package provides methods that incorporate
 these perception probabilities in the evaluation of meteor magnitudes.

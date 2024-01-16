@@ -1,10 +1,11 @@
 Package: vismeteor
 Type: Package
 Title: Analysis of Visual Meteor Data
-Version: 1.8.4
-Author: Janko Richter <janko@richtej.de>
+Version: 1.8.5
+Authors@R: c(person("Janko", "Richter", role = c("aut", "cre"), email = "janko@richtej.de"))
+Author: Janko Richter [aut, cre]
 Maintainer: Janko Richter <janko@richtej.de>
-Description: Tools for the analysis of
+Description: Provides a suite of analytical functionalities to process and analyze
     visual meteor observations from the Visual Meteor Database
     of the International Meteor Organization <https://www.imo.net/>.
 License: MIT + file LICENSE

@@ -30,7 +30,7 @@
 #' @references Richter, J. (2018) \emph{About the mass and magnitude distributions of meteor showers}.
 #'   WGN, Journal of the International Meteor Organization, vol. 46, no. 1, p. 34-38
 #' @examples
-#' par(mfrow = c(2,2))
+#' old_par <- par(mfrow = c(2,2))
 #' psi <- 5.0
 #' plot(
 #'     function(m) dmideal(m, psi, log = FALSE),
@@ -86,6 +86,8 @@
 #' # estimations
 #' est$par # mean of psi
 #' sqrt(1/est$hessian[1][1]) # standard deviation of psi
+#'
+#' par(old_par)
 
 #' @rdname mideal
 #' @export

@@ -28,7 +28,7 @@
 #' vmperception(5.6 - 3.0)
 #'
 #' # plot
-#' par(mfrow = c(1,1))
+#' old_par <- par(mfrow = c(1,1))
 #' plot(
 #'     vmperception,
 #'     -0.5, 8,
@@ -54,6 +54,8 @@
 #'     xlab = 'm',
 #'     ylab = 'q'
 #' )
+#'
+#' par(old_par)
 #' @export
 vmperception <- function(m, deriv.degree = 0L) {
     poly.coef <- c(0.0, 0.003, 0.0056, 0, 0.0014)
@@ -119,7 +121,7 @@ vmperception <- function(m, deriv.degree = 0L) {
 #' In this scenario, the mean of the observable meteor magnitudes is given by
 #' \eqn{-\mathcal{L}'/\mathcal{L}}, and their variance is calculated as
 #' \eqn{\mathcal{L}''/\mathcal{L} - (\mathcal{L}'/\mathcal{L})^2}.
-#' @return This function returns the Laplace-transformed perception probabilities.
+#' @return returns the Laplace-transformed perception probabilities.
 #' If `deriv.degree` is specified, it will return the `deriv.degree`-th order derivative
 #' of these Laplace-transformed values.
 #' @seealso
@@ -136,7 +138,7 @@ vmperception <- function(m, deriv.degree = 0L) {
 #' # magnitude variance
 #' F2/F0 - (F1/F0)^2
 #' # plot the Laplace-transformed perception probabilities
-#' par(mfrow = c(1,1))
+#' old_par <- par(mfrow = c(1,1))
 #' plot(
 #'     vmperception.l,
 #'     0.2, 1.1,
@@ -149,6 +151,7 @@ vmperception <- function(m, deriv.degree = 0L) {
 #'     xlab = 's',
 #'     ylab = 'L'
 #' )
+#' par(old_par)
 #' @export
 vmperception.l <- function(s, deriv.degree = 0L) {
     poly.coef <- c(0.0, -4.11, 1.32, -0.15)

@@ -1,7 +1,7 @@
 Package: vismeteor
 Type: Package
 Title: Analysis of Visual Meteor Data
-Version: 1.8.5
+Version: 2.0.0
 Authors@R: c(person("Janko", "Richter", role = c("aut", "cre"), email = "janko@richtej.de"))
 Author: Janko Richter [aut, cre]
 Maintainer: Janko Richter <janko@richtej.de>
@@ -13,9 +13,9 @@ URL: https://github.com/jankorichter/vismeteor
 BugReports: https://github.com/jankorichter/vismeteor/issues
 Encoding: UTF-8
 LazyData: true
-Depends: R (>= 3.5)
+Depends: R (>= 3.5.0)
 Imports: methods, stats, DBI
-RoxygenNote: 7.3.0
+RoxygenNote: 7.3.2
 Roxygen: list(markdown = TRUE)
 Suggests:
     usethis (>= 2.1.1),

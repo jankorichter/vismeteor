@@ -11,7 +11,7 @@
 #' @param lm numeric; limiting magnitude.
 #' @param tm numeric; transformed magnitude.
 #' @param deriv.degree integer; the degree of the derivative at `tm` to return
-#'   instead of `r` or `log(r)`. Must be `0`, `1` or `2`.
+#'   instead of `psi`. Must be `0`, `1` or `2`.
 #'
 #' @details
 #' Many linear models require the variance of visual meteor magnitudes to be
@@ -42,7 +42,11 @@
 #'   the mean of `tm`.
 #' The argument `deriv.degree` can be used to apply the delta method.
 #'
-#' @seealso [vismeteor::vmgeom]
+#' @note
+#' The internal approximations used here are derived from the perception
+#' probabilities produced by [vismeteor::vmperception].
+#'
+#' @seealso [vismeteor::vmideal] [vismeteor::mideal] [vismeteor::vmperception]
 #' @examples
 #' N <- 100
 #' psi <- 5.0

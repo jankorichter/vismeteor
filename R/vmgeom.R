@@ -41,8 +41,6 @@
 #' it must have the signature `function(x)` and return the perception probability of
 #' the difference `x` between the limiting magnitude and the meteor magnitude.
 #' If `x >= 15.0`, the function `perception.fun` should return a perception probability of `1.0`.
-#' If `log = TRUE` is specified, the logarithm of the perception probabilities
-#' must be returned.  
 #' The argument `perception.fun` is resolved using [match.fun].
 #'
 #' @return
@@ -53,6 +51,7 @@
 #'
 #' The length of the result is determined by `n` for `rvmgeom`, and by the maximum
 #' of the lengths of the numeric vector arguments for the other functions.
+#' All arguments are vectorized; standard R recycling rules apply.
 #'
 #' Since the distribution is discrete, `qvmgeom` and `rvmgeom` always return integer values.  
 #' `qvmgeom` may return `NaN` with a warning.

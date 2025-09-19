@@ -48,7 +48,11 @@
 #' The argument `deriv.degree` can be used to apply the delta method.  
 #' If `log = TRUE`, the logarithm of `r` is returned.
 #'
-#' @seealso [vismeteor::vmgeom]
+#' @note
+#' The internal approximations used here are derived from the perception
+#' probabilities produced by [vismeteor::vmperception].
+#'
+#' @seealso [vismeteor::vmgeom] [vismeteor::vmperception]
 #' @examples
 #' N <- 100
 #' r <- 2.0

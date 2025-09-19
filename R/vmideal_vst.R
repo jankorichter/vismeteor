@@ -79,10 +79,7 @@
 #' print(psi.hat)
 #' print(se_psi.hat)
 
-#' @rdname vmidealVst
-#' @export
-vmidealVstFromMagn <- function(m, lm) {
-
+.vmidealVstFromMagn.params <- (function() {
     param.df <- data.frame(
         'p1' = c(0.379578706193683, 0.380865978506213,
         0.383646581863156, 0.386594955357005, 0.384516871380943, 0.378119364136071,
@@ -116,20 +113,26 @@ vmidealVstFromMagn <- function(m, lm) {
         1.41062845239295, 1.41258415137388)
     )
 
+    list(
+        sx = c(1.0, 2.0, 4.0, 6.0, 8.0, 10.0),
+        p0.fun = stats::approxfun(param.df$offset, param.df[['intercept']]),
+        p1.fun = stats::approxfun(param.df$offset, param.df[['p1']]),
+        p2.fun = stats::approxfun(param.df$offset, param.df[['p2']]),
+        p3.fun = stats::approxfun(param.df$offset, param.df[['p3']]),
+        p4.fun = stats::approxfun(param.df$offset, param.df[['p4']]),
+        p5.fun = stats::approxfun(param.df$offset, param.df[['p5']]),
+        p6.fun = stats::approxfun(param.df$offset, param.df[['p6']])
+    )
+})()
+
+#' @rdname vmidealVst
+#' @export
+vmidealVstFromMagn <- function(m, lm) {
     offset <- lm - round(lm)
     if (1L == length(lm)) {
         limmag <- rep(lm, length(m))
         offset <- rep(offset, length(m))
     }
-
-    sx <- c(1.0, 2.0, 4.0, 6.0, 8.0, 10.0)
-    p0.fun <- stats::approxfun(param.df$offset, param.df[['intercept']])
-    p1.fun <- stats::approxfun(param.df$offset, param.df[['p1']])
-    p2.fun <- stats::approxfun(param.df$offset, param.df[['p2']])
-    p3.fun <- stats::approxfun(param.df$offset, param.df[['p3']])
-    p4.fun <- stats::approxfun(param.df$offset, param.df[['p4']])
-    p5.fun <- stats::approxfun(param.df$offset, param.df[['p5']])
-    p6.fun <- stats::approxfun(param.df$offset, param.df[['p6']])
 
     arg.data <- data.frame(
         x = lm - m,
@@ -141,14 +144,16 @@ vmidealVstFromMagn <- function(m, lm) {
     y <- lapply(data.s, function(data) {
         x <- data$x
         offset <- data$offset[1]
+        params <- .vmidealVstFromMagn.params
         sy <- c(
-            p1.fun(offset),
-            p2.fun(offset),
-            p3.fun(offset),
-            p4.fun(offset),
-            p5.fun(offset),
-            p6.fun(offset)
+            params$p1.fun(offset),
+            params$p2.fun(offset),
+            params$p3.fun(offset),
+            params$p4.fun(offset),
+            params$p5.fun(offset),
+            params$p6.fun(offset)
         )
+        sx <- params$sx
         f.spline <- stats::splinefun(sx, sy)
         y <- rep(NA, length(x))
 
@@ -167,7 +172,7 @@ vmidealVstFromMagn <- function(m, lm) {
             y[idx] <- f.spline(x[idx])
         }
 
-        y - p0.fun(offset)
+        y - params$p0.fun(offset)
     })
 
     unsplit(y, data.f)

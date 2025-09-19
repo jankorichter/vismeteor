@@ -79,6 +79,7 @@
 #' print(psi.hat)
 #' print(se_psi.hat)
 
+#' @keywords internal
 .vmidealVstFromMagn.params <- (function() {
     param.df <- data.frame(
         'p1' = c(0.379578706193683, 0.380865978506213,

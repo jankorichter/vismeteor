@@ -41,11 +41,11 @@
 #' values across package versions.
 #'
 #' @return
-#' * `vmgeomVstFromMagn`: numeric value, the transformed meteor magnitude.  
+#' * `vmgeomVstFromMagn`: numeric value, the transformed meteor magnitude.
 #' * `vmgeomVstToR`: numeric value of the population index `r`, derived from
-#'   the mean of `tm`.  
+#'   the mean of `tm`.
 #'
-#' The argument `deriv.degree` can be used to apply the delta method.  
+#' The argument `deriv.degree` can be used to apply the delta method.
 #' If `log = TRUE`, the logarithm of `r` is returned.
 #'
 #' @note
@@ -85,6 +85,7 @@
 #' print(r.hat)
 #' print(se_r.hat)
 
+#' @keywords internal
 .vmgeomVstFromMagn.params <- (function() {
     param.df <- data.frame(
         offset = c(-0.5, -0.48, -0.45, -0.4, -0.3, -0.2, -0.1, 0, 0.1, 0.2, 0.3, 0.4, 0.45, 0.48, 0.5),
@@ -151,7 +152,7 @@ vmgeomVstToR <- function(tm, log = FALSE, deriv.degree = 0L) {
     } else {
         if(2L == deriv.degree) {
             exp(f.polynomial(tm, poly.coef0)) * (
-               f.polynomial(tm, poly.coef1)^2 + f.polynomial(tm, poly.coef2) 
+               f.polynomial(tm, poly.coef1)^2 + f.polynomial(tm, poly.coef2)
             )
         } else if(1L == deriv.degree) {
             f.polynomial(tm, poly.coef1) * exp(f.polynomial(tm, poly.coef0))

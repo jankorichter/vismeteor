@@ -51,6 +51,8 @@
 #' @note
 #' The internal approximations used here are derived from the perception
 #' probabilities produced by [vismeteor::vmperception].
+#' For details on the derivation, see the script `inst/derivation/vmgeom_vst.R` in the
+#' package's source code.
 #'
 #' @seealso [vismeteor::vmgeom] [vismeteor::vmperception]
 #' @examples

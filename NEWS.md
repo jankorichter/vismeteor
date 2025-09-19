@@ -12,10 +12,6 @@
 # vismeteor 2.0.0
 
 ## Highlights
-This release introduces variance-stabilizing transformations for ideally distributed visual meteor magnitudes 
-(`vmidealVstFromMagn()`) as well as for visual meteor magnitudes under a geometric distribution (`vmgeomVstFromMagn()`).
-
-## Highlights
 This release introduces variance-stabilizing transformations for the ideal distribution of visual meteor magnitudes (`vmidealVstFromMagn()`) as well as for visual meteor magnitudes under a geometric distribution (`vmgeomVstFromMagn()`).
 
 ## Other changes

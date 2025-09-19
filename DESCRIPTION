@@ -1,7 +1,7 @@
 Package: vismeteor
 Type: Package
 Title: Analysis of Visual Meteor Data
-Version: 2.0.0
+Version: 2.0.1
 Authors@R: c(person("Janko", "Richter", role = c("aut", "cre"), email = "janko@richtej.de"))
 Author: Janko Richter [aut, cre]
 Maintainer: Janko Richter <janko@richtej.de>

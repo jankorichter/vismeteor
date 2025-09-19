@@ -144,8 +144,9 @@ dvmgeom <- function(m, lm, r, log = FALSE, perception.fun = NULL) {
         p.geom <- rep(p.geom, length(m))
     }
 
-    offset <- 0.0
-    list2env(vmgeom.std(m, lm), environment())
+    std_res <- vmgeom.std(m, lm)
+    m <- std_res$m
+    offset <- std_res$offset
 
     f.density <- function(m, offset, p.geom) {
         m.max <- 15L
@@ -225,8 +226,9 @@ pvmgeom <- function(m, lm, r, lower.tail = TRUE, log = FALSE, perception.fun = N
         p.geom <- rep(p.geom, length(m))
     }
 
-    offset <- 0.0
-    list2env(vmgeom.std(m, lm), environment())
+    std_res <- vmgeom.std(m, lm)
+    m <- std_res$m
+    offset <- std_res$offset
 
     f.density <- function(m, offset, p.geom) {
         stats::dgeom(m, p.geom) * perception.fun(m + offset)

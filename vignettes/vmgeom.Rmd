@@ -33,7 +33,7 @@ and the meteor magnitude, and $f(m)$ is the perception probability function.
 
 The estimation of the population index r, briefly called the r-value,
 is a common task in the evaluation of meteor magnitudes.
-Here we demonstrate two methods for unbiased estimation of this parameter.
+Here we demonstrate two methods to estimate this parameter.
 
 First, we obtain some magnitude observations from the example data set,
 which also includes the limiting magnitude.
@@ -86,9 +86,10 @@ This is a sufficiently large number to estimate the r-value.
 
 ## Maximum Likelihood Method
 
-The maximum likelihood method can be used to estimate the r-value in an unbiased manner.
-For this, the function `dvmgeom()` is needed, which returns the probability density of
-the observable meteor magnitudes when the r-value and the limiting magnitudes are known.
+The maximum likelihood method can be used to estimate the r-value in an asymptotically
+unbiased manner. For this, the function `dvmgeom()` is needed, which returns the
+probability density of the observable meteor magnitudes when the r-value and the
+limiting magnitudes are known.
 
 The following algorithm estimates the r-value by maximizing the likelihood with
 the `optim()` function. The function `ll()` returns the negative log-likelihood,

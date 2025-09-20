@@ -39,7 +39,7 @@ $$
 where $g(m)$ is the perception probability function. This distribution is thus a product of the
 perception probabilities and the actual ideal distribution of meteor magnitudes.
 
-Here we demonstrate a method for an unbiased estimation of $\psi$.
+Here we demonstrate two methods to estimate the parameter $\psi$.
 
 First, we obtain some magnitude observations from the example data set,
 which also includes the limiting magnitude.
@@ -93,7 +93,7 @@ This is a sufficiently large number to estimate the parameter.
 
 ## Maximum Likelihood Method
 
-The maximum likelihood method can be used to estimate the parameter in an unbiased manner.
+The maximum likelihood method can be used to estimate the parameter in an asymptotically unbiased manner.
 For this, the function `dvmideal()` is needed, which returns the probability density of
 the observable meteor magnitudes when the parameter and the limiting magnitudes are known.
 
@@ -148,7 +148,7 @@ with(new.env(), {
 
 It is clearly visible that the likelihood function is not normally distributed.
 This distribution even belongs to the class of heavy-tailed distributions.
-While its maximum is indeed an unbiased estimator, this does not hold for the variance.
+While its maximum is indeed an asymptotically unbiased estimator, this does not hold for the variance.
 This is important in this context because the variance of the estimated $\psi$-value is derived from the curvature (the second derivative at the maximum) of the log-likelihood function.
 Therefore, the estimator for the variance of $\psi$ is far too small.
 

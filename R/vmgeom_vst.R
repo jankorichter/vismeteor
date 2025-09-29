@@ -85,24 +85,6 @@
 #' print(r.hat)
 #' print(se_r.hat)
 
-#' @keywords internal
-.vmgeomVstFromMagn.params <- (function() {
-    param.df <- data.frame(
-        offset = c(-0.5, -0.48, -0.45, -0.4, -0.3, -0.2, -0.1, 0, 0.1, 0.2, 0.3, 0.4, 0.45, 0.48, 0.5),
-        a = c(8.810993, 8.496702, 8.29026, 8.140408, 8.031893, 8.024524, 8.046554, 8.093328, 8.165077, 8.265932, 8.384126, 8.564082, 8.678373, 8.757368, 8.811488),
-        b = c(2.176, 2.077, 2.004, 1.945, 1.897, 1.885, 1.889, 1.906, 1.933, 1.97, 2.02, 2.087, 2.128, 2.156, 2.176),
-        c = c(-0.317, -0.278, -0.249, -0.225, -0.206, -0.2, -0.201, -0.207, -0.217, -0.231, -0.252, -0.279, -0.296, -0.308, -0.317),
-        d = c(0.669, 0.748, 0.813, 0.872, 0.922, 0.934, 0.928, 0.91, 0.881, 0.843, 0.796, 0.739, 0.706, 0.684, 0.669)
-    )
-
-    list(
-        pa.fun = stats::approxfun(param.df$offset, param.df$a),
-        pb.fun = stats::approxfun(param.df$offset, param.df$b),
-        pc.fun = stats::approxfun(param.df$offset, param.df$c),
-        pd.fun = stats::approxfun(param.df$offset, param.df$d)
-    )
-})()
-
 #' @rdname vmgeomVst
 #' @export
 vmgeomVstFromMagn <- function(m, lm) {
@@ -161,3 +143,21 @@ vmgeomVstToR <- function(tm, log = FALSE, deriv.degree = 0L) {
         }
     }
 }
+
+#' @keywords internal
+.vmgeomVstFromMagn.params <- (function() {
+    param.df <- data.frame(
+        offset = c(-0.5, -0.48, -0.45, -0.4, -0.3, -0.2, -0.1, 0, 0.1, 0.2, 0.3, 0.4, 0.45, 0.48, 0.5),
+        a = c(8.810993, 8.496702, 8.29026, 8.140408, 8.031893, 8.024524, 8.046554, 8.093328, 8.165077, 8.265932, 8.384126, 8.564082, 8.678373, 8.757368, 8.811488),
+        b = c(2.176, 2.077, 2.004, 1.945, 1.897, 1.885, 1.889, 1.906, 1.933, 1.97, 2.02, 2.087, 2.128, 2.156, 2.176),
+        c = c(-0.317, -0.278, -0.249, -0.225, -0.206, -0.2, -0.201, -0.207, -0.217, -0.231, -0.252, -0.279, -0.296, -0.308, -0.317),
+        d = c(0.669, 0.748, 0.813, 0.872, 0.922, 0.934, 0.928, 0.91, 0.881, 0.843, 0.796, 0.739, 0.706, 0.684, 0.669)
+    )
+
+    list(
+        pa.fun = stats::approxfun(param.df$offset, param.df$a),
+        pb.fun = stats::approxfun(param.df$offset, param.df$b),
+        pc.fun = stats::approxfun(param.df$offset, param.df$c),
+        pd.fun = stats::approxfun(param.df$offset, param.df$d)
+    )
+})()

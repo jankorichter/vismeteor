@@ -7,7 +7,7 @@
 #' @description
 #' Density, distribution function, quantile function, and random generation
 #' for the geometric model of visual meteor magnitudes.
-#' @param m numeric; the meteor magnitude.
+#' @param m integer; the meteor magnitude.
 #' @param p numeric; probability.
 #' @param lm numeric; limiting magnitude.
 #' @param r numeric; the population index.

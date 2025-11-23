@@ -176,6 +176,11 @@ The variance-stabilizing transformation has the following additional advantages:
 The resulting procedure is straightforward: it suffices to compute the mean of
 the transformed meteor magnitudes, from which an estimate of the parameter $\psi$ is obtained.
 
+Note that the variance-stabilizing transformation yields a mean that can be directly analyzed,
+but converting it back to the $\psi$ parameter requires applying the delta method.
+This accounts for the nonlinearity of the transformation and provides appropriate uncertainty
+estimates for $\psi$.
+
 ```{r, echo=TRUE, results='show'}
 tm.mean <- with(magnitudes, {
   N <- sum(Freq)
@@ -238,7 +243,7 @@ There are two possible explanations:
 2. Random variation led to this result.
 
 Although the expected value is clearly above `0.0` and can therefore be used, it is more appropriate
-in this context to interpret the value as the median:
+in this context to interpret the value as the median.
 
 ```{r, echo=TRUE}
 lim.magn.mean <- with(magnitudes, {

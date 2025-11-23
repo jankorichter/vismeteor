@@ -176,6 +176,11 @@ Very bright meteors are inherently grouped into a single magnitude class wheneve
 perception probability is approximately `1.0`, which suppresses outliers in this part of the magnitude range.
 The resulting estimator is therefore inexpensive to compute and directly comparable to the likelihood-based approaches discussed earlier.
 
+We estimate $r = 1/a$ from the sample mean of $a$. Since $r$ is a function
+of $a$, we apply the delta method to correct for bias and to compute the variance of $r$.
+The delta method uses a Taylor expansion around the mean of $a$ to approximate the
+distribution of $r$.
+
 ```{r, echo=TRUE, results='hide'}
 result.rate <- with(magnitudes, {
     N <- sum(Freq)
@@ -261,6 +266,10 @@ The variance-stabilizing transformation has the following additional advantages:
 The resulting procedure is straightforward: it suffices to compute the mean of
 the transformed meteor magnitudes, from which an estimate of the parameter `r` is obtained.
 
+To convert the mean of the transformed values back to the original `r` scale, we apply
+the delta method. This accounts for the nonlinearity of the back-transformation and
+provides both a bias correction (second-order term).
+
 ```{r, echo=TRUE, results='show'}
 result.vs <- with(magnitudes, {
   N <- sum(Freq)
@@ -268,7 +277,7 @@ result.vs <- with(magnitudes, {
   tm.mean <- sum(Freq * tm)/N
   tm.var <- sum(Freq * (tm - tm.mean)^2)/(N-1)
   tm.mean.var <- tm.var / N
-  
+
   # Delta method: variance and variance of r
   r.hat <- vmgeomVstToR(tm.mean)
   dr_dtm <- vmgeomVstToR(tm.mean, deriv.degree = 1L)

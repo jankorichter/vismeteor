@@ -1,3 +1,10 @@
+# vismeteor 2.0.2
+
+## Changes
+
+- Clarified documentation and vignettes for `vmgeom` and `vmideal` models, including improved mathematical notation and explanations.
+- Hidden internal parameters from exported function documentation to reduce user confusion.
+
 # vismeteor 2.0.1
 
 ## Changes

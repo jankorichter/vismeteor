@@ -4,6 +4,7 @@
 ^\.Rproj\.user$
 ^\.Rprofile$
 ^.*\.Rproj$
+^AGENTS.md$
 ^LICENSE.md$
 ^Meta$
 ^doc$

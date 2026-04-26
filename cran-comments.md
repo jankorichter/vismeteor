@@ -1,10 +1,15 @@
 ## Release summary
-This is a patch release (2.0.2) that improves documentation and vignettes.
+
+This is a minor release (2.1.0) with breaking changes.
+`load_vmdb_rates()` and `load_vmdb_magnitudes()` now connect to an
+[imo-vmdb](https://pypi.org/project/imo-vmdb/) REST API instead of a
+direct database connection. Minimum R version raised to 4.1.0.
 
 ## Test environments
-* local macOS install, R 4.5.2
+
+* local macOS, R 4.5.2
 * win-builder (R-devel)
-* GitHub Actions (ubuntu-latest, windows-latest, macOS-latest), R-release
+* GitHub Actions (ubuntu-latest, windows-latest, macOS-latest), R-release + R-devel
 
 ## R CMD check results
 
@@ -13,8 +18,3 @@ This is a patch release (2.0.2) that improves documentation and vignettes.
 ## Reverse dependencies
 
 There are currently no reverse dependencies for this package.
-
-## Changes in this version
-
-- Clarified documentation and vignettes for `vmgeom` and `vmideal` models, including improved mathematical notation and explanations.
-- Hidden internal parameters from exported function documentation to reduce user confusion.

@@ -273,15 +273,15 @@ provides both a bias correction (second-order term).
 ```{r, echo=TRUE, results='show'}
 result.vs <- with(magnitudes, {
     N <- sum(Freq)
-    tm <- vmgeomVstFromMagn(magn, lim.magn)
+    tm <- vmgeom_vst_from_magn(magn, lim.magn)
     tm.mean <- sum(Freq * tm) / N
     tm.var <- sum(Freq * (tm - tm.mean)^2) / (N - 1)
     tm.mean.var <- tm.var / N
 
     # Delta method: variance and variance of r
-    r.hat <- vmgeomVstToR(tm.mean)
-    dr_dtm <- vmgeomVstToR(tm.mean, deriv.degree = 1L)
-    d2r_dtm2 <- vmgeomVstToR(tm.mean, deriv.degree = 2L)
+    r.hat <- vmgeom_vst_to_r(tm.mean)
+    dr_dtm <- vmgeom_vst_to_r(tm.mean, deriv.degree = 1L)
+    d2r_dtm2 <- vmgeom_vst_to_r(tm.mean, deriv.degree = 2L)
     r.hat <- r.hat - 0.5 * d2r_dtm2 * tm.mean.var
     r.var <- dr_dtm^2 * tm.mean.var + 0.5 * d2r_dtm2^2 * tm.mean.var^2
 
@@ -302,14 +302,14 @@ Using the bootstrap method, it can be assessed whether the mean is normally dist
 # Bootstrapping Method
 r.means <- with(magnitudes, {
     N <- sum(Freq)
-    tm <- vmgeomVstFromMagn(magn, lim.magn)
+    tm <- vmgeom_vst_from_magn(magn, lim.magn)
     replicate(50000, {
         s <- sample(tm, size = N, replace = TRUE, prob = Freq)
         s.mean <- mean(s)
         s.var <- var(s) / N
 
-        r.hat <- vmgeomVstToR(s.mean)
-        d2r_ds2 <- vmgeomVstToR(s.mean, deriv.degree = 2L)
+        r.hat <- vmgeom_vst_to_r(s.mean)
+        d2r_ds2 <- vmgeom_vst_to_r(s.mean, deriv.degree = 2L)
         r.hat - 0.5 * d2r_ds2 * s.var
     })
 })

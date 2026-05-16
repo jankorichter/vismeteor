@@ -1,6 +1,6 @@
-#' @name vmidealVst
-#' @aliases vmidealVstFromMagn
-#' @aliases vmidealVstToPsi
+#' @name vmideal_vst
+#' @aliases vmideal_vst_from_magn
+#' @aliases vmideal_vst_to_psi
 #' @title Variance-stabilizing Transformation for the Ideal Distribution of Visual Meteor Magnitudes
 #'
 #' @description
@@ -15,7 +15,7 @@
 #'
 #' @details
 #' Many linear models require the variance of visual meteor magnitudes to be
-#' homoscedastic. The function `vmidealVstFromMagn` applies a transformation
+#' homoscedastic. The function `vmideal_vst_from_magn` applies a transformation
 #' that produces homoscedastic distributions of visual meteor magnitudes if the
 #' underlying magnitudes follow the ideal magnitude distribution.
 #' In this sense, the transformation acts as a normalization of meteor magnitudes
@@ -29,7 +29,7 @@
 #' limiting magnitude `lm` is a fixed parameter and never estimated
 #' statistically, the magnitudes can be transformed such that, for example,
 #' the mean of the transformed magnitudes directly provides an estimate of `psi`
-#' using the function `vmidealVstToPsi`.
+#' using the function `vmideal_vst_to_psi`.
 #'
 #' This transformation is valid for \eqn{-10 \le \texttt{psi} \le 9}.
 #' The numerical form of the transformation is version-specific and may change
@@ -37,8 +37,8 @@
 #' values across package versions.
 #'
 #' @return
-#' * `vmidealVstFromMagn`: a numeric value, the transformed meteor magnitude.
-#' * `vmidealVstToPsi`: a numeric value of the parameter `psi`, derived from
+#' * `vmideal_vst_from_magn`: a numeric value, the transformed meteor magnitude.
+#' * `vmideal_vst_to_psi`: a numeric value of the parameter `psi`, derived from
 #'   the mean of `tm`.
 #' The argument `deriv.degree` can be used to apply the delta method.
 #'
@@ -58,15 +58,15 @@
 #' m <- rvmideal(N, limmag, psi)
 #'
 #' # Variance-stabilizing transformation
-#' tm <- vmidealVstFromMagn(m, limmag)
+#' tm <- vmideal_vst_from_magn(m, limmag)
 #' tm_mean <- mean(tm)
 #' tm_var <- var(tm)
 #'
 #' # Estimator for psi from the transformed mean
-#' psi_hat <- vmidealVstToPsi(tm_mean, limmag)
+#' psi_hat <- vmideal_vst_to_psi(tm_mean, limmag)
 #'
 #' # Derivative d(psi)/d(tm) at tm_mean (needed for the delta method)
-#' dpsi_dtm <- vmidealVstToPsi(tm_mean, limmag, deriv.degree = 1L)
+#' dpsi_dtm <- vmideal_vst_to_psi(tm_mean, limmag, deriv.degree = 1L)
 #'
 #' # Variance of the sample mean of tm
 #' var_tm.mean <- tm_var / N
@@ -79,9 +79,9 @@
 #' print(psi_hat)
 #' print(se_psi.hat)
 
-#' @rdname vmidealVst
+#' @rdname vmideal_vst
 #' @export
-vmidealVstFromMagn <- function(m, lm) {
+vmideal_vst_from_magn <- function(m, lm) {
     offset <- lm - round(lm)
     if (1L == length(lm)) {
         offset <- rep(offset, length(m))
@@ -97,7 +97,7 @@ vmidealVstFromMagn <- function(m, lm) {
     y <- lapply(data_s, \(data) {
         x <- data$x
         offset <- data$offset[1]
-        params <- .vmidealVstFromMagn.params
+        params <- .vmideal_vst_from_magn_params
         sy <- c(
             params$p1_fun(offset),
             params$p2_fun(offset),
@@ -131,9 +131,9 @@ vmidealVstFromMagn <- function(m, lm) {
     unsplit(y, data_f)
 }
 
-#' @rdname vmidealVst
+#' @rdname vmideal_vst
 #' @export
-vmidealVstToPsi <- function(tm, lm, deriv.degree = 0L) {
+vmideal_vst_to_psi <- function(tm, lm, deriv.degree = 0L) {
     poly_coef0 <- c(
         -2.97086442804517, -2.72858043751615, -0.683184284791628, -0.1971973188227,
         -0.0707494993259986, -0.0267813318470729, -0.00482163891332698,
@@ -166,7 +166,7 @@ vmidealVstToPsi <- function(tm, lm, deriv.degree = 0L) {
 }
 
 #' @keywords internal
-.vmidealVstFromMagn.params <- (function() {
+.vmideal_vst_from_magn_params <- (function() {
     param_df <- data.frame(
         "p1" = c(
             0.379578706193683, 0.380865978506213,

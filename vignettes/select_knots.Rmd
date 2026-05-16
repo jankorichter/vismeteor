@@ -194,7 +194,7 @@ break `predict()` on `newdata`.
 
 A regular grid is the simplest choice but ignores the actual observation
 density. In practice the candidate grid is built from the data themselves
-via `freq.quantile()` (see `?freq.quantile`): partition the observations,
+via `freq_quantile()` (see `?freq_quantile`): partition the observations,
 ordered by solar longitude, into bins each containing at least a fixed
 minimum number of meteors, then use the meteor-weighted solar-longitude
 midpoint of each bin as a candidate. This produces a fine grid in
@@ -202,7 +202,7 @@ observation-rich regions and a coarse grid where data is sparse — exactly
 the resolution `select_knots()` benefits from:
 
 ```{r, echo=TRUE}
-rates$q <- vismeteor::freq.quantile(rates$freq, 12) # >= 12 meteors per bin
+rates$q <- vismeteor::freq_quantile(rates$freq, 12) # >= 12 meteors per bin
 rates$qsl <- with(
     rates,
     ave(freq * sl, q, FUN = sum) /
@@ -434,14 +434,14 @@ of the counts themselves.
 
 Raw residuals of individual Poisson observations with small expectations
 are visually uninformative. A cleaner diagnostic groups the observations
-into bins of fixed minimum meteor count using `freq.quantile()` and
+into bins of fixed minimum meteor count using `freq_quantile()` and
 compares the observed and expected totals per bin.
 
 ```{r, echo=TRUE, fig.alt="Binned observed-over-expected ratios with one-sigma error bars over solar longitude"}
 # Use a coarser binning here than for the candidate grid above
 # (>= 500 meteors per bin) so that bin uncertainties are small enough
 # to read systematic deviations from the diagnostic plot.
-rates$qres <- vismeteor::freq.quantile(rates$freq, 500)
+rates$qres <- vismeteor::freq_quantile(rates$freq, 500)
 rates$pred <- predict(fit, type = "response")
 
 bins <- with(rates, {
@@ -478,7 +478,7 @@ Systematic arches over solar longitude would indicate too few knots in
 a region; visible scatter with no trend is Poisson over-dispersion (not
 pursued here).
 
-The same `freq.quantile()` helper drives both the candidate grid above
+The same `freq_quantile()` helper drives both the candidate grid above
 and the diagnostic here, but with different minimum bin sizes: a small
 minimum (12) for a fine candidate grid that `select_knots()` can prune
 from, and a larger minimum (500) for a small number of stable bins on
@@ -490,7 +490,7 @@ minimum to keep enough bins for a visible trend.
 ## See also
 
 - `?select_knots` — the function reference.
-- `?freq.quantile` — quantile bins used here for the residual diagnostic.
+- `?freq_quantile` — quantile bins used here for the residual diagnostic.
 - `?PER_2015_rates` — the example data set.
 - `?load_vmdb` — importing rate and magnitude observations from the
   VMDB API.

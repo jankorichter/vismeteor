@@ -209,15 +209,15 @@ See `?vmtable` for more information.
 
 ## Quantile Analysis with Minimum Meteor Count
 
-The function `freq.quantile()` is tailored for analyzing time series data in visual
+The function `freq_quantile()` is tailored for analyzing time series data in visual
 meteor observation, where the count of meteors is recorded over specific time intervals.
 
 Unlike traditional methods that sort quantiles based on time and percent, which often result
-in some quantiles having fewer meteors than desired, `freq.quantile()` constructs quantiles
+in some quantiles having fewer meteors than desired, `freq_quantile()` constructs quantiles
 with a focus on ensuring a minimum number of meteors in each quantile.
 
 This method addresses the challenge of varying meteor counts in each interval, including those
-with zero meteors. By utilizing `freq.quantile()`, users can effectively divide the time series
+with zero meteors. By utilizing `freq_quantile()`, users can effectively divide the time series
 into quantiles that are both time-based and density-based, enhancing the understanding of meteor
 occurrence and distribution over the observed period while ensuring each quantile meets the
 minimum count criterion.
@@ -231,12 +231,12 @@ ensuring that each quantile contains at least 10 meteors.
 
 ```{r, echo=TRUE}
 freq <- c(1, 8, 3, 3, 4, 9, 5, 0, 0, 2, 7, 8, 2, 6, 4)
-f <- freq.quantile(freq, 10)
+f <- freq_quantile(freq, 10)
 print(f)
 print(tapply(freq, f, sum))
 ```
 
-See `?freq.quantile` for more information.
+See `?freq_quantile` for more information.
 
 ## Interfacing VMDB Data with VMDB Loaders
 

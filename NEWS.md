@@ -23,7 +23,7 @@
 ## Changes
 
 - Updated README guidance, vignettes, and roxygen references to clarify data sources, models, and to correct documentation errors.
-- Improved the performance of `vmgeomVstFromMagn()` and `vmidealVstFromMagn()` by tightening the interpolation steps used during the variance-stabilising transforms.
+- Improved the performance of `vmgeom_vst_from_magn()` and `vmideal_vst_from_magn()` by tightening the interpolation steps used during the variance-stabilising transforms.
 - Streamlined the `vmtable()` rounding routine to reduce allocations.
 - Added a GitHub Actions workflow to run package checks automatically.
 - Documented the derivation scripts in `inst/derivation/` to improve reproducibility.
@@ -32,7 +32,7 @@
 # vismeteor 2.0.0
 
 ## Highlights
-This release introduces variance-stabilizing transformations for the ideal distribution of visual meteor magnitudes (`vmidealVstFromMagn()`) as well as for visual meteor magnitudes under a geometric distribution (`vmgeomVstFromMagn()`).
+This release introduces variance-stabilizing transformations for the ideal distribution of visual meteor magnitudes (`vmideal_vst_from_magn()`) as well as for visual meteor magnitudes under a geometric distribution (`vmgeom_vst_from_magn()`).
 
 ## Other changes
 The function `vmperception()` now better matches the perception probabilities of *Koschack & Rendtel (1990b)*.  

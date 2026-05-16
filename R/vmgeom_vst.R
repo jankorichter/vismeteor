@@ -1,6 +1,6 @@
-#' @name vmgeomVst
-#' @aliases vmgeomVstFromMagn
-#' @aliases vmgeomVstToR
+#' @name vmgeom_vst
+#' @aliases vmgeom_vst_from_magn
+#' @aliases vmgeom_vst_to_r
 #' @title Variance-Stabilizing Transformation for Geometric Visual Meteor Magnitudes
 #'
 #' @description
@@ -16,7 +16,7 @@
 #'
 #' @details
 #' Many linear models require the variance of visual meteor magnitudes to be
-#' homoscedastic. The function `vmgeomVstFromMagn` applies a transformation
+#' homoscedastic. The function `vmgeom_vst_from_magn` applies a transformation
 #' that produces homoscedastic distributions of visual meteor magnitudes if the
 #' underlying distribution follows a geometric model.
 #'
@@ -28,7 +28,7 @@
 #' limiting magnitude `lm` is a fixed parameter and never estimated
 #' statistically, the magnitudes can be transformed such that, for example,
 #' the mean of the transformed magnitudes directly provides an estimate of `r`
-#' using the function `vmgeomVstToR`.
+#' using the function `vmgeom_vst_to_r`.
 #'
 #' A key advantage of this transformation is that the limiting magnitude `lm`
 #' is already incorporated into subsequent analyses. In this sense, the
@@ -41,8 +41,8 @@
 #' values across package versions.
 #'
 #' @return
-#' * `vmgeomVstFromMagn`: numeric value, the transformed meteor magnitude.
-#' * `vmgeomVstToR`: numeric value of the population index `r`, derived from
+#' * `vmgeom_vst_from_magn`: numeric value, the transformed meteor magnitude.
+#' * `vmgeom_vst_to_r`: numeric value of the population index `r`, derived from
 #'   the mean of `tm`.
 #'
 #' The argument `deriv.degree` can be used to apply the delta method.
@@ -64,15 +64,15 @@
 #' m <- rvmgeom(N, limmag, r)
 #'
 #' # Variance-stabilizing transformation
-#' tm <- vmgeomVstFromMagn(m, limmag)
+#' tm <- vmgeom_vst_from_magn(m, limmag)
 #' tm_mean <- mean(tm)
 #' tm_var <- var(tm)
 #'
 #' # Estimator for r from the transformed mean
-#' r_hat <- vmgeomVstToR(tm_mean)
+#' r_hat <- vmgeom_vst_to_r(tm_mean)
 #'
 #' # Derivative dr/d(tm) at tm_mean (needed for the delta method)
-#' dr_dtm <- vmgeomVstToR(tm_mean, deriv.degree = 1L)
+#' dr_dtm <- vmgeom_vst_to_r(tm_mean, deriv.degree = 1L)
 #'
 #' # Variance of the sample mean of tm
 #' var_tm.mean <- tm_var / N
@@ -85,26 +85,26 @@
 #' print(r_hat)
 #' print(se_r.hat)
 
-#' @rdname vmgeomVst
+#' @rdname vmgeom_vst
 #' @export
-vmgeomVstFromMagn <- function(m, lm) {
+vmgeom_vst_from_magn <- function(m, lm) {
     offset <- lm - round(lm)
     if (1L == length(lm)) {
         offset <- rep(offset, length(m))
     }
 
-    a <- .vmgeomVstFromMagn.params$pa_fun(offset)
-    b <- .vmgeomVstFromMagn.params$pb_fun(offset)
-    c <- .vmgeomVstFromMagn.params$pc_fun(offset)
-    d <- .vmgeomVstFromMagn.params$pd_fun(offset)
+    a <- .vmgeom_vst_from_magn_params$pa_fun(offset)
+    b <- .vmgeom_vst_from_magn_params$pb_fun(offset)
+    c <- .vmgeom_vst_from_magn_params$pc_fun(offset)
+    d <- .vmgeom_vst_from_magn_params$pd_fun(offset)
 
     x <- lm - m
     a - exp(b + c * (x + 0.5)^d)
 }
 
-#' @rdname vmgeomVst
+#' @rdname vmgeom_vst
 #' @export
-vmgeomVstToR <- function(tm, log = FALSE, deriv.degree = 0L) {
+vmgeom_vst_to_r <- function(tm, log = FALSE, deriv.degree = 0L) {
     poly_coef0 <- c(10.31637299, -5.51610811, 1.38003791, -0.18014183, 0.00946975)
     names(poly_coef0) <- seq_along(poly_coef0) - 1 # exponents
 
@@ -144,7 +144,7 @@ vmgeomVstToR <- function(tm, log = FALSE, deriv.degree = 0L) {
 }
 
 #' @keywords internal
-.vmgeomVstFromMagn.params <- (function() {
+.vmgeom_vst_from_magn_params <- (function() {
     param_df <- data.frame(
         offset = c(
             -0.5, -0.48, -0.45, -0.4, -0.3, -0.2, -0.1, 0,

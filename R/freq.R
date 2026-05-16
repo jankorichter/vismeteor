@@ -15,10 +15,10 @@
 #' @examples
 #' freq <- c(1, 2, 3, 4, 5, 6, 7, 8, 9)
 #' cumsum(freq)
-#' (f <- freq.quantile(freq, 10))
+#' (f <- freq_quantile(freq, 10))
 #' tapply(freq, f, sum)
 #' @export
-freq.quantile <- function(freq, min) {
+freq_quantile <- function(freq, min) {
     if (0 >= min) {
         stop(paste0('min must be greater than 0 instead of "', min, '"!'))
     }

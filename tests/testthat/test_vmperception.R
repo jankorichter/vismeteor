@@ -35,7 +35,7 @@ test_that("vmperception", {
         do.call(
             rbind.data.frame,
             mapply(function(r, limmag) {
-                p <- dvmgeom(m, limmag, r, perception.fun = p.fun)
+                p <- dvmgeom(m, limmag, r, perception_fun = p.fun)
 
                 # maximum likelihood estimation (MLE) of r
                 llr <- function(r) {

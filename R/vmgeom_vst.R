@@ -11,7 +11,7 @@
 #' @param lm numeric; limiting magnitude.
 #' @param tm numeric; transformed magnitude.
 #' @param log logical; if `TRUE`, the logarithm of the population index `r` is returned.
-#' @param deriv.degree integer; the order of the derivative at `tm` to return
+#' @param deriv_degree integer; the order of the derivative at `tm` to return
 #'   instead of `r` or `log(r)`. Must be `0`, `1`, or `2`.
 #'
 #' @details
@@ -45,7 +45,7 @@
 #' * `vmgeom_vst_to_r`: numeric value of the population index `r`, derived from
 #'   the mean of `tm`.
 #'
-#' The argument `deriv.degree` can be used to apply the delta method.
+#' The argument `deriv_degree` can be used to apply the delta method.
 #' If `log = TRUE`, the logarithm of `r` is returned.
 #'
 #' @note
@@ -72,7 +72,7 @@
 #' r_hat <- vmgeom_vst_to_r(tm_mean)
 #'
 #' # Derivative dr/d(tm) at tm_mean (needed for the delta method)
-#' dr_dtm <- vmgeom_vst_to_r(tm_mean, deriv.degree = 1L)
+#' dr_dtm <- vmgeom_vst_to_r(tm_mean, deriv_degree = 1L)
 #'
 #' # Variance of the sample mean of tm
 #' var_tm.mean <- tm_var / N
@@ -104,7 +104,7 @@ vmgeom_vst_from_magn <- function(m, lm) {
 
 #' @rdname vmgeom_vst
 #' @export
-vmgeom_vst_to_r <- function(tm, log = FALSE, deriv.degree = 0L) {
+vmgeom_vst_to_r <- function(tm, log = FALSE, deriv_degree = 0L) {
     poly_coef0 <- c(10.31637299, -5.51610811, 1.38003791, -0.18014183, 0.00946975)
     names(poly_coef0) <- seq_along(poly_coef0) - 1 # exponents
 
@@ -112,30 +112,30 @@ vmgeom_vst_to_r <- function(tm, log = FALSE, deriv.degree = 0L) {
     # tm max 5.74 (r approx 1.4)
     tm[tm < 3.96 | tm > 5.74] <- NA
 
-    if (deriv.degree > 0L) {
-        poly_coef1 <- f_polynomial_coef(poly_coef0, deriv.degree = 1L)
+    if (deriv_degree > 0L) {
+        poly_coef1 <- f_polynomial_coef(poly_coef0, deriv_degree = 1L)
     }
-    if (deriv.degree > 1L) {
-        poly_coef2 <- f_polynomial_coef(poly_coef1, deriv.degree = 1L)
+    if (deriv_degree > 1L) {
+        poly_coef2 <- f_polynomial_coef(poly_coef1, deriv_degree = 1L)
     }
-    if (deriv.degree > 2L) {
-        stop(paste("deriv.degree", deriv.degree, "not implemented!"))
+    if (deriv_degree > 2L) {
+        stop(paste("deriv_degree", deriv_degree, "not implemented!"))
     }
 
     if (log) {
-        if (2L == deriv.degree) {
+        if (2L == deriv_degree) {
             f_polynomial(tm, poly_coef2)
-        } else if (1L == deriv.degree) {
+        } else if (1L == deriv_degree) {
             f_polynomial(tm, poly_coef1)
         } else {
             f_polynomial(tm, poly_coef0)
         }
     } else {
-        if (2L == deriv.degree) {
+        if (2L == deriv_degree) {
             exp(f_polynomial(tm, poly_coef0)) * (
                 f_polynomial(tm, poly_coef1)^2 + f_polynomial(tm, poly_coef2)
             )
-        } else if (1L == deriv.degree) {
+        } else if (1L == deriv_degree) {
             f_polynomial(tm, poly_coef1) * exp(f_polynomial(tm, poly_coef0))
         } else {
             exp(f_polynomial(tm, poly_coef0))

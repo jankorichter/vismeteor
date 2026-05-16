@@ -7,8 +7,8 @@ test_that("per_2015", {
             base_url,
             shower = "PER",
             period = c("2015-01-01", "2015-12-31"),
-            withMagnitudes = TRUE,
-            withSessions = TRUE
+            with_magnitudes = TRUE,
+            with_sessions = TRUE
         )
         save(
             PER_2015_rates,
@@ -20,8 +20,8 @@ test_that("per_2015", {
             base_url,
             shower = "PER",
             period = c("2015-01-01", "2015-12-31"),
-            withMagnitudes = TRUE,
-            withSessions = TRUE
+            with_magnitudes = TRUE,
+            with_sessions = TRUE
         )
         save(
             PER_2015_magn,

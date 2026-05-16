@@ -121,13 +121,13 @@ test_that("pvmgeom", {
     }
 
     m <- seq(0, 30, 1)
-    p <- vismeteor::pvmgeom(6 - m, 6.5, r, lower.tail = FALSE, perception.fun = perception.const)
+    p <- vismeteor::pvmgeom(6 - m, 6.5, r, lower.tail = FALSE, perception_fun = perception.const)
     expect_type(p, "double")
     expect_length(p, length(m))
     expect_equal(p, stats::pgeom(m, 1 - 1 / r, lower.tail = TRUE))
 
     m <- seq(0, 30, 1)
-    p <- vismeteor::pvmgeom(6 - m, 6.5, r, lower.tail = TRUE, perception.fun = perception.const)
+    p <- vismeteor::pvmgeom(6 - m, 6.5, r, lower.tail = TRUE, perception_fun = perception.const)
     expect_type(p, "double")
     expect_length(p, length(m))
     expect_equal(p, stats::pgeom(m, 1 - 1 / r, lower.tail = FALSE))

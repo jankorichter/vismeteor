@@ -120,7 +120,7 @@ obs$t <- with(obs, t.eff * sin(deg2rad(radiant.alt)) / f)
 rates <- data.frame(
     sl     = obs$sl,
     t      = obs$t,
-    limmag = obs$lim.magn,
+    limmag = obs$lim_magn,
     freq   = obs$freq
 )
 rates <- rates[order(rates$sl), ]

@@ -46,10 +46,10 @@ which also includes the limiting magnitude.
 
 ```{r, echo=TRUE, results='hide'}
 observations <- with(PER_2015_magn$observations, {
-    idx <- !is.na(lim.magn) & sl.start > 135.81 & sl.end < 135.87
+    idx <- !is.na(lim_magn) & sl.start > 135.81 & sl.end < 135.87
     data.frame(
-        magn.id = magn.id[idx],
-        lim.magn = lim.magn[idx]
+        magn_id = magn_id[idx],
+        lim_magn = lim_magn[idx]
     )
 })
 head(observations, 5) # Example values
@@ -70,17 +70,17 @@ magnitudes <- with(new.env(), {
     magnitudes <- merge(
         observations,
         as.data.frame(PER_2015_magn$magnitudes),
-        by = "magn.id"
+        by = "magn_id"
     )
     magnitudes$magn <- as.integer(as.character(magnitudes$magn))
-    subset(magnitudes, (magnitudes$lim.magn - magnitudes$magn) > -0.5)
+    subset(magnitudes, (magnitudes$lim_magn - magnitudes$magn) > -0.5)
 })
 head(magnitudes, 5) # Example values
 ```
 
 we obtain a data frame with the absolute observed frequencies `Freq` for each
 observation of a magnitude class. The expression
-`subset(magnitudes, (magnitudes$lim.magn - magnitudes$magn) > -0.5`
+`subset(magnitudes, (magnitudes$lim_magn - magnitudes$magn) > -0.5`
 ensures that meteors fainter than the limiting magnitude are not used if they exist.
 
 ```{r, echo=FALSE, results='asis'}
@@ -106,7 +106,7 @@ as `optim()` identifies a minimum.
 # maximum likelihood estimation (MLE) of r
 result.ml <- with(magnitudes, {
     # log likelihood function
-    ll <- function(r) -sum(Freq * dvmgeom(magn, lim.magn, r, log = TRUE))
+    ll <- function(r) -sum(Freq * dvmgeom(magn, lim_magn, r, log = TRUE))
     r.start <- 2.0 # starting value
     r.lower <- 1.2 # lowest expected value
     r.upper <- 4.0 # highest expected value
@@ -130,7 +130,7 @@ with(new.env(), {
     data.plot$ll <- mapply(function(r) {
         with(magnitudes, {
             # log likelihood function
-            sum(Freq * dvmgeom(magn, lim.magn, r, log = TRUE))
+            sum(Freq * dvmgeom(magn, lim_magn, r, log = TRUE))
         })
     }, data.plot$r)
     data.plot$l <- exp(data.plot$ll - max(data.plot$ll))
@@ -184,7 +184,7 @@ distribution of $r$.
 ```{r, echo=TRUE, results='hide'}
 result.rate <- with(magnitudes, {
     N <- sum(Freq)
-    a <- vmperception(lim.magn - magn - 1) / vmperception(lim.magn - magn)
+    a <- vmperception(lim_magn - magn - 1) / vmperception(lim_magn - magn)
     a.mean <- as.numeric(weighted.mean(a, w = Freq))
     a.var <- as.numeric(cov.wt(cbind(a), wt = Freq)$cov) / N
     # apply the delta method and return the result
@@ -208,7 +208,7 @@ Using the bootstrap method, it can be assessed whether the mean is normally dist
 # Bootstrapping Method
 r.means <- with(magnitudes, {
     N <- sum(Freq)
-    a <- vmperception(lim.magn - magn - 1) / vmperception(lim.magn - magn)
+    a <- vmperception(lim_magn - magn - 1) / vmperception(lim_magn - magn)
     replicate(50000, {
         s <- sample(a, size = N, replace = TRUE, prob = Freq)
         s.mean <- mean(s)
@@ -273,15 +273,15 @@ provides both a bias correction (second-order term).
 ```{r, echo=TRUE, results='show'}
 result.vs <- with(magnitudes, {
     N <- sum(Freq)
-    tm <- vmgeom_vst_from_magn(magn, lim.magn)
+    tm <- vmgeom_vst_from_magn(magn, lim_magn)
     tm.mean <- sum(Freq * tm) / N
     tm.var <- sum(Freq * (tm - tm.mean)^2) / (N - 1)
     tm.mean.var <- tm.var / N
 
     # Delta method: variance and variance of r
     r.hat <- vmgeom_vst_to_r(tm.mean)
-    dr_dtm <- vmgeom_vst_to_r(tm.mean, deriv.degree = 1L)
-    d2r_dtm2 <- vmgeom_vst_to_r(tm.mean, deriv.degree = 2L)
+    dr_dtm <- vmgeom_vst_to_r(tm.mean, deriv_degree = 1L)
+    d2r_dtm2 <- vmgeom_vst_to_r(tm.mean, deriv_degree = 2L)
     r.hat <- r.hat - 0.5 * d2r_dtm2 * tm.mean.var
     r.var <- dr_dtm^2 * tm.mean.var + 0.5 * d2r_dtm2^2 * tm.mean.var^2
 
@@ -302,14 +302,14 @@ Using the bootstrap method, it can be assessed whether the mean is normally dist
 # Bootstrapping Method
 r.means <- with(magnitudes, {
     N <- sum(Freq)
-    tm <- vmgeom_vst_from_magn(magn, lim.magn)
+    tm <- vmgeom_vst_from_magn(magn, lim_magn)
     replicate(50000, {
         s <- sample(tm, size = N, replace = TRUE, prob = Freq)
         s.mean <- mean(s)
         s.var <- var(s) / N
 
         r.hat <- vmgeom_vst_to_r(s.mean)
-        d2r_ds2 <- vmgeom_vst_to_r(s.mean, deriv.degree = 2L)
+        d2r_ds2 <- vmgeom_vst_to_r(s.mean, deriv_degree = 2L)
         r.hat - 0.5 * d2r_ds2 * s.var
     })
 })
@@ -352,7 +352,7 @@ the expected frequencies. Then, using the estimated r-value, we retrieve the rel
 frequencies `p` for each observation and add them to the data frame `magnitudes`:
 
 ```{r, echo=TRUE, results='hide'}
-magnitudes$p <- with(magnitudes, dvmgeom(m = magn, lm = lim.magn, result.rate$mean))
+magnitudes$p <- with(magnitudes, dvmgeom(m = magn, lm = lim_magn, result.rate$mean))
 ```
 
 We must also consider the probabilities for the magnitude class with the brightest meteors.
@@ -370,7 +370,7 @@ their probability.
 idx <- magnitudes$magn == magn.min
 magnitudes$p[idx] <- with(
     magnitudes[idx, ],
-    pvmgeom(m = magn + 1L, lm = lim.magn, result.rate$mean, lower.tail = TRUE)
+    pvmgeom(m = magn + 1L, lm = lim_magn, result.rate$mean, lower.tail = TRUE)
 )
 ```
 
@@ -382,7 +382,7 @@ We now create the contingency table `magnitutes.observed` for the observed meteo
 and its margin table.
 
 ```{r, echo=TRUE}
-magnitutes.observed <- xtabs(Freq ~ magn.id + magn, data = magnitudes)
+magnitutes.observed <- xtabs(Freq ~ magn_id + magn, data = magnitudes)
 magnitutes.observed.mt <- margin.table(magnitutes.observed, margin = 2)
 print(magnitutes.observed.mt)
 ```
@@ -397,14 +397,14 @@ magnitude class `4+`, and a new contingency table magnitudes.observed is created
 ```{r, echo=TRUE}
 magnitudes$magn[magnitudes$magn <= 0] <- "0-"
 magnitudes$magn[magnitudes$magn >= 4] <- "4+"
-magnitutes.observed <- xtabs(Freq ~ magn.id + magn, data = magnitudes)
+magnitutes.observed <- xtabs(Freq ~ magn_id + magn, data = magnitudes)
 print(margin.table(magnitutes.observed, margin = 2))
 ```
 
 We now need the corresponding expected relative frequencies
 
 ```{r, echo=TRUE}
-magnitutes.expected <- xtabs(p ~ magn.id + magn, data = magnitudes)
+magnitutes.expected <- xtabs(p ~ magn_id + magn, data = magnitudes)
 magnitutes.row_freq <- margin.table(magnitutes.observed, margin = 1)
 magnitutes.expected <- sweep(magnitutes.expected, 1, magnitutes.row_freq, `*`)
 magnitutes.expected <- magnitutes.expected / sum(magnitutes.expected)

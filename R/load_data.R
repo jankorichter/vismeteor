@@ -14,27 +14,27 @@
 #'   \code{NA} loads sporadic meteors.
 #' @param period time; selects a time range by minimum/maximum.
 #' @param sl numeric; selects a range of solar longitudes by minimum/maximum.
-#' @param lim.magn numeric; selects a range of limiting magnitudes by
+#' @param lim_magn numeric; selects a range of limiting magnitudes by
 #'   minimum/maximum.
-#' @param sun.alt.max numeric; selects the maximum altitude of the sun
+#' @param sun_alt_max numeric; selects the maximum altitude of the sun
 #'   (rates only).
-#' @param moon.alt.max numeric; selects the maximum altitude of the moon
+#' @param moon_alt_max numeric; selects the maximum altitude of the moon
 #'   (rates only).
-#' @param session.id integer; selects by session ids.
-#' @param rate.id integer; selects rate observations by ids.
-#' @param magn.id integer; selects magnitude observations by ids.
-#' @param withSessions logical; if \code{TRUE}, also load the corresponding
+#' @param session_id integer; selects by session ids.
+#' @param rate_id integer; selects rate observations by ids.
+#' @param magn_id integer; selects magnitude observations by ids.
+#' @param with_sessions logical; if \code{TRUE}, also load the corresponding
 #'   session data.
-#' @param withMagnitudes logical; if \code{TRUE}, also load the corresponding
+#' @param with_magnitudes logical; if \code{TRUE}, also load the corresponding
 #'   magnitude observations.
 #' @details
-#' \code{sl}, \code{period} and \code{lim.magn} expect a vector with
+#' \code{sl}, \code{period} and \code{lim_magn} expect a vector with
 #' successive minimum and maximum values.
-#' \code{sun.alt.max} and \code{moon.alt.max} are expected to be scalar values.
+#' \code{sun_alt_max} and \code{moon_alt_max} are expected to be scalar values.
 #'
 #' \strong{Note:} Unlike the previous DBI-based version, only a single range
 #' per filter parameter is supported.  If you previously passed a matrix with
-#' multiple rows to \code{period}, \code{sl}, or \code{lim.magn}, flatten
+#' multiple rows to \code{period}, \code{sl}, or \code{lim_magn}, flatten
 #' them to a single min/max pair or issue multiple calls and combine with
 #' \code{rbind()}.
 #' @return
@@ -51,15 +51,15 @@
 #' \code{load_vmdb_rates} returns a data frame with columns:
 #'
 #' \tabular{ll}{
-#' \code{rate.id} \tab unique identifier of the rate observation,\cr
+#' \code{rate_id} \tab unique identifier of the rate observation,\cr
 #' \code{shower.code} \tab IAU code of the shower. \code{NA} for sporadic.\cr
 #' \code{period.start} \tab start of observation,\cr
 #' \code{period.end} \tab end of observation,\cr
 #' \code{sl.start} \tab solar longitude at start,\cr
 #' \code{sl.end} \tab solar longitude at end,\cr
-#' \code{session.id} \tab reference to the session,\cr
+#' \code{session_id} \tab reference to the session,\cr
 #' \code{freq} \tab count of observed meteors,\cr
-#' \code{lim.magn} \tab limiting magnitude,\cr
+#' \code{lim_magn} \tab limiting magnitude,\cr
 #' \code{t.eff} \tab net observed time in hours,\cr
 #' \code{f} \tab correction factor of cloud cover,\cr
 #' \code{time.sidereal} \tab sidereal time,\cr
@@ -72,28 +72,28 @@
 #' \code{field.az} \tab azimuth of the field of view (optional),\cr
 #' \code{radiant.alt} \tab altitude of the radiant (optional),\cr
 #' \code{radiant.az} \tab azimuth of the radiant (optional),\cr
-#' \code{magn.id} \tab reference to the magnitude observations (optional).
+#' \code{magn_id} \tab reference to the magnitude observations (optional).
 #' }
 #'
 #' \code{load_vmdb_magnitudes} returns an \code{observations} data frame with:
 #'
 #' \tabular{ll}{
-#' \code{magn.id} \tab unique identifier of the magnitude observation,\cr
+#' \code{magn_id} \tab unique identifier of the magnitude observation,\cr
 #' \code{shower.code} \tab IAU code of the shower. \code{NA} for sporadic.\cr
 #' \code{period.start} \tab start of observation,\cr
 #' \code{period.end} \tab end of observation,\cr
 #' \code{sl.start} \tab solar longitude at start,\cr
 #' \code{sl.end} \tab solar longitude at end,\cr
-#' \code{session.id} \tab reference to the session,\cr
+#' \code{session_id} \tab reference to the session,\cr
 #' \code{freq} \tab count of observed meteors,\cr
 #' \code{magn.mean} \tab mean magnitude,\cr
-#' \code{lim.magn} \tab limiting magnitude (optional).
+#' \code{lim_magn} \tab limiting magnitude (optional).
 #' }
 #'
 #' The \code{sessions} data frame contains
 #'
 #' \tabular{ll}{
-#' \code{session.id} \tab unique identifier of the session,\cr
+#' \code{session_id} \tab unique identifier of the session,\cr
 #' \code{longitude} \tab location's longitude,\cr
 #' \code{latitude} \tab location's latitude,\cr
 #' \code{elevation} \tab height above mean sea level in km,\cr
@@ -115,9 +115,9 @@
 #'     shower         = "PER",
 #'     sl             = c(135.5, 145.5),
 #'     period         = c("2015-08-01", "2015-08-31"),
-#'     lim.magn       = c(5.3, 6.7),
-#'     withMagnitudes = TRUE,
-#'     withSessions   = TRUE
+#'     lim_magn       = c(5.3, 6.7),
+#'     with_magnitudes = TRUE,
+#'     with_sessions   = TRUE
 #' )
 #'
 #' # Load magnitude observations
@@ -126,8 +126,8 @@
 #'     shower       = "PER",
 #'     sl           = c(135.5, 145.5),
 #'     period       = c("2015-08-01", "2015-08-31"),
-#'     lim.magn     = c(5.3, 6.7),
-#'     withSessions = TRUE
+#'     lim_magn     = c(5.3, 6.7),
+#'     with_sessions = TRUE
 #' )
 #' }
 
@@ -138,23 +138,23 @@ load_vmdb_rates <- function(
   shower = NULL,
   period = NULL,
   sl = NULL,
-  lim.magn = NULL,
-  sun.alt.max = NULL,
-  moon.alt.max = NULL,
-  session.id = NULL,
-  rate.id = NULL,
-  withSessions = FALSE,
-  withMagnitudes = FALSE
+  lim_magn = NULL,
+  sun_alt_max = NULL,
+  moon_alt_max = NULL,
+  session_id = NULL,
+  rate_id = NULL,
+  with_sessions = FALSE,
+  with_magnitudes = FALSE
 ) {
     p <- .build_params(
-        shower, period, sl, lim.magn,
-        sun.alt.max = sun.alt.max,
-        moon.alt.max = moon.alt.max,
-        session.id = session.id,
+        shower, period, sl, lim_magn,
+        sun_alt_max = sun_alt_max,
+        moon_alt_max = moon_alt_max,
+        session_id = session_id,
         id_param = "rate_id",
-        id_values = rate.id,
-        withSessions = withSessions,
-        withMagnitudes = withMagnitudes
+        id_values = rate_id,
+        with_sessions = with_sessions,
+        with_magnitudes = with_magnitudes
     )
 
     body <- .api_get(base_url, "rates", p$scalar, p$multi)
@@ -164,9 +164,9 @@ load_vmdb_rates <- function(
     } else {
         observations <- .remap_cols(as.data.frame(body$observations), .rate_col_map)
         observations$shower.code <- factor(observations$shower.code)
-        observations$session.id <- factor(observations$session.id)
-        observations$magn.id <- factor(observations$magn.id)
-        row.names(observations) <- observations$rate.id
+        observations$session_id <- factor(observations$session_id)
+        observations$magn_id <- factor(observations$magn_id)
+        row.names(observations) <- observations$rate_id
     }
 
     list(
@@ -183,19 +183,19 @@ load_vmdb_magnitudes <- function(
   shower = NULL,
   period = NULL,
   sl = NULL,
-  lim.magn = NULL,
-  session.id = NULL,
-  magn.id = NULL,
-  withSessions = FALSE,
-  withMagnitudes = TRUE
+  lim_magn = NULL,
+  session_id = NULL,
+  magn_id = NULL,
+  with_sessions = FALSE,
+  with_magnitudes = TRUE
 ) {
     p <- .build_params(
-        shower, period, sl, lim.magn,
-        session.id = session.id,
+        shower, period, sl, lim_magn,
+        session_id = session_id,
         id_param = "magn_id",
-        id_values = magn.id,
-        withSessions = withSessions,
-        withMagnitudes = withMagnitudes
+        id_values = magn_id,
+        with_sessions = with_sessions,
+        with_magnitudes = with_magnitudes
     )
 
     body <- .api_get(base_url, "magnitudes", p$scalar, p$multi)
@@ -205,8 +205,8 @@ load_vmdb_magnitudes <- function(
     } else {
         observations <- .remap_cols(as.data.frame(body$observations), .magn_col_map)
         observations$shower.code <- factor(observations$shower.code)
-        observations$session.id <- factor(observations$session.id)
-        row.names(observations) <- observations$magn.id
+        observations$session_id <- factor(observations$session_id)
+        row.names(observations) <- observations$magn_id
     }
 
     list(
@@ -220,10 +220,10 @@ load_vmdb_magnitudes <- function(
 # Multi-value parameters (shower, session_id, rate_id, magn_id) are returned
 # separately as a named list of vectors.
 .build_params <- function(
-  shower, period, sl, lim.magn,
-  sun.alt.max = NULL, moon.alt.max = NULL,
-  session.id = NULL, id_param = NULL, id_values = NULL,
-  withSessions = FALSE, withMagnitudes = FALSE
+  shower, period, sl, lim_magn,
+  sun_alt_max = NULL, moon_alt_max = NULL,
+  session_id = NULL, id_param = NULL, id_values = NULL,
+  with_sessions = FALSE, with_magnitudes = FALSE
 ) {
     params <- list()
     multi <- list()
@@ -244,21 +244,21 @@ load_vmdb_magnitudes <- function(
         params$sl_max <- max(sl[, 2])
     }
 
-    if (!is.null(lim.magn)) {
-        lim.magn <- matrix(lim.magn, ncol = 2)
-        params$lim_magn_min <- min(lim.magn[, 1])
-        params$lim_magn_max <- max(lim.magn[, 2])
+    if (!is.null(lim_magn)) {
+        lim_magn <- matrix(lim_magn, ncol = 2)
+        params$lim_magn_min <- min(lim_magn[, 1])
+        params$lim_magn_max <- max(lim_magn[, 2])
     }
 
-    if (!is.null(sun.alt.max)) params$sun_alt_max <- sun.alt.max
-    if (!is.null(moon.alt.max)) params$moon_alt_max <- moon.alt.max
+    if (!is.null(sun_alt_max)) params$sun_alt_max <- sun_alt_max
+    if (!is.null(moon_alt_max)) params$moon_alt_max <- moon_alt_max
 
-    if (!is.null(session.id)) multi$session_id <- as.integer(session.id)
+    if (!is.null(session_id)) multi$session_id <- as.integer(session_id)
     if (!is.null(id_values)) multi[[id_param]] <- as.integer(id_values)
 
     include <- character(0)
-    if (withSessions) include <- c(include, "sessions")
-    if (withMagnitudes) include <- c(include, "magnitudes")
+    if (with_sessions) include <- c(include, "sessions")
+    if (with_magnitudes) include <- c(include, "magnitudes")
     if (length(include) > 0) params$include <- paste(include, collapse = ",")
 
     list(scalar = params, multi = multi)
@@ -289,15 +289,15 @@ load_vmdb_magnitudes <- function(
 
 # Explicit column maps: API name (DB column) -> R output name.
 .rate_col_map <- c(
-    id            = "rate.id",
+    id            = "rate_id",
     shower        = "shower.code",
     period_start  = "period.start",
     period_end    = "period.end",
     sl_start      = "sl.start",
     sl_end        = "sl.end",
-    session_id    = "session.id",
+    session_id    = "session_id",
     freq          = "freq",
-    lim_mag       = "lim.magn",
+    lim_mag       = "lim_magn",
     t_eff         = "t.eff",
     f             = "f",
     sidereal_time = "time.sidereal",
@@ -310,24 +310,24 @@ load_vmdb_magnitudes <- function(
     field_az      = "field.az",
     rad_alt       = "radiant.alt",
     rad_az        = "radiant.az",
-    magn_id       = "magn.id"
+    magn_id       = "magn_id"
 )
 
 .magn_col_map <- c(
-    id           = "magn.id",
+    id           = "magn_id",
     shower       = "shower.code",
     period_start = "period.start",
     period_end   = "period.end",
     sl_start     = "sl.start",
     sl_end       = "sl.end",
-    session_id   = "session.id",
+    session_id   = "session_id",
     freq         = "freq",
     mean         = "magn.mean",
-    lim_mag      = "lim.magn"
+    lim_mag      = "lim_magn"
 )
 
 .session_col_map <- c(
-    id            = "session.id",
+    id            = "session_id",
     longitude     = "longitude",
     latitude      = "latitude",
     elevation     = "elevation",
@@ -353,7 +353,7 @@ load_vmdb_magnitudes <- function(
     s$location.name <- factor(s$location.name)
     s$observer.id <- factor(s$observer.id)
     s$observer.name <- factor(s$observer.name)
-    row.names(s) <- s$session.id
+    row.names(s) <- s$session_id
     s
 }
 
@@ -372,6 +372,6 @@ load_vmdb_magnitudes <- function(
         levels  = sort(unique(m$magn), decreasing = TRUE),
         ordered = TRUE
     )
-    names(m)[names(m) == "id"] <- "magn.id"
-    stats::xtabs(freq ~ magn.id + magn, data = m)
+    names(m)[names(m) == "id"] <- "magn_id"
+    stats::xtabs(freq ~ magn_id + magn, data = m)
 }

@@ -16,7 +16,7 @@
 #' @param log logical; if `TRUE`, probabilities are returned as `log(p)`.
 #' @param lower.tail logical; if `TRUE` (default), probabilities are
 #'     \eqn{P[M < m]}; otherwise, \eqn{P[M \ge m]}.
-#' @param perception.fun function; optional perception probability function.
+#' @param perception_fun function; optional perception probability function.
 #'     The default is [vismeteor::vmperception].
 #'
 #' @details
@@ -44,11 +44,11 @@
 #' The function \eqn{f(\cdot)} is the continuous density of the ideal magnitude distribution,
 #' and \eqn{g(\cdot)} denotes the [perception probability function][vismeteor::vmperception].
 #'
-#' If a different perception probability function `perception.fun` is supplied,
+#' If a different perception probability function `perception_fun` is supplied,
 #' it must have the signature `function(x)` and return the perception probabilities of
 #' the difference `x` between the limiting magnitude and the meteor magnitude.
-#' If `x >= 15.0`, the `perception.fun` function should return a perception probability of `1.0`.
-#' The argument `perception.fun` is resolved using [match.fun].
+#' If `x >= 15.0`, the `perception_fun` function should return a perception probability of `1.0`.
+#' The argument `perception_fun` is resolved using [match.fun].
 #'
 #' @return
 #' - `dvmideal`: density
@@ -132,7 +132,7 @@
 
 #' @rdname vmideal
 #' @export
-dvmideal <- function(m, lm, psi, log = FALSE, perception.fun = NULL) {
+dvmideal <- function(m, lm, psi, log = FALSE, perception_fun = NULL) {
     if (anyNA(m) || anyNA(lm) || anyNA(psi)) {
         stop("NA's are not allowed!")
     }
@@ -150,10 +150,10 @@ dvmideal <- function(m, lm, psi, log = FALSE, perception.fun = NULL) {
         stop("magnitudes must be integer values!")
     }
 
-    if (is.null(perception.fun)) {
-        perception.fun <- vismeteor::vmperception
+    if (is.null(perception_fun)) {
+        perception_fun <- vismeteor::vmperception
     } else {
-        perception.fun <- match.fun(perception.fun)
+        perception_fun <- match.fun(perception_fun)
     }
 
     if (1 == length(lm)) {
@@ -171,7 +171,7 @@ dvmideal <- function(m, lm, psi, log = FALSE, perception.fun = NULL) {
             return(vismeteor::dvmgeom(m, lm, 10^0.4, log = log))
         }
 
-        norm_res <- vmideal_norm(lm, psi, perception.fun)
+        norm_res <- vmideal_norm(lm, psi, perception_fun)
         p <- norm_res$p
         m_lower <- norm_res$m_lower
         m_upper <- norm_res$m_upper
@@ -230,7 +230,7 @@ dvmideal <- function(m, lm, psi, log = FALSE, perception.fun = NULL) {
 
 #' @rdname vmideal
 #' @export
-pvmideal <- function(m, lm, psi, lower.tail = TRUE, log = FALSE, perception.fun = NULL) {
+pvmideal <- function(m, lm, psi, lower.tail = TRUE, log = FALSE, perception_fun = NULL) {
     if (anyNA(m) || anyNA(lm) || anyNA(psi)) {
         stop("NA's are not allowed!")
     }
@@ -248,10 +248,10 @@ pvmideal <- function(m, lm, psi, lower.tail = TRUE, log = FALSE, perception.fun 
         stop("magnitudes must be integer values!")
     }
 
-    if (is.null(perception.fun)) {
-        perception.fun <- vismeteor::vmperception
+    if (is.null(perception_fun)) {
+        perception_fun <- vismeteor::vmperception
     } else {
-        perception.fun <- match.fun(perception.fun)
+        perception_fun <- match.fun(perception_fun)
     }
 
     if (1 == length(lm)) {
@@ -269,7 +269,7 @@ pvmideal <- function(m, lm, psi, lower.tail = TRUE, log = FALSE, perception.fun 
             return(vismeteor::pvmgeom(m, lm, 10^0.4, lower.tail = lower.tail, log = log))
         }
 
-        norm_res <- vmideal_norm(lm, psi, perception.fun)
+        norm_res <- vmideal_norm(lm, psi, perception_fun)
         m_lower <- norm_res$m_lower
         m_upper <- norm_res$m_upper
 
@@ -354,7 +354,7 @@ pvmideal <- function(m, lm, psi, lower.tail = TRUE, log = FALSE, perception.fun 
 
 #' @rdname vmideal
 #' @export
-qvmideal <- function(p, lm, psi, lower.tail = TRUE, perception.fun = NULL) {
+qvmideal <- function(p, lm, psi, lower.tail = TRUE, perception_fun = NULL) {
     if (anyNA(p) || anyNA(lm) || anyNA(psi)) {
         stop("NA's are not allowed!")
     }
@@ -367,10 +367,10 @@ qvmideal <- function(p, lm, psi, lower.tail = TRUE, perception.fun = NULL) {
         stop("Infinite psi values are not allowed!")
     }
 
-    if (is.null(perception.fun)) {
-        perception.fun <- vismeteor::vmperception
+    if (is.null(perception_fun)) {
+        perception_fun <- vismeteor::vmperception
     } else {
-        perception.fun <- match.fun(perception.fun)
+        perception_fun <- match.fun(perception_fun)
     }
 
     if (1 == length(lm)) {
@@ -398,7 +398,7 @@ qvmideal <- function(p, lm, psi, lower.tail = TRUE, perception.fun = NULL) {
         if (lower.tail) {
             m[0.0 == p] <- -Inf
             m[1.0 == p] <- m_upper
-            p_max <- vismeteor::pvmideal(m_lower, lm, psi, lower.tail = TRUE, perception.fun = perception.fun)
+            p_max <- vismeteor::pvmideal(m_lower, lm, psi, lower.tail = TRUE, perception_fun = perception_fun)
 
             idx <- p > 0.0 & p < p_max
             if (any(idx)) {
@@ -412,14 +412,14 @@ qvmideal <- function(p, lm, psi, lower.tail = TRUE, perception.fun = NULL) {
             idx <- p >= p_max & p < 1.0
             if (any(idx)) {
                 m_gen <- seq(m_lower, m_upper + 1)
-                p_gen <- vismeteor::pvmideal(m_gen, lm, psi, lower.tail = lower.tail, perception.fun = perception.fun)
+                p_gen <- vismeteor::pvmideal(m_gen, lm, psi, lower.tail = lower.tail, perception_fun = perception_fun)
                 p_idx <- findInterval(p[idx], p_gen, left.open = FALSE)
                 m[idx] <- m_gen[p_idx]
             }
         } else {
             m[0.0 == p] <- m_upper
             m[1.0 == p] <- -Inf
-            p_max <- vismeteor::pvmideal(m_lower, lm, psi, lower.tail = FALSE, perception.fun = perception.fun)
+            p_max <- vismeteor::pvmideal(m_lower, lm, psi, lower.tail = FALSE, perception_fun = perception_fun)
 
             idx <- p > p_max & p < 1.0
             if (any(idx)) {
@@ -434,7 +434,7 @@ qvmideal <- function(p, lm, psi, lower.tail = TRUE, perception.fun = NULL) {
             idx <- p > 0.0 & p <= p_max
             if (any(idx)) {
                 m_gen <- seq(m_upper + 1, m_lower)
-                p_gen <- vismeteor::pvmideal(m_gen, lm, psi, lower.tail = FALSE, perception.fun = perception.fun)
+                p_gen <- vismeteor::pvmideal(m_gen, lm, psi, lower.tail = FALSE, perception_fun = perception_fun)
                 p_idx <- findInterval(p[idx], p_gen, left.open = TRUE) + 1
                 m[idx] <- m_gen[p_idx]
             }
@@ -469,7 +469,7 @@ qvmideal <- function(p, lm, psi, lower.tail = TRUE, perception.fun = NULL) {
 
 #' @rdname vmideal
 #' @export
-rvmideal <- function(n, lm, psi, perception.fun = NULL) {
+rvmideal <- function(n, lm, psi, perception_fun = NULL) {
     if (anyNA(lm) || anyNA(psi)) {
         stop("NA's are not allowed!")
     }
@@ -482,10 +482,10 @@ rvmideal <- function(n, lm, psi, perception.fun = NULL) {
         stop("Infinite psi values are not allowed!")
     }
 
-    if (is.null(perception.fun)) {
-        perception.fun <- vismeteor::vmperception
+    if (is.null(perception_fun)) {
+        perception_fun <- vismeteor::vmperception
     } else {
-        perception.fun <- match.fun(perception.fun)
+        perception_fun <- match.fun(perception_fun)
     }
 
     p <- stats::runif(n)
@@ -493,11 +493,11 @@ rvmideal <- function(n, lm, psi, perception.fun = NULL) {
 
     idx <- p < 0.5
     if (any(idx)) {
-        m[idx] <- vismeteor::qvmideal(p[idx], lm, psi, lower.tail = TRUE, perception.fun = perception.fun)
+        m[idx] <- vismeteor::qvmideal(p[idx], lm, psi, lower.tail = TRUE, perception_fun = perception_fun)
     }
 
     if (any(!idx)) {
-        m[!idx] <- vismeteor::qvmideal(1.0 - p[!idx], lm, psi, lower.tail = FALSE, perception.fun = perception.fun)
+        m[!idx] <- vismeteor::qvmideal(1.0 - p[!idx], lm, psi, lower.tail = FALSE, perception_fun = perception_fun)
     }
 
     m
@@ -505,15 +505,15 @@ rvmideal <- function(n, lm, psi, perception.fun = NULL) {
 
 #' @rdname vmideal
 #' @export
-cvmideal <- function(lm, psi, log = FALSE, perception.fun = NULL) {
+cvmideal <- function(lm, psi, log = FALSE, perception_fun = NULL) {
     if (anyNA(lm) || anyNA(psi)) {
         stop("NA's are not allowed!")
     }
 
-    if (is.null(perception.fun)) {
-        perception.fun <- vismeteor::vmperception
+    if (is.null(perception_fun)) {
+        perception_fun <- vismeteor::vmperception
     } else {
-        perception.fun <- match.fun(perception.fun)
+        perception_fun <- match.fun(perception_fun)
     }
 
     if (1 == length(psi)) {
@@ -526,7 +526,7 @@ cvmideal <- function(lm, psi, log = FALSE, perception.fun = NULL) {
         m_upper <- vmideal_upper_lm(lm)
         m_lower <- m_upper - m_max
         m <- as.integer(seq(m_lower, m_upper))
-        p <- dmideal_int(m, psi) * perception.fun(lm - m)
+        p <- dmideal_int(m, psi) * perception_fun(lm - m)
         p_lower_tail <- vismeteor::pmideal(m_lower - 0.5, psi, lower.tail = TRUE)
         sum(p) + p_lower_tail
     }
@@ -618,12 +618,12 @@ dmideal_int <- function(m, psi, log = FALSE) {
 #' normalization
 #'
 #' @noRd
-vmideal_norm <- function(lm, psi, perception.fun) {
+vmideal_norm <- function(lm, psi, perception_fun) {
     m_max <- 15L
     m_upper <- vmideal_upper_lm(lm)
     m_lower <- m_upper - m_max
     m <- as.integer(seq(m_lower, m_upper))
-    p <- dmideal_int(m, psi) * perception.fun(lm - m)
+    p <- dmideal_int(m, psi) * perception_fun(lm - m)
     names(p) <- as.character(m)
     p_lower_tail <- vismeteor::pmideal(m_lower - 0.5, psi, lower.tail = TRUE)
     norm <- sum(p) + p_lower_tail

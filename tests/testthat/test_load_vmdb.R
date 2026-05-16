@@ -30,13 +30,13 @@ test_that(".build_params: range params", {
 })
 
 test_that(".build_params: scalar altitude / id params", {
-    p <- vismeteor:::.build_params(NULL, NULL, NULL, NULL, sun.alt.max = -10)
+    p <- vismeteor:::.build_params(NULL, NULL, NULL, NULL, sun_alt_max = -10)
     expect_equal(p$scalar$sun_alt_max, -10)
 
-    p <- vismeteor:::.build_params(NULL, NULL, NULL, NULL, moon.alt.max = 5)
+    p <- vismeteor:::.build_params(NULL, NULL, NULL, NULL, moon_alt_max = 5)
     expect_equal(p$scalar$moon_alt_max, 5)
 
-    p <- vismeteor:::.build_params(NULL, NULL, NULL, NULL, session.id = c(1L, 2L))
+    p <- vismeteor:::.build_params(NULL, NULL, NULL, NULL, session_id = c(1L, 2L))
     expect_equal(p$multi$session_id, c(1L, 2L))
 
     p <- vismeteor:::.build_params(NULL, NULL, NULL, NULL,
@@ -49,14 +49,14 @@ test_that(".build_params: include parameter", {
     p <- vismeteor:::.build_params(NULL, NULL, NULL, NULL)
     expect_null(p$scalar$include)
 
-    p <- vismeteor:::.build_params(NULL, NULL, NULL, NULL, withSessions = TRUE)
+    p <- vismeteor:::.build_params(NULL, NULL, NULL, NULL, with_sessions = TRUE)
     expect_equal(p$scalar$include, "sessions")
 
-    p <- vismeteor:::.build_params(NULL, NULL, NULL, NULL, withMagnitudes = TRUE)
+    p <- vismeteor:::.build_params(NULL, NULL, NULL, NULL, with_magnitudes = TRUE)
     expect_equal(p$scalar$include, "magnitudes")
 
     p <- vismeteor:::.build_params(NULL, NULL, NULL, NULL,
-        withSessions = TRUE, withMagnitudes = TRUE
+        with_sessions = TRUE, with_magnitudes = TRUE
     )
     expect_equal(p$scalar$include, "sessions,magnitudes")
 })
@@ -76,10 +76,10 @@ test_that(".parse_sessions: correct data.frame with factors and row names", {
     s <- vismeteor:::.parse_sessions(df)
     expect_true(is.data.frame(s))
     expect_equal(names(s), c(
-        "session.id", "longitude", "latitude", "elevation",
+        "session_id", "longitude", "latitude", "elevation",
         "country", "location.name", "observer.id", "observer.name"
     ))
-    expect_equal(s$session.id, 1L)
+    expect_equal(s$session_id, 1L)
     expect_true(is.factor(s$country))
     expect_true(is.factor(s$location.name))
     expect_true(is.factor(s$observer.id))
@@ -133,11 +133,11 @@ test_that("load_vmdb_rates: parses observations, sessions, magnitudes", {
         obs <- res$observations
         expect_true(is.data.frame(obs))
         expect_equal(nrow(obs), 1)
-        expect_equal(obs$rate.id, 100L)
+        expect_equal(obs$rate_id, 100L)
         expect_true(is.factor(obs$shower.code))
         expect_equal(as.character(obs$shower.code), "PER")
-        expect_true(is.factor(obs$session.id))
-        expect_true(is.factor(obs$magn.id))
+        expect_true(is.factor(obs$session_id))
+        expect_true(is.factor(obs$magn_id))
         expect_equal(row.names(obs), "100")
 
         sess <- res$sessions
@@ -154,15 +154,15 @@ test_that("load_vmdb_rates: parses observations, sessions, magnitudes", {
 
 test_that("load_vmdb_magnitudes: parses observations, sessions, magnitudes", {
     testthat::skip_if_not_installed("httptest2")
-    # withMagnitudes defaults to TRUE → suppress include param for clean fixture path
+    # with_magnitudes defaults to TRUE → suppress include param for clean fixture path
     httptest2::with_mock_dir("fixtures/full", {
-        res <- load_vmdb_magnitudes("http://example.com/api/v1", withMagnitudes = FALSE)
+        res <- load_vmdb_magnitudes("http://example.com/api/v1", with_magnitudes = FALSE)
         expect_type(res, "list")
 
         obs <- res$observations
         expect_true(is.data.frame(obs))
         expect_equal(nrow(obs), 1)
-        expect_equal(obs$magn.id, 200L)
+        expect_equal(obs$magn_id, 200L)
         expect_true(is.factor(obs$shower.code))
         expect_equal(as.character(obs$shower.code), "PER")
         expect_equal(row.names(obs), "200")

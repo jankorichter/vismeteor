@@ -10,7 +10,7 @@
 #' @param m integer; the meteor magnitude.
 #' @param lm numeric; limiting magnitude.
 #' @param tm numeric; transformed magnitude.
-#' @param deriv.degree integer; the degree of the derivative at `tm` to return
+#' @param deriv_degree integer; the degree of the derivative at `tm` to return
 #'   instead of `psi`. Must be `0`, `1` or `2`.
 #'
 #' @details
@@ -40,7 +40,7 @@
 #' * `vmideal_vst_from_magn`: a numeric value, the transformed meteor magnitude.
 #' * `vmideal_vst_to_psi`: a numeric value of the parameter `psi`, derived from
 #'   the mean of `tm`.
-#' The argument `deriv.degree` can be used to apply the delta method.
+#' The argument `deriv_degree` can be used to apply the delta method.
 #'
 #' @note
 #' The internal approximations used here are derived from the perception
@@ -66,7 +66,7 @@
 #' psi_hat <- vmideal_vst_to_psi(tm_mean, limmag)
 #'
 #' # Derivative d(psi)/d(tm) at tm_mean (needed for the delta method)
-#' dpsi_dtm <- vmideal_vst_to_psi(tm_mean, limmag, deriv.degree = 1L)
+#' dpsi_dtm <- vmideal_vst_to_psi(tm_mean, limmag, deriv_degree = 1L)
 #'
 #' # Variance of the sample mean of tm
 #' var_tm.mean <- tm_var / N
@@ -133,7 +133,7 @@ vmideal_vst_from_magn <- function(m, lm) {
 
 #' @rdname vmideal_vst
 #' @export
-vmideal_vst_to_psi <- function(tm, lm, deriv.degree = 0L) {
+vmideal_vst_to_psi <- function(tm, lm, deriv_degree = 0L) {
     poly_coef0 <- c(
         -2.97086442804517, -2.72858043751615, -0.683184284791628, -0.1971973188227,
         -0.0707494993259986, -0.0267813318470729, -0.00482163891332698,
@@ -146,19 +146,19 @@ vmideal_vst_to_psi <- function(tm, lm, deriv.degree = 0L) {
     tm[tm < 0.016 | tm > 8.22] <- NA
     y <- log(tm)
 
-    if (deriv.degree > 0L) {
-        poly_coef1 <- f_polynomial_coef(poly_coef0, deriv.degree = 1L)
+    if (deriv_degree > 0L) {
+        poly_coef1 <- f_polynomial_coef(poly_coef0, deriv_degree = 1L)
     }
-    if (deriv.degree > 1L) {
-        poly_coef2 <- f_polynomial_coef(poly_coef1, deriv.degree = 1L)
+    if (deriv_degree > 1L) {
+        poly_coef2 <- f_polynomial_coef(poly_coef1, deriv_degree = 1L)
     }
-    if (deriv.degree > 2L) {
-        stop(paste("deriv.degree", deriv.degree, "not implemented!"))
+    if (deriv_degree > 2L) {
+        stop(paste("deriv_degree", deriv_degree, "not implemented!"))
     }
 
-    if (2L == deriv.degree) {
+    if (2L == deriv_degree) {
         (f_polynomial(y, poly_coef2) - f_polynomial(y, poly_coef1)) / tm^2
-    } else if (1L == deriv.degree) {
+    } else if (1L == deriv_degree) {
         f_polynomial(y, poly_coef1) / tm
     } else {
         lm + f_polynomial(y, poly_coef0)

@@ -68,8 +68,8 @@ f_polynomial <- function(m, poly_coef) {
 #' returns polynomial coefficients
 #'
 #' @noRd
-f_polynomial_coef <- function(poly_coef, deriv.degree = 1L) {
-    if (0L == deriv.degree) {
+f_polynomial_coef <- function(poly_coef, deriv_degree = 1L) {
+    if (0L == deriv_degree) {
         return(poly_coef)
     }
 
@@ -87,5 +87,5 @@ f_polynomial_coef <- function(poly_coef, deriv.degree = 1L) {
     exponents <- exponents - 1L
     names(poly_coef) <- exponents
 
-    f_polynomial_coef(poly_coef, deriv.degree - 1L)
+    f_polynomial_coef(poly_coef, deriv_degree - 1L)
 }

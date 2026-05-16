@@ -41,16 +41,16 @@ test_that("vmgeom_vst", {
 
     # test first derivative
     f <- function(x) {
-        vmgeom_vst_to_r(x, deriv.degree = 1L)
+        vmgeom_vst_to_r(x, deriv_degree = 1L)
     }
     y <- vmgeom_vst_to_r(5.5) - vmgeom_vst_to_r(4.5)
     expect_true(abs(y - stats::integrate(f, 4.5, 5.5)$value) < 1e-10)
 
     # test second derivative
     f <- function(x) {
-        vmgeom_vst_to_r(x, deriv.degree = 2L)
+        vmgeom_vst_to_r(x, deriv_degree = 2L)
     }
-    y <- vmgeom_vst_to_r(5.5, deriv.degree = 1L) - vmgeom_vst_to_r(4.5, deriv.degree = 1L)
+    y <- vmgeom_vst_to_r(5.5, deriv_degree = 1L) - vmgeom_vst_to_r(4.5, deriv_degree = 1L)
     expect_true(abs(y - stats::integrate(f, 4.5, 5.5)$value) < 1e-10)
 
     # log ...
@@ -65,16 +65,16 @@ test_that("vmgeom_vst", {
 
     # test log first derivative
     f <- function(x) {
-        vmgeom_vst_to_r(x, log = TRUE, deriv.degree = 1L)
+        vmgeom_vst_to_r(x, log = TRUE, deriv_degree = 1L)
     }
     y <- vmgeom_vst_to_r(5.5, log = TRUE) - vmgeom_vst_to_r(4.5, log = TRUE)
     expect_true(abs(y - stats::integrate(f, 4.5, 5.5)$value) < 1e-10)
 
     # test log second derivative
     f <- function(x) {
-        vmgeom_vst_to_r(x, log = TRUE, deriv.degree = 2L)
+        vmgeom_vst_to_r(x, log = TRUE, deriv_degree = 2L)
     }
-    y <- vmgeom_vst_to_r(5.5, log = TRUE, deriv.degree = 1L) -
-        vmgeom_vst_to_r(4.5, log = TRUE, deriv.degree = 1L)
+    y <- vmgeom_vst_to_r(5.5, log = TRUE, deriv_degree = 1L) -
+        vmgeom_vst_to_r(4.5, log = TRUE, deriv_degree = 1L)
     expect_true(abs(y - stats::integrate(f, 4.5, 5.5)$value) < 1e-10)
 })

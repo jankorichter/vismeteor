@@ -51,10 +51,10 @@ which also includes the limiting magnitude.
 
 ```{r, echo=TRUE, results='hide'}
 observations <- with(PER_2015_magn$observations, {
-    idx <- !is.na(lim.magn) & sl.start > 135.81 & sl.end < 135.87
+    idx <- !is.na(lim_magn) & sl.start > 135.81 & sl.end < 135.87
     data.frame(
-        magn.id = magn.id[idx],
-        lim.magn = lim.magn[idx]
+        magn_id = magn_id[idx],
+        lim_magn = lim_magn[idx]
     )
 })
 head(observations, 5) # Example values
@@ -75,17 +75,17 @@ magnitudes <- with(new.env(), {
     magnitudes <- merge(
         observations,
         as.data.frame(PER_2015_magn$magnitudes),
-        by = "magn.id"
+        by = "magn_id"
     )
     magnitudes$magn <- as.integer(as.character(magnitudes$magn))
-    subset(magnitudes, (magnitudes$lim.magn - magnitudes$magn) > -0.5)
+    subset(magnitudes, (magnitudes$lim_magn - magnitudes$magn) > -0.5)
 })
 head(magnitudes[magnitudes$Freq > 0, ], 5) # Example values
 ```
 
 we obtain a data frame with the absolute observed frequencies `Freq` for each
 observation of a magnitude class. The expression
-`subset(magnitudes, (magnitudes$lim.magn - magnitudes$magn) > -0.5`
+`subset(magnitudes, (magnitudes$lim_magn - magnitudes$magn) > -0.5`
 ensures that meteors fainter than the limiting magnitude are not used if they exist.
 
 ```{r, echo=FALSE, results='asis'}
@@ -110,7 +110,7 @@ as `optim()` identifies a minimum.
 # maximum likelihood estimation (MLE) of psi
 result <- with(magnitudes, {
     # log likelihood function
-    ll <- function(psi) -sum(Freq * dvmideal(magn, lim.magn, psi, log = TRUE))
+    ll <- function(psi) -sum(Freq * dvmideal(magn, lim_magn, psi, log = TRUE))
     psi.start <- 6.0 # starting value
     psi.lower <- 4.0 # lowest expected value
     psi.upper <- 10.0 # highest expected value
@@ -136,7 +136,7 @@ with(new.env(), {
     data.plot$ll <- mapply(function(psi) {
         with(magnitudes, {
             # log likelihood function
-            sum(Freq * dvmideal(magn, lim.magn, psi, log = TRUE))
+            sum(Freq * dvmideal(magn, lim_magn, psi, log = TRUE))
         })
     }, data.plot$psi)
     data.plot$l <- exp(data.plot$ll - max(data.plot$ll))
@@ -184,7 +184,7 @@ estimates for $\psi$.
 ```{r, echo=TRUE, results='show'}
 tm.mean <- with(magnitudes, {
     N <- sum(Freq)
-    tm <- vmideal_vst_from_magn(magn, lim.magn)
+    tm <- vmideal_vst_from_magn(magn, lim_magn)
     tm.mean <- sum(Freq * tm) / N
     tm.var <- sum(Freq * (tm - tm.mean)^2) / (N - 1)
     tm.mean.var <- tm.var / N
@@ -206,7 +206,7 @@ Using the bootstrap method, it can be assessed whether the mean is normally dist
 ```{r, echo=TRUE, results='show'}
 tm.means <- with(magnitudes, {
     N <- sum(Freq)
-    tm <- vmideal_vst_from_magn(magn, lim.magn)
+    tm <- vmideal_vst_from_magn(magn, lim_magn)
     replicate(50000, {
         mean(sample(tm, size = N, replace = TRUE, prob = Freq))
     })
@@ -246,15 +246,15 @@ Although the expected value is clearly above `0.0` and can therefore be used, it
 in this context to interpret the value as the median.
 
 ```{r, echo=TRUE}
-lim.magn.mean <- with(magnitudes, {
+lim_magn.mean <- with(magnitudes, {
     N <- sum(Freq)
-    sum(Freq * lim.magn) / N
+    sum(Freq * lim_magn) / N
 })
-print(paste("lim.magn.mean:", lim.magn.mean))
-print(paste("mean psi:", vmideal_vst_to_psi(tm.mean$val, lim.magn.mean)))
+print(paste("lim_magn.mean:", lim_magn.mean))
+print(paste("mean psi:", vmideal_vst_to_psi(tm.mean$val, lim_magn.mean)))
 ```
 
-The mean limiting magnitude `lim.magn.mean` is required to estimate the location parameter $\psi$.
+The mean limiting magnitude `lim_magn.mean` is required to estimate the location parameter $\psi$.
 In visual meteor observations, different limiting magnitudes usually occur.
 In practice, the observed quantity is the difference between $\psi$ and the limiting magnitude
 for each observation. Since $\psi$ is unknown, one must assume that the mean `tm` is correlated
@@ -275,7 +275,7 @@ In practice, however, it is preferable to use a confidence interval estimate.
 For example, one can estimate that $\psi$ is, with 10 percent probability, not smaller than:
 
 ```{r, echo=TRUE}
-print(vmideal_vst_to_psi(qnorm(0.90, tm.mean$val, tm.mean$sd), lim.magn.mean))
+print(vmideal_vst_to_psi(qnorm(0.90, tm.mean$val, tm.mean$sd), lim_magn.mean))
 ```
 
 ## Residual Analysis
@@ -287,8 +287,8 @@ the expected frequencies. Then, using the estimated parameter, we retrieve the r
 frequencies `p` for each observation and add them to the data frame `magnitudes`:
 
 ```{r, echo=TRUE, results='asis'}
-psi.mean <- vmideal_vst_to_psi(tm.mean$val, lim.magn.mean)
-magnitudes$p <- with(magnitudes, dvmideal(m = magn, lm = lim.magn, psi.mean))
+psi.mean <- vmideal_vst_to_psi(tm.mean$val, lim_magn.mean)
+magnitudes$p <- with(magnitudes, dvmideal(m = magn, lm = lim_magn, psi.mean))
 ```
 
 We must also consider the probabilities for the magnitude class with the brightest meteors.
@@ -306,7 +306,7 @@ their probability.
 idx <- magnitudes$magn == magn.min
 magnitudes$p[idx] <- with(
     magnitudes[idx, ],
-    pvmideal(m = magn + 1L, lm = lim.magn, psi.mean, lower.tail = TRUE)
+    pvmideal(m = magn + 1L, lm = lim_magn, psi.mean, lower.tail = TRUE)
 )
 ```
 
@@ -318,7 +318,7 @@ We now create the contingency table `magnitutes.observed` for the observed meteo
 and its margin table.
 
 ```{r, echo=TRUE}
-magnitutes.observed <- xtabs(Freq ~ magn.id + magn, data = magnitudes)
+magnitutes.observed <- xtabs(Freq ~ magn_id + magn, data = magnitudes)
 magnitutes.observed.mt <- margin.table(magnitutes.observed, margin = 2)
 print(magnitutes.observed.mt)
 ```
@@ -333,14 +333,14 @@ magnitude class `4+`, and a new contingency table magnitudes.observed is created
 ```{r, echo=TRUE}
 magnitudes$magn[magnitudes$magn <= 0] <- "0-"
 magnitudes$magn[magnitudes$magn >= 4] <- "4+"
-magnitutes.observed <- xtabs(Freq ~ magn.id + magn, data = magnitudes)
+magnitutes.observed <- xtabs(Freq ~ magn_id + magn, data = magnitudes)
 print(margin.table(magnitutes.observed, margin = 2))
 ```
 
 We now need the corresponding expected relative frequencies
 
 ```{r, echo=TRUE}
-magnitutes.expected <- xtabs(p ~ magn.id + magn, data = magnitudes)
+magnitutes.expected <- xtabs(p ~ magn_id + magn, data = magnitudes)
 magnitutes.row_freq <- margin.table(magnitutes.observed, margin = 1)
 magnitutes.expected <- sweep(magnitutes.expected, 1, magnitutes.row_freq, `*`)
 magnitutes.expected <- magnitutes.expected / sum(magnitutes.expected)

@@ -22,8 +22,8 @@ test_that("rvmgeom", {
     expect_true(all(m <= 6.0))
     expect_equal(as.integer(m), m)
 
-    # Tests with perception.fun
-    m <- with_seed(7, vismeteor::rvmgeom(1000, 6.5, r, perception.fun = perception.const))
+    # Tests with perception_fun
+    m <- with_seed(7, vismeteor::rvmgeom(1000, 6.5, r, perception_fun = perception.const))
     expect_type(m, "double")
     expect_length(m, 1000)
     expect_false(anyNA(m))

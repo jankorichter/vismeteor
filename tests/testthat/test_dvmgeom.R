@@ -96,7 +96,7 @@ test_that("dvmgeom", {
     }
 
     m <- as.integer(seq(6, -30, -1))
-    p <- vismeteor::dvmgeom(m, lm, r, perception.fun = perception.const)
+    p <- vismeteor::dvmgeom(m, lm, r, perception_fun = perception.const)
     expect_type(p, "double")
     expect_length(p, length(m))
     expect_equal(stats::dgeom(6 - m, 1 - 1 / r), p)

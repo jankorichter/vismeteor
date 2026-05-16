@@ -5,7 +5,7 @@
 - `load_vmdb_rates()` and `load_vmdb_magnitudes()` now connect to an
   [imo-vmdb](https://pypi.org/project/imo-vmdb/) REST API instead of a
   direct database connection. 
-- Multi-range filters for `period`, `sl`, and `lim.magn` (previously a
+- Multi-range filters for `period`, `sl`, and `lim_magn` (previously a
   matrix with multiple rows that were OR-joined) are no longer supported.
   Each filter is collapsed to a single bounding min/max. Use multiple calls
   combined with `rbind()` if disjoint ranges are needed.
@@ -36,7 +36,7 @@ This release introduces variance-stabilizing transformations for the ideal distr
 
 ## Other changes
 The function `vmperception()` now better matches the perception probabilities of *Koschack & Rendtel (1990b)*.  
-The argument `deriv.degree` has been removed, as it was only intended for internal testing and had no practical relevance for regular use.
+The argument `deriv_degree` has been removed, as it was only intended for internal testing and had no practical relevance for regular use.
 
 Laplace-transformed perception probabilities have been replaced by variance-stabilizing transformations, which also means that the function `vmperception.l()` has been removed.
 

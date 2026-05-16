@@ -42,15 +42,15 @@ test_that("vmideal_vst", {
 
     # test first derivative
     f <- function(x) {
-        vmideal_vst_to_psi(x, 6.0, deriv.degree = 1L)
+        vmideal_vst_to_psi(x, 6.0, deriv_degree = 1L)
     }
     y <- vmideal_vst_to_psi(5.5, 6.0) - vmideal_vst_to_psi(4.5, 6.0)
     expect_true(abs(y - stats::integrate(f, 4.5, 5.5)$value) < 1e-10)
 
     # test second derivative
     f <- function(x) {
-        vmideal_vst_to_psi(x, 6.0, deriv.degree = 2L)
+        vmideal_vst_to_psi(x, 6.0, deriv_degree = 2L)
     }
-    y <- vmideal_vst_to_psi(5.5, 6.0, deriv.degree = 1L) - vmideal_vst_to_psi(4.5, 6.0, deriv.degree = 1L)
+    y <- vmideal_vst_to_psi(5.5, 6.0, deriv_degree = 1L) - vmideal_vst_to_psi(4.5, 6.0, deriv_degree = 1L)
     expect_true(abs(y - stats::integrate(f, 4.5, 5.5)$value) < 1e-10)
 })

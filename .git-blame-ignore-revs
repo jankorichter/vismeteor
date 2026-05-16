@@ -3,3 +3,6 @@
 #   git config blame.ignoreRevsFile .git-blame-ignore-revs
 #
 # Add the full 40-char SHA of mass-reformat or rename commits below.
+
+# styler reformat + lintr fixes
+13b1c7a7da91e7feb7b1126ff2e05fee1a507e54

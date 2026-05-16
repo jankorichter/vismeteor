@@ -197,21 +197,24 @@
 #' \dontrun{
 #' # Greedy knot selection on a simple synthetic signal.
 #' set.seed(1)
-#' n   <- 200
-#' x   <- seq(0, 10, length.out = n)
-#' y   <- sin(x) + stats::rnorm(n, sd = 0.2)
+#' n <- 200
+#' x <- seq(0, 10, length.out = n)
+#' y <- sin(x) + stats::rnorm(n, sd = 0.2)
 #' dat <- data.frame(x = x, y = y)
 #'
 #' # score_fun: fit a natural cubic spline, return BIC. Lower is better.
 #' fit <- \(d, knots) {
-#'   f <- if (length(knots) == 0L) y ~ splines::ns(x)
-#'        else                     y ~ splines::ns(x, knots = knots)
-#'   stats::lm(f, data = d)
+#'     f <- if (length(knots) == 0L) {
+#'         y ~ splines::ns(x)
+#'     } else {
+#'         y ~ splines::ns(x, knots = knots)
+#'     }
+#'     stats::lm(f, data = d)
 #' }
 #' score_bic <- \(d, knots) stats::BIC(fit(d, knots))
 #'
 #' cand <- seq(1, 9, by = 0.5)
-#' res  <- select_knots(dat, cand, score_bic, verbose = TRUE)
+#' res <- select_knots(dat, cand, score_bic, verbose = TRUE)
 #' # Full knot vector to fit the final model on:
 #' final_knots <- sort(c(res$knots, res$fixed_knots))
 #' }
@@ -220,56 +223,65 @@
 #'   \code{\link[stats]{BIC}}, \code{\link[stats]{AIC}}
 #' @export
 select_knots <- \(data,
-                  knot_candidates,
-                  score_fun,
-                  backward    = FALSE,
-                  n_steps     = NULL,
-                  bulk_gap    = 4L,
-                  fixed_knots = numeric(0),
-                  verbose     = FALSE,
-                  n_cores     = 1L) {
+    knot_candidates,
+    score_fun,
+    backward = FALSE,
+    n_steps = NULL,
+    bulk_gap = 4L,
+    fixed_knots = numeric(0),
+    verbose = FALSE,
+    n_cores = 1L) {
+    stopifnot(
+        is.function(score_fun),
+        is.logical(backward), length(backward) == 1L, !is.na(backward),
+        is.logical(verbose), length(verbose) == 1L, !is.na(verbose),
+        is.numeric(bulk_gap), length(bulk_gap) == 1L, bulk_gap >= 0L,
+        is.null(n_steps) || (is.numeric(n_steps) &&
+            length(n_steps) == 1L &&
+            !is.na(n_steps) &&
+            n_steps >= 1L &&
+            n_steps == as.integer(n_steps)),
+        is.numeric(n_cores), length(n_cores) == 1L, n_cores >= 1L,
+        is.numeric(fixed_knots), !anyNA(fixed_knots),
+        all(is.finite(fixed_knots))
+    )
 
-    stopifnot(is.function(score_fun),
-              is.logical(backward), length(backward) == 1L, !is.na(backward),
-              is.logical(verbose),  length(verbose)  == 1L, !is.na(verbose),
-              is.numeric(bulk_gap), length(bulk_gap) == 1L, bulk_gap >= 0L,
-              is.null(n_steps) || (is.numeric(n_steps) &&
-                                   length(n_steps) == 1L &&
-                                   !is.na(n_steps) &&
-                                   n_steps >= 1L &&
-                                   n_steps == as.integer(n_steps)),
-              is.numeric(n_cores),  length(n_cores)  == 1L, n_cores  >= 1L,
-              is.numeric(fixed_knots), !anyNA(fixed_knots),
-              all(is.finite(fixed_knots)))
-
-    forward     <- !backward
+    forward <- !backward
     # !duplicated() + boolean indexing instead of unique(): for atomic
     # vectors unique() strips names, which would silently drop the labels
     # of a named knot_candidates / fixed_knots input. The order() variant
     # of sort() likewise preserves names.
-    cand_pool   <- knot_candidates[!duplicated(knot_candidates)]
-    cand_pool   <- cand_pool[order(cand_pool)]
+    cand_pool <- knot_candidates[!duplicated(knot_candidates)]
+    cand_pool <- cand_pool[order(cand_pool)]
     fixed_knots <- fixed_knots[!duplicated(fixed_knots)]
     fixed_knots <- fixed_knots[order(fixed_knots)]
-    dir_lbl     <- if (backward) "backward" else "forward"
-    verb        <- if (forward) "add" else "remove"
-    bulk_active <- backward && (bulk_gap >= 1L)   # bulk only for backward; may flip off mid-run
+    dir_lbl <- if (backward) "backward" else "forward"
+    verb <- if (forward) "add" else "remove"
+    bulk_active <- backward && (bulk_gap >= 1L) # bulk only for backward; may flip off mid-run
 
     # --- private helpers ---
     # Score for one knot set (Inf if the user's score_fun errors out).
     # Knots are sorted before they reach score_fun so the user's fit code
     # never has to defensively sort.
-    score_of <- \(knots) tryCatch(suppressWarnings(score_fun(data, sort(knots))),
-                                  error = \(e) Inf)
+    score_of <- \(knots) {
+        tryCatch(
+            suppressWarnings(score_fun(data, sort(knots))),
+            error = \(e) Inf
+        )
+    }
     # Scores for many candidate knot sets. Serial (no extra dep) by default;
     # parallel only when explicitly requested via n_cores > 1L.
     par_score <- \(items, make_knots) {
         if (n_cores > 1L) {
-            if (!requireNamespace("parallel", quietly = TRUE))
+            if (!requireNamespace("parallel", quietly = TRUE)) {
                 stop("select_knots: n_cores > 1 requires the 'parallel' package; ",
-                     "install it or use n_cores = 1L.", call. = FALSE)
+                    "install it or use n_cores = 1L.",
+                    call. = FALSE
+                )
+            }
             res <- parallel::mclapply(items, \(it) score_of(make_knots(it)),
-                                      mc.cores = n_cores)
+                mc.cores = n_cores
+            )
         } else {
             res <- lapply(items, \(it) score_of(make_knots(it)))
         }
@@ -281,19 +293,19 @@ select_knots <- \(data,
         current_knots <- fixed_knots
         # cand_pool[!cand_pool %in% fixed_knots] instead of setdiff(): the
         # latter strips names.
-        remaining     <- cand_pool[!cand_pool %in% fixed_knots]
+        remaining <- cand_pool[!cand_pool %in% fixed_knots]
     } else {
-        combined      <- c(cand_pool, fixed_knots)
-        combined      <- combined[!duplicated(combined)]
+        combined <- c(cand_pool, fixed_knots)
+        combined <- combined[!duplicated(combined)]
         current_knots <- combined[order(combined)]
-        remaining     <- NULL
+        remaining <- NULL
     }
     current_score <- score_of(current_knots)
 
     # best_score is tracked internally to control the bulk-removal gate (bulk
     # is only worthwhile while we are still improving). It is not returned;
     # the returned score is the score at the loop's end state.
-    best_score  <- current_score
+    best_score <- current_score
 
     history <- data.frame(
         step         = 0,
@@ -304,17 +316,21 @@ select_knots <- \(data,
     )
 
     if (verbose) {
-        fixed_lbl <- if (length(fixed_knots) > 0L)
-                         sprintf(" (%d fixed)", length(fixed_knots)) else ""
-        cat(sprintf("Start (%s, %d core%s): %d knots%s,  score = %.2f\n",
-                    dir_lbl, n_cores, if (n_cores == 1) "" else "s",
-                    length(current_knots), fixed_lbl, current_score))
+        fixed_lbl <- if (length(fixed_knots) > 0L) {
+            sprintf(" (%d fixed)", length(fixed_knots))
+        } else {
+            ""
+        }
+        cat(sprintf(
+            "Start (%s, %d core%s): %d knots%s,  score = %.2f\n",
+            dir_lbl, n_cores, if (n_cores == 1) "" else "s",
+            length(current_knots), fixed_lbl, current_score
+        ))
     }
 
     step <- 1
 
     repeat {
-
         # -- Score of every one-step neighbour of the current knot set (parallel) --
         # In backward mode, fixed knots are excluded from the removal candidates;
         # `removable_idx` maps from score_candidates positions back into
@@ -324,14 +340,16 @@ select_knots <- \(data,
         if (forward) {
             if (length(remaining) == 0) break
             score_candidates <- par_score(remaining, \(k) c(current_knots, k))
-            cand_ids         <- remaining
-            removable_idx    <- NULL
+            cand_ids <- remaining
+            removable_idx <- NULL
         } else {
             removable_idx <- which(!current_knots %in% fixed_knots)
             if (length(removable_idx) == 0) break
-            score_candidates <- par_score(removable_idx,
-                                          \(i) current_knots[-i])
-            cand_ids         <- current_knots[removable_idx]
+            score_candidates <- par_score(
+                removable_idx,
+                \(i) current_knots[-i]
+            )
+            cand_ids <- current_knots[removable_idx]
         }
 
         # -- Bulk removal: drop multiple well-separated improving knots at once.
@@ -341,12 +359,12 @@ select_knots <- \(data,
         #    verify-fit shows no improvement (in which case bulk mode is
         #    permanently disabled for the rest of the run).
         if (bulk_active && min(score_candidates) < best_score) {
-            ord       <- order(score_candidates)
+            ord <- order(score_candidates)
             improving <- ord[score_candidates[ord] < best_score]
             # picked stores positions in current_knots (mapped via
             # removable_idx) so the gap check matches the d+1 basis-support
             # argument from the docs.
-            picked    <- integer(0)
+            picked <- integer(0)
             for (idx in improving) {
                 pos <- removable_idx[idx]
                 if (length(picked) == 0L || all(abs(pos - picked) >= bulk_gap)) {
@@ -355,17 +373,18 @@ select_knots <- \(data,
             }
             if (length(picked) >= 2L) {
                 proposed_knots <- current_knots[-picked]
-                verify_score   <- score_of(proposed_knots)
+                verify_score <- score_of(proposed_knots)
                 if (verify_score < best_score) {
                     if (verbose) {
                         cat(sprintf(
                             "Step %2d: remove %d knots [bulk]  ->  score %.2f -> %.2f  (delta = %.4f)\n",
                             step, length(picked), current_score, verify_score,
-                            verify_score - current_score))
+                            verify_score - current_score
+                        ))
                     }
                     current_knots <- proposed_knots
                     current_score <- verify_score
-                    best_score    <- current_score
+                    best_score <- current_score
                     history <- rbind(history, data.frame(
                         step         = step,
                         n_knots      = length(current_knots),
@@ -379,8 +398,12 @@ select_knots <- \(data,
                 } else {
                     if (verbose) {
                         cat(sprintf(
-                            "Step %2d: bulk removal of %d knots did not improve (delta = %.4f) -> switching to single-knot mode\n",
-                            step, length(picked), verify_score - current_score))
+                            paste0(
+                                "Step %2d: bulk removal of %d knots did not improve ",
+                                "(delta = %.4f) -> switching to single-knot mode\n"
+                            ),
+                            step, length(picked), verify_score - current_score
+                        ))
                     }
                     bulk_active <- FALSE
                     # fall through to single-knot path (uses the same score_candidates)
@@ -389,10 +412,10 @@ select_knots <- \(data,
             # length(picked) < 2 -> fall through to single-knot path; keep bulk_active for next round
         }
 
-        best_idx     <- which.min(score_candidates)
-        cand_score   <- score_candidates[best_idx]
+        best_idx <- which.min(score_candidates)
+        cand_score <- score_candidates[best_idx]
         changed_knot <- cand_ids[best_idx]
-        improved     <- cand_score < best_score
+        improved <- cand_score < best_score
 
         # NULL-mode: exit before applying a non-improving step, so the loop
         # end state IS the score optimum. The failed candidate is not recorded
@@ -401,23 +424,28 @@ select_knots <- \(data,
             if (verbose) {
                 cat(sprintf(
                     "Step %2d: best %s would worsen score by %.4f -> stopping at optimum\n",
-                    step, verb, cand_score - current_score))
+                    step, verb, cand_score - current_score
+                ))
             }
             break
         }
 
         if (verbose) {
-            step_lbl <- if (!is.null(n_steps))
-                            sprintf("  [step %d/%d]", step, n_steps) else ""
+            step_lbl <- if (!is.null(n_steps)) {
+                sprintf("  [step %d/%d]", step, n_steps)
+            } else {
+                ""
+            }
             cat(sprintf(
                 "Step %2d: %s knot %.4f  ->  score %.2f -> %.2f  (delta = %.4f)%s\n",
                 step, verb, changed_knot, current_score, cand_score, cand_score - current_score,
-                step_lbl))
+                step_lbl
+            ))
         }
 
         if (forward) {
             current_knots <- c(current_knots, changed_knot)
-            remaining     <- remaining[-best_idx]
+            remaining <- remaining[-best_idx]
         } else {
             current_knots <- current_knots[-removable_idx[best_idx]]
         }

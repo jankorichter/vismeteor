@@ -18,7 +18,7 @@ test_that("vmgeomVst", {
                 t.mean = t.mean,
                 t.var = t.var
             )
-        }, model$r, model$limmag , SIMPLIFY = FALSE)
+        }, model$r, model$limmag, SIMPLIFY = FALSE)
     )
 
     #

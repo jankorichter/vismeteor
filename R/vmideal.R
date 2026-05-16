@@ -22,7 +22,8 @@
 #' @details
 #' The density of the [ideal distribution of meteor magnitudes][vismeteor::mideal] is
 #' \deqn{
-#'     {\displaystyle f(m) = \frac{\mathrm{d}p}{\mathrm{d}m} = \frac{3}{2} \, \log(r) \sqrt{\frac{r^{3 \, \psi + 2 \, m}}{(r^\psi + r^m)^5}}}
+#'     {\displaystyle f(m) = \frac{\mathrm{d}p}{\mathrm{d}m} =
+#'      \frac{3}{2} \, \log(r) \sqrt{\frac{r^{3 \, \psi + 2 \, m}}{(r^\psi + r^m)^5}}}
 #' }
 #' where \eqn{m} denotes the continuous (real-valued) meteor magnitude,
 #' \eqn{r = 10^{0.4} \approx 2.51189 \dots} is a constant, and
@@ -33,7 +34,8 @@
 #' \deqn{
 #' P[M = m] \sim
 #' \begin{cases}
-#'   g(m_{\mathrm{lim}} - m) \displaystyle \int\limits_{m-0.5}^{m+0.5} f(u) \, \mathrm{d}u, & \text{if } m_{\mathrm{lim}} - m > -0.5,\\[5pt]
+#'   g(m_{\mathrm{lim}} - m) \displaystyle \int\limits_{m-0.5}^{m+0.5} f(u) \, \mathrm{d}u,
+#'   & \text{if } m_{\mathrm{lim}} - m > -0.5,\\[5pt]
 #'   0 & \text{otherwise,}
 #' \end{cases}
 #' }
@@ -78,11 +80,11 @@
 #'
 #' # log likelihood function
 #' lld <- function(psi) {
-#'     -sum(freq * dvmideal(m, limmag, psi, log=TRUE))
+#'     -sum(freq * dvmideal(m, limmag, psi, log = TRUE))
 #' }
 #'
 #' # maximum likelihood estimation (MLE) of psi
-#' est <- optim(2, lld, method='Brent', lower=0, upper=8, hessian=TRUE)
+#' est <- optim(2, lld, method = "Brent", lower = 0, upper = 8, hessian = TRUE)
 #'
 #' # estimations
 #' est$par # mean of psi
@@ -92,25 +94,25 @@
 #'
 #' # log likelihood function
 #' llr <- function(psi) {
-#'     -sum(dvmideal(m, limmag, psi, log=TRUE))
+#'     -sum(dvmideal(m, limmag, psi, log = TRUE))
 #' }
 #'
 #' # maximum likelihood estimation (MLE) of psi
-#' est <- optim(2, llr, method='Brent', lower=0, upper=8, hessian=TRUE)
+#' est <- optim(2, llr, method = "Brent", lower = 0, upper = 8, hessian = TRUE)
 #'
 #' # estimations
 #' est$par # mean of psi
-#' sqrt(1/est$hessian[1][1]) # standard deviation of psi
+#' sqrt(1 / est$hessian[1][1]) # standard deviation of psi
 #'
 #' m <- seq(6, -4, -1)
 #' p <- vismeteor::dvmideal(m, limmag, psi)
 #' barplot(
 #'     p,
 #'     names.arg = m,
-#'     main = paste0('Density (psi = ', psi, ', limmag = ', limmag, ')'),
+#'     main = paste0("Density (psi = ", psi, ", limmag = ", limmag, ")"),
 #'     col = "blue",
-#'     xlab = 'm',
-#'     ylab = 'p',
+#'     xlab = "m",
+#'     ylab = "p",
 #'     border = "blue",
 #'     space = 0.5
 #' )
@@ -120,19 +122,18 @@
 #'     \(lm) vismeteor::cvmideal(lm, psi, log = TRUE),
 #'     -5, 10,
 #'     main = paste0(
-#'         'Partial convolution of the ideal meteor magnitude distribution\n',
-#'         'with the perception probabilities (psi = ', psi, ')'
+#'         "Partial convolution of the ideal meteor magnitude distribution\n",
+#'         "with the perception probabilities (psi = ", psi, ")"
 #'     ),
 #'     col = "blue",
-#'     xlab = 'lm',
-#'     ylab = 'log(rate)'
+#'     xlab = "lm",
+#'     ylab = "log(rate)"
 #' )
-
 
 #' @rdname vmideal
 #' @export
 dvmideal <- function(m, lm, psi, log = FALSE, perception.fun = NULL) {
-    if (anyNA(m) | anyNA(lm) | anyNA(psi)) {
+    if (anyNA(m) || anyNA(lm) || anyNA(psi)) {
         stop("NA's are not allowed!")
     }
 
@@ -145,7 +146,7 @@ dvmideal <- function(m, lm, psi, log = FALSE, perception.fun = NULL) {
     }
 
     is.wholenumber <- function(x, tol = .Machine$double.eps^0.5) all(is.infinite(x) | abs(x - round(x)) < tol)
-    if (! is.wholenumber(m)) {
+    if (!is.wholenumber(m)) {
         stop("magnitudes must be integer values!")
     }
 
@@ -195,7 +196,6 @@ dvmideal <- function(m, lm, psi, log = FALSE, perception.fun = NULL) {
             }
 
             d[idx] <- d.tmp
-
         }
 
         idx <- m > -Inf & m < m.lower
@@ -203,7 +203,7 @@ dvmideal <- function(m, lm, psi, log = FALSE, perception.fun = NULL) {
             if (log) {
                 d[idx] <- dmideal.int(m[idx], psi, log = TRUE) - base::log(norm.res$norm)
             } else {
-                d[idx] <- dmideal.int(m[idx], psi)/norm.res$norm
+                d[idx] <- dmideal.int(m[idx], psi) / norm.res$norm
             }
         }
 
@@ -216,7 +216,7 @@ dvmideal <- function(m, lm, psi, log = FALSE, perception.fun = NULL) {
         psi = psi
     )
 
-    data.f <- as.factor(paste0(lm, '/', psi))
+    data.f <- as.factor(paste0(lm, "/", psi))
     data.s <- split(arg.data, data.f)
     d <- lapply(data.s, \(data) {
         m <- data$m
@@ -231,7 +231,7 @@ dvmideal <- function(m, lm, psi, log = FALSE, perception.fun = NULL) {
 #' @rdname vmideal
 #' @export
 pvmideal <- function(m, lm, psi, lower.tail = TRUE, log = FALSE, perception.fun = NULL) {
-    if (anyNA(m) | anyNA(lm) | anyNA(psi)) {
+    if (anyNA(m) || anyNA(lm) || anyNA(psi)) {
         stop("NA's are not allowed!")
     }
 
@@ -244,7 +244,7 @@ pvmideal <- function(m, lm, psi, lower.tail = TRUE, log = FALSE, perception.fun 
     }
 
     is.wholenumber <- function(x, tol = .Machine$double.eps^0.5) all(is.infinite(x) | abs(x - round(x)) < tol)
-    if (! is.wholenumber(m)) {
+    if (!is.wholenumber(m)) {
         stop("magnitudes must be integer values!")
     }
 
@@ -296,7 +296,7 @@ pvmideal <- function(m, lm, psi, lower.tail = TRUE, log = FALSE, perception.fun 
             if (any(idx)) {
                 p.gen <- cumsum(norm.res$p)
                 p[idx] <- norm.res$p.lower.tail + p.gen[as.character(m[idx] - 1)]
-                p[p>1.0] <- 1.0
+                p[p > 1.0] <- 1.0
                 if (log) {
                     log.idx <- p > 0.0
                     if (any(log.idx)) {
@@ -320,7 +320,7 @@ pvmideal <- function(m, lm, psi, lower.tail = TRUE, log = FALSE, perception.fun 
             }
 
             p[m > 0.0 & is.infinite(m)] <- 0.0
-            p[p>1.0] <- 1.0
+            p[p > 1.0] <- 1.0
 
             if (log) {
                 log.idx <- p > 0.0
@@ -340,7 +340,7 @@ pvmideal <- function(m, lm, psi, lower.tail = TRUE, log = FALSE, perception.fun 
         psi = psi
     )
 
-    data.f <- as.factor(paste0(lm, '/', psi))
+    data.f <- as.factor(paste0(lm, "/", psi))
     data.s <- split(arg.data, data.f)
     p <- lapply(data.s, \(data) {
         m <- data$m
@@ -355,7 +355,7 @@ pvmideal <- function(m, lm, psi, lower.tail = TRUE, log = FALSE, perception.fun 
 #' @rdname vmideal
 #' @export
 qvmideal <- function(p, lm, psi, lower.tail = TRUE, perception.fun = NULL) {
-    if (anyNA(p) | anyNA(lm) | anyNA(psi)) {
+    if (anyNA(p) || anyNA(lm) || anyNA(psi)) {
         stop("NA's are not allowed!")
     }
 
@@ -395,7 +395,7 @@ qvmideal <- function(p, lm, psi, lower.tail = TRUE, perception.fun = NULL) {
         m.lower <- m.upper - m.max
         m <- rep(NA, length(p))
 
-        if(lower.tail) {
+        if (lower.tail) {
             m[0.0 == p] <- -Inf
             m[1.0 == p] <- m.upper
             p.max <- vismeteor::pvmideal(m.lower, lm, psi, lower.tail = TRUE, perception.fun = perception.fun)
@@ -409,7 +409,7 @@ qvmideal <- function(p, lm, psi, lower.tail = TRUE, perception.fun = NULL) {
                     lower.tail = TRUE
                 ))
             }
-            idx <- p>=p.max & p<1.0
+            idx <- p >= p.max & p < 1.0
             if (any(idx)) {
                 m.gen <- seq(m.lower, m.upper + 1)
                 p.gen <- vismeteor::pvmideal(m.gen, lm, psi, lower.tail = lower.tail, perception.fun = perception.fun)
@@ -431,7 +431,7 @@ qvmideal <- function(p, lm, psi, lower.tail = TRUE, perception.fun = NULL) {
                 ))
             }
 
-            idx <- p>0.0 & p<=p.max
+            idx <- p > 0.0 & p <= p.max
             if (any(idx)) {
                 m.gen <- seq(m.upper + 1, m.lower)
                 p.gen <- vismeteor::pvmideal(m.gen, lm, psi, lower.tail = FALSE, perception.fun = perception.fun)
@@ -449,7 +449,7 @@ qvmideal <- function(p, lm, psi, lower.tail = TRUE, perception.fun = NULL) {
         psi = psi
     )
 
-    data.f <- as.factor(paste0(lm, '/', psi))
+    data.f <- as.factor(paste0(lm, "/", psi))
     data.s <- split(arg.data, data.f)
     m <- lapply(data.s, \(data) {
         p <- data$p
@@ -461,7 +461,7 @@ qvmideal <- function(p, lm, psi, lower.tail = TRUE, perception.fun = NULL) {
     m <- unsplit(m, data.f)
 
     if (anyNA(m)) {
-        warning('NaNs produced')
+        warning("NaNs produced")
     }
 
     m
@@ -470,7 +470,7 @@ qvmideal <- function(p, lm, psi, lower.tail = TRUE, perception.fun = NULL) {
 #' @rdname vmideal
 #' @export
 rvmideal <- function(n, lm, psi, perception.fun = NULL) {
-    if (anyNA(lm) | anyNA(psi)) {
+    if (anyNA(lm) || anyNA(psi)) {
         stop("NA's are not allowed!")
     }
 
@@ -506,7 +506,7 @@ rvmideal <- function(n, lm, psi, perception.fun = NULL) {
 #' @rdname vmideal
 #' @export
 cvmideal <- function(lm, psi, log = FALSE, perception.fun = NULL) {
-    if (anyNA(lm) | anyNA(psi)) {
+    if (anyNA(lm) || anyNA(psi)) {
         stop("NA's are not allowed!")
     }
 
@@ -532,10 +532,18 @@ cvmideal <- function(lm, psi, log = FALSE, perception.fun = NULL) {
     }
 
     p <- mapply(\(lm, psi) {
-        if (Inf == lm & Inf == psi) return(NA)
-        if (-Inf == lm & -Inf == psi) return(NA)
-        if (Inf == lm & -Inf == psi) return(if(log) 0.0 else 1.0)
-        if (Inf == psi & -Inf == lm) return(if(log) -Inf else 0.0)
+        if (Inf == lm & Inf == psi) {
+            return(NA)
+        }
+        if (-Inf == lm & -Inf == psi) {
+            return(NA)
+        }
+        if (Inf == lm & -Inf == psi) {
+            return(if (log) 0.0 else 1.0)
+        }
+        if (Inf == psi & -Inf == lm) {
+            return(if (log) -Inf else 0.0)
+        }
 
         if (log) {
             base::log(f.integrate(lm, psi))
@@ -545,7 +553,7 @@ cvmideal <- function(lm, psi, log = FALSE, perception.fun = NULL) {
     }, lm, psi, SIMPLIFY = TRUE)
 
     if (anyNA(p)) {
-        warning('NaNs produced')
+        warning("NaNs produced")
     }
 
     p
@@ -624,7 +632,7 @@ vmideal.norm <- function(lm, psi, perception.fun) {
         m.lower = m.lower,
         m.upper = m.upper,
         norm = norm,
-        p = p/norm,
-        p.lower.tail = p.lower.tail/norm
+        p = p / norm,
+        p.lower.tail = p.lower.tail / norm
     )
 }

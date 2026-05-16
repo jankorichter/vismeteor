@@ -76,49 +76,48 @@
 #'
 #' # log likelihood function
 #' lld <- function(r) {
-#'     -sum(freq * dvmgeom(m, limmag, r, log=TRUE))
+#'     -sum(freq * dvmgeom(m, limmag, r, log = TRUE))
 #' }
 #'
 #' # maximum likelihood estimation (MLE) of r
-#' est <- optim(2, lld, method='Brent', lower=1.1, upper=4)
+#' est <- optim(2, lld, method = "Brent", lower = 1.1, upper = 4)
 #'
 #' # estimations
 #' est$par # mean of r
 #'
 #' # generate random meteor magnitudes
-#' m <- rvmgeom(N, r, lm=limmag)
+#' m <- rvmgeom(N, r, lm = limmag)
 #'
 #' # log likelihood function
 #' llr <- function(r) {
-#'     -sum(dvmgeom(m, limmag, r, log=TRUE))
+#'     -sum(dvmgeom(m, limmag, r, log = TRUE))
 #' }
 #'
 #' # maximum likelihood estimation (MLE) of r
-#' est <- optim(2, llr, method='Brent', lower=1.1, upper=4, hessian=TRUE)
+#' est <- optim(2, llr, method = "Brent", lower = 1.1, upper = 4, hessian = TRUE)
 #'
 #' # estimations
 #' est$par # mean of r
-#' sqrt(1/est$hessian[1][1]) # standard deviation of r
+#' sqrt(1 / est$hessian[1][1]) # standard deviation of r
 #'
 #' m <- seq(6, -4, -1)
 #' p <- vismeteor::dvmgeom(m, limmag, r)
 #' barplot(
 #'     p,
 #'     names.arg = m,
-#'     main = paste0('Density (r = ', r, ', limmag = ', limmag, ')'),
+#'     main = paste0("Density (r = ", r, ", limmag = ", limmag, ")"),
 #'     col = "blue",
-#'     xlab = 'm',
-#'     ylab = 'p',
+#'     xlab = "m",
+#'     ylab = "p",
 #'     border = "blue",
 #'     space = 0.5
 #' )
 #' axis(side = 2, at = pretty(p))
 
-
 #' @rdname vmgeom
 #' @export
 dvmgeom <- function(m, lm, r, log = FALSE, perception.fun = NULL) {
-    if (anyNA(m) | anyNA(lm) | anyNA(r)) {
+    if (anyNA(m) || anyNA(lm) || anyNA(r)) {
         stop("NA's are not allowed!")
     }
 
@@ -135,7 +134,7 @@ dvmgeom <- function(m, lm, r, log = FALSE, perception.fun = NULL) {
     }
 
     is.wholenumber <- function(x, tol = .Machine$double.eps^0.5) all(is.infinite(x) | abs(x - round(x)) < tol)
-    if (! is.wholenumber(m)) {
+    if (!is.wholenumber(m)) {
         stop("magnitudes must be integer values!")
     }
 
@@ -145,7 +144,7 @@ dvmgeom <- function(m, lm, r, log = FALSE, perception.fun = NULL) {
         perception.fun <- match.fun(perception.fun)
     }
 
-    p.geom <- 1.0 - 1.0/r
+    p.geom <- 1.0 - 1.0 / r
 
     if (1 == length(r)) {
         r <- rep(r, length(m))
@@ -173,7 +172,7 @@ dvmgeom <- function(m, lm, r, log = FALSE, perception.fun = NULL) {
         p.geom = p.geom
     )
 
-    data.f <- as.factor(paste0(offset, '/', p.geom))
+    data.f <- as.factor(paste0(offset, "/", p.geom))
     data.s <- split(arg.data, data.f)
     d <- lapply(data.s, \(data) {
         m <- data$m
@@ -186,7 +185,7 @@ dvmgeom <- function(m, lm, r, log = FALSE, perception.fun = NULL) {
             d[idx] <- f.density(m[idx], offset, p.geom)
         }
 
-        if (! log) {
+        if (!log) {
             d[idx] <- exp(d[idx])
             d[!idx] <- 0.0
         }
@@ -200,7 +199,7 @@ dvmgeom <- function(m, lm, r, log = FALSE, perception.fun = NULL) {
 #' @rdname vmgeom
 #' @export
 pvmgeom <- function(m, lm, r, lower.tail = TRUE, log = FALSE, perception.fun = NULL) {
-    if (anyNA(m) | anyNA(lm) | anyNA(r)) {
+    if (anyNA(m) || anyNA(lm) || anyNA(r)) {
         stop("NA's are not allowed!")
     }
 
@@ -217,7 +216,7 @@ pvmgeom <- function(m, lm, r, lower.tail = TRUE, log = FALSE, perception.fun = N
     }
 
     is.wholenumber <- function(x, tol = .Machine$double.eps^0.5) all(is.infinite(x) | abs(x - round(x)) < tol)
-    if (! is.wholenumber(m)) {
+    if (!is.wholenumber(m)) {
         stop("magnitudes must be integer values!")
     }
 
@@ -227,7 +226,7 @@ pvmgeom <- function(m, lm, r, lower.tail = TRUE, log = FALSE, perception.fun = N
         perception.fun <- match.fun(perception.fun)
     }
 
-    p.geom <- 1.0 - 1.0/r
+    p.geom <- 1.0 - 1.0 / r
 
     if (1 == length(r)) {
         r <- rep(r, length(m))
@@ -254,23 +253,23 @@ pvmgeom <- function(m, lm, r, lower.tail = TRUE, log = FALSE, perception.fun = N
 
         if (lower.tail) {
             idx <- m <= m.max
-            if(any(idx)) {
-                p[idx] <- 1.0 - f.sum(m[idx], offset, p.geom)/norm
+            if (any(idx)) {
+                p[idx] <- 1.0 - f.sum(m[idx], offset, p.geom) / norm
             }
 
             idx <- m > m.max
-            if(any(idx)) {
-                p[idx] <- stats::pgeom(m[idx], p.geom, lower.tail = FALSE)/norm
+            if (any(idx)) {
+                p[idx] <- stats::pgeom(m[idx], p.geom, lower.tail = FALSE) / norm
             }
         } else {
             idx <- m <= m.max
-            if(any(idx)) {
-                p[idx] <- f.sum(m[idx], offset, p.geom)/norm
+            if (any(idx)) {
+                p[idx] <- f.sum(m[idx], offset, p.geom) / norm
             }
 
             idx <- m > m.max
-            if(any(idx)) {
-                p[idx] <- 1.0 - stats::pgeom(m[idx], p.geom, lower.tail = FALSE)/norm
+            if (any(idx)) {
+                p[idx] <- 1.0 - stats::pgeom(m[idx], p.geom, lower.tail = FALSE) / norm
             }
         }
 
@@ -283,7 +282,7 @@ pvmgeom <- function(m, lm, r, lower.tail = TRUE, log = FALSE, perception.fun = N
         p.geom = p.geom
     )
 
-    data.f <- as.factor(paste0(offset, '/', p.geom))
+    data.f <- as.factor(paste0(offset, "/", p.geom))
     data.s <- split(arg.data, data.f)
     p <- lapply(data.s, \(data) {
         m <- data$m
@@ -297,7 +296,7 @@ pvmgeom <- function(m, lm, r, lower.tail = TRUE, log = FALSE, perception.fun = N
         }
 
         idx <- m > -1
-        if(any(idx)) {
+        if (any(idx)) {
             p[idx] <- f.prob(m[idx], offset, p.geom)
         }
 
@@ -319,7 +318,7 @@ pvmgeom <- function(m, lm, r, lower.tail = TRUE, log = FALSE, perception.fun = N
 #' @rdname vmgeom
 #' @export
 qvmgeom <- function(p, lm, r, lower.tail = TRUE, perception.fun = NULL) {
-    if (anyNA(p) | anyNA(lm) | anyNA(r)) {
+    if (anyNA(p) || anyNA(lm) || anyNA(r)) {
         stop("NA's are not allowed!")
     }
 
@@ -341,7 +340,7 @@ qvmgeom <- function(p, lm, r, lower.tail = TRUE, perception.fun = NULL) {
         perception.fun <- match.fun(perception.fun)
     }
 
-    p.geom <- 1.0 - 1.0/r
+    p.geom <- 1.0 - 1.0 / r
 
     if (1 == length(r)) {
         r <- rep(r, length(p))
@@ -367,7 +366,7 @@ qvmgeom <- function(p, lm, r, lower.tail = TRUE, perception.fun = NULL) {
         r = r
     )
 
-    data.f <- as.factor(paste0(offset, '/', p.geom))
+    data.f <- as.factor(paste0(offset, "/", p.geom))
     data.s <- split(arg.data, data.f)
     m <- lapply(data.s, \(data) {
         m.max <- 15L
@@ -377,15 +376,15 @@ qvmgeom <- function(p, lm, r, lower.tail = TRUE, perception.fun = NULL) {
         r <- data$r[1]
         m <- rep(NA, length(p))
 
-        if(lower.tail) {
+        if (lower.tail) {
             m[1.0 == p] <- 0L
             p.max <- 1.0 - vismeteor::pvmgeom(0, m.max + offset, r, lower.tail = FALSE, perception.fun = perception.fun)
-            idx <- p>=0.0 & p<p.max
+            idx <- p >= 0.0 & p < p.max
             if (any(idx)) {
-                m[idx] <- m.max + 1 + stats::qgeom(p[idx]/p.max, p.geom, lower.tail = FALSE)
+                m[idx] <- m.max + 1 + stats::qgeom(p[idx] / p.max, p.geom, lower.tail = FALSE)
             }
 
-            idx <- p>=p.max & p<1.0
+            idx <- p >= p.max & p < 1.0
             if (any(idx)) {
                 m0 <- seq(-m.max, 0, 1)
                 p0 <- c(vismeteor::pvmgeom(m0, offset, r, lower.tail = TRUE, perception.fun = perception.fun), 1.0)
@@ -396,18 +395,18 @@ qvmgeom <- function(p, lm, r, lower.tail = TRUE, perception.fun = NULL) {
         } else {
             m[0.0 == p] <- 0L
             p.max <- vismeteor::pvmgeom(0, m.max + offset, r, lower.tail = FALSE, perception.fun = perception.fun)
-            idx <- p>p.max & p<=1.0
+            idx <- p > p.max & p <= 1.0
             if (any(idx)) {
-                m[idx] <- m.max + 1L + stats::qgeom((p[idx] - p.max)/(1.0 - p.max), p.geom)
+                m[idx] <- m.max + 1L + stats::qgeom((p[idx] - p.max) / (1.0 - p.max), p.geom)
             }
 
-            idx <- p>0.0 & p<=p.max
+            idx <- p > 0.0 & p <= p.max
             if (any(idx)) {
                 m0 <- seq(1, -m.max, -1)
                 p0 <- vismeteor::pvmgeom(m0, offset, r, lower.tail = FALSE, perception.fun = perception.fun)
                 p.idx <- findInterval(p[idx], p0, left.open = TRUE) + 1
                 m[idx] <- -m0[p.idx]
-                m[m<0] <- NA
+                m[m < 0] <- NA
             }
         }
 
@@ -417,7 +416,7 @@ qvmgeom <- function(p, lm, r, lower.tail = TRUE, perception.fun = NULL) {
     m <- lm - unsplit(m, data.f)
 
     if (anyNA(m)) {
-        warning('NaNs produced')
+        warning("NaNs produced")
     }
 
     as.numeric(m)
@@ -426,7 +425,7 @@ qvmgeom <- function(p, lm, r, lower.tail = TRUE, perception.fun = NULL) {
 #' @rdname vmgeom
 #' @export
 rvmgeom <- function(n, lm, r, perception.fun = NULL) {
-    if (anyNA(lm) | anyNA(r)) {
+    if (anyNA(lm) || anyNA(r)) {
         stop("NA's are not allowed!")
     }
 
@@ -471,7 +470,7 @@ vmgeom.std <- function(m, lm) {
     m.round <- round(m)
     offset <- rep(0.0, length(m))
     idx <- is.infinite(m)
-    offset[! idx] <- m[! idx] - m.round[! idx]
+    offset[!idx] <- m[!idx] - m.round[!idx]
     m <- m.round
 
     idx <- -0.5 == offset
@@ -487,7 +486,7 @@ vmgeom.std <- function(m, lm) {
 #' normalization
 #'
 #' @noRd
-vmgeom.norm <- function(offset, p.geom, m.max, perception.fun){
+vmgeom.norm <- function(offset, p.geom, m.max, perception.fun) {
     m <- as.integer(seq(0, m.max))
     sum(stats::dgeom(m, p.geom) * perception.fun(m + offset)) +
         stats::pgeom(m.max, p.geom, lower.tail = FALSE)

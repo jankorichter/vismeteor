@@ -13,16 +13,16 @@ vignette: >
 
 ```{r, include = FALSE}
 knitr::opts_chunk$set(
-  collapse = TRUE,
-  comment = "#>"
+    collapse = TRUE,
+    comment = "#>"
 )
 ```
 
 ```{r setup, include = FALSE}
 library(vismeteor)
 knitr::opts_chunk$set(
-  collapse = TRUE,
-  comment = "#>"
+    collapse = TRUE,
+    comment = "#>"
 )
 ```
 
@@ -73,12 +73,12 @@ their own empirical data or models into the analysis.
 
 ```{r, echo=TRUE}
 plot(
-  vmperception,
-  -0.5, 8,
-  main = "Perception probability of visual meteor magnitudes",
-  col = "blue",
-  xlab = "limiting magnitude - meteor magnitude",
-  ylab = "p"
+    vmperception,
+    -0.5, 8,
+    main = "Perception probability of visual meteor magnitudes",
+    col = "blue",
+    xlab = "limiting magnitude - meteor magnitude",
+    ylab = "p"
 )
 ```
 
@@ -116,10 +116,10 @@ p <- vismeteor::dvmgeom(m, limmag, r)
 barplot(
     p,
     names.arg = m,
-    main = paste0('Density (r = ', r, ', limmag = ', limmag, ')'),
+    main = paste0("Density (r = ", r, ", limmag = ", limmag, ")"),
     col = "blue",
-    xlab = 'm',
-    ylab = 'p',
+    xlab = "m",
+    ylab = "p",
     border = "blue",
     space = 0.5
 )
@@ -154,10 +154,10 @@ p <- vismeteor::dvmideal(m, limmag, psi)
 barplot(
     p,
     names.arg = m,
-    main = paste0('Density (psi = ', psi, ', limmag = ', limmag, ')'),
+    main = paste0("Density (psi = ", psi, ", limmag = ", limmag, ")"),
     col = "blue",
-    xlab = 'm',
-    ylab = 'p',
+    xlab = "m",
+    ylab = "p",
     border = "blue",
     space = 0.5
 )
@@ -191,10 +191,11 @@ mt <- as.table(matrix(
         0.0, 0.0, 2.5, 0.5, 0.0, 1.0,
         0.0, 1.5, 2.0, 0.5, 0.0, 0.0,
         1.0, 0.0, 0.0, 3.0, 2.5, 0.5
-    ), nrow = 3, ncol = 6, byrow = TRUE
+    ),
+    nrow = 3, ncol = 6, byrow = TRUE
 ))
 colnames(mt) <- seq(6)
-rownames(mt) <- c('A', 'B', 'C')
+rownames(mt) <- c("A", "B", "C")
 margin.table(mt, 1)
 margin.table(mt, 2)
 
@@ -229,7 +230,7 @@ The objective is to group these counts into quantiles while maintaining their ch
 ensuring that each quantile contains at least 10 meteors.
 
 ```{r, echo=TRUE}
-freq <- c(1,8,3,3,4,9,5,0,0,2,7,8,2,6,4)
+freq <- c(1, 8, 3, 3, 4, 9, 5, 0, 0, 2, 7, 8, 2, 6, 4)
 f <- freq.quantile(freq, 10)
 print(f)
 print(tapply(freq, f, sum))

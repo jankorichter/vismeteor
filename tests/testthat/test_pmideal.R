@@ -4,7 +4,7 @@ test_that("pmideal", {
     # from documentation
     dp.fun <- function(m, psi) {
         r <- 10^0.4
-        1.5 * log(r) * sqrt(r^(3 * psi + 2 * m)/((r^psi + r^m)^5))
+        1.5 * log(r) * sqrt(r^(3 * psi + 2 * m) / ((r^psi + r^m)^5))
     }
 
     # probability of m >= 3
@@ -13,7 +13,7 @@ test_that("pmideal", {
 
     # probability
     p <- vismeteor::pmideal(c(3, -Inf, -100, 100, Inf), psi, lower.tail = TRUE)
-    expect_type(p, 'double')
+    expect_type(p, "double")
     expect_length(p, 5)
     expect_equal(p[1], expected_p)
     expect_equal(p[2], 0.0)
@@ -22,7 +22,7 @@ test_that("pmideal", {
     expect_equal(p[5], 1.0)
 
     p <- vismeteor::pmideal(c(3, -Inf, -100, 100, Inf), psi, lower.tail = FALSE)
-    expect_type(p, 'double')
+    expect_type(p, "double")
     expect_length(p, 5)
     expect_equal(round(p[1], 6), round(1.0 - expected_p, 6))
     expect_equal(p[2], 1.0)
@@ -32,7 +32,7 @@ test_that("pmideal", {
 
     # log probability
     p <- vismeteor::pmideal(c(3, -Inf, -100, 100, Inf), psi, lower.tail = TRUE, log = TRUE)
-    expect_type(p, 'double')
+    expect_type(p, "double")
     expect_length(p, 5)
     expect_equal(round(p[1], 6), round(log(expected_p), 6))
     expect_equal(p[2], -Inf)
@@ -41,7 +41,7 @@ test_that("pmideal", {
     expect_equal(p[5], 0)
 
     p <- vismeteor::pmideal(c(3, -Inf, -100, 100, Inf), psi, lower.tail = FALSE, log = TRUE)
-    expect_type(p, 'double')
+    expect_type(p, "double")
     expect_length(p, 5)
     expect_equal(round(p[1], 6), round(log(1.0 - expected_p), 6))
     expect_equal(p[2], 0.0)

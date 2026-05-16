@@ -134,26 +134,26 @@
 #' @rdname load_vmdb
 #' @export
 load_vmdb_rates <- function(
-    base_url,
-    shower       = NULL,
-    period       = NULL,
-    sl           = NULL,
-    lim.magn     = NULL,
-    sun.alt.max  = NULL,
-    moon.alt.max = NULL,
-    session.id   = NULL,
-    rate.id      = NULL,
-    withSessions   = FALSE,
-    withMagnitudes = FALSE
+  base_url,
+  shower = NULL,
+  period = NULL,
+  sl = NULL,
+  lim.magn = NULL,
+  sun.alt.max = NULL,
+  moon.alt.max = NULL,
+  session.id = NULL,
+  rate.id = NULL,
+  withSessions = FALSE,
+  withMagnitudes = FALSE
 ) {
     p <- .build_params(
         shower, period, sl, lim.magn,
-        sun.alt.max  = sun.alt.max,
+        sun.alt.max = sun.alt.max,
         moon.alt.max = moon.alt.max,
-        session.id   = session.id,
-        id.param     = "rate_id",
-        id.values    = rate.id,
-        withSessions   = withSessions,
+        session.id = session.id,
+        id.param = "rate_id",
+        id.values = rate.id,
+        withSessions = withSessions,
         withMagnitudes = withMagnitudes
     )
 
@@ -164,9 +164,9 @@ load_vmdb_rates <- function(
     } else {
         observations <- .remap_cols(as.data.frame(body$observations), .rate_col_map)
         observations$shower.code <- factor(observations$shower.code)
-        observations$session.id  <- factor(observations$session.id)
-        observations$magn.id     <- factor(observations$magn.id)
-        row.names(observations)  <- observations$rate.id
+        observations$session.id <- factor(observations$session.id)
+        observations$magn.id <- factor(observations$magn.id)
+        row.names(observations) <- observations$rate.id
     }
 
     list(
@@ -179,22 +179,22 @@ load_vmdb_rates <- function(
 #' @rdname load_vmdb
 #' @export
 load_vmdb_magnitudes <- function(
-    base_url,
-    shower       = NULL,
-    period       = NULL,
-    sl           = NULL,
-    lim.magn     = NULL,
-    session.id   = NULL,
-    magn.id      = NULL,
-    withSessions   = FALSE,
-    withMagnitudes = TRUE
+  base_url,
+  shower = NULL,
+  period = NULL,
+  sl = NULL,
+  lim.magn = NULL,
+  session.id = NULL,
+  magn.id = NULL,
+  withSessions = FALSE,
+  withMagnitudes = TRUE
 ) {
     p <- .build_params(
         shower, period, sl, lim.magn,
-        session.id   = session.id,
-        id.param     = "magn_id",
-        id.values    = magn.id,
-        withSessions   = withSessions,
+        session.id = session.id,
+        id.param = "magn_id",
+        id.values = magn.id,
+        withSessions = withSessions,
         withMagnitudes = withMagnitudes
     )
 
@@ -205,8 +205,8 @@ load_vmdb_magnitudes <- function(
     } else {
         observations <- .remap_cols(as.data.frame(body$observations), .magn_col_map)
         observations$shower.code <- factor(observations$shower.code)
-        observations$session.id  <- factor(observations$session.id)
-        row.names(observations)  <- observations$magn.id
+        observations$session.id <- factor(observations$session.id)
+        row.names(observations) <- observations$magn.id
     }
 
     list(
@@ -220,13 +220,13 @@ load_vmdb_magnitudes <- function(
 # Multi-value parameters (shower, session_id, rate_id, magn_id) are returned
 # separately as a named list of vectors.
 .build_params <- function(
-    shower, period, sl, lim.magn,
-    sun.alt.max = NULL, moon.alt.max = NULL,
-    session.id = NULL, id.param = NULL, id.values = NULL,
-    withSessions = FALSE, withMagnitudes = FALSE
+  shower, period, sl, lim.magn,
+  sun.alt.max = NULL, moon.alt.max = NULL,
+  session.id = NULL, id.param = NULL, id.values = NULL,
+  withSessions = FALSE, withMagnitudes = FALSE
 ) {
     params <- list()
-    multi  <- list()
+    multi <- list()
 
     if (!is.null(shower)) {
         multi$shower <- ifelse(is.na(shower), "SPO", shower)
@@ -235,7 +235,7 @@ load_vmdb_magnitudes <- function(
     if (!is.null(period)) {
         period <- matrix(period, ncol = 2)
         params$period_start <- min(period[, 1])
-        params$period_end   <- max(period[, 2])
+        params$period_end <- max(period[, 2])
     }
 
     if (!is.null(sl)) {
@@ -250,14 +250,14 @@ load_vmdb_magnitudes <- function(
         params$lim_magn_max <- max(lim.magn[, 2])
     }
 
-    if (!is.null(sun.alt.max))  params$sun_alt_max  <- sun.alt.max
+    if (!is.null(sun.alt.max)) params$sun_alt_max <- sun.alt.max
     if (!is.null(moon.alt.max)) params$moon_alt_max <- moon.alt.max
 
-    if (!is.null(session.id))   multi$session_id    <- as.integer(session.id)
-    if (!is.null(id.values))    multi[[id.param]]   <- as.integer(id.values)
+    if (!is.null(session.id)) multi$session_id <- as.integer(session.id)
+    if (!is.null(id.values)) multi[[id.param]] <- as.integer(id.values)
 
     include <- character(0)
-    if (withSessions)   include <- c(include, "sessions")
+    if (withSessions) include <- c(include, "sessions")
     if (withMagnitudes) include <- c(include, "magnitudes")
     if (length(include) > 0) params$include <- paste(include, collapse = ",")
 
@@ -345,11 +345,13 @@ load_vmdb_magnitudes <- function(
 
 # Parse the sessions array from the API response into a data.frame.
 .parse_sessions <- function(sessions_list) {
-    if (is.null(sessions_list) || length(sessions_list) == 0) return(NULL)
+    if (is.null(sessions_list) || length(sessions_list) == 0) {
+        return(NULL)
+    }
     s <- .remap_cols(as.data.frame(sessions_list), .session_col_map)
-    s$country       <- factor(s$country)
+    s$country <- factor(s$country)
     s$location.name <- factor(s$location.name)
-    s$observer.id   <- factor(s$observer.id)
+    s$observer.id <- factor(s$observer.id)
     s$observer.name <- factor(s$observer.name)
     row.names(s) <- s$session.id
     s
@@ -358,9 +360,13 @@ load_vmdb_magnitudes <- function(
 
 # Parse the magnitudes array from the API response into an xtabs table.
 .parse_magnitudes <- function(magnitudes_list) {
-    if (is.null(magnitudes_list) || length(magnitudes_list) == 0) return(NULL)
+    if (is.null(magnitudes_list) || length(magnitudes_list) == 0) {
+        return(NULL)
+    }
     m <- as.data.frame(magnitudes_list)
-    if (nrow(m) == 0) return(NULL)
+    if (nrow(m) == 0) {
+        return(NULL)
+    }
     m$magn <- factor(
         m$magn,
         levels  = sort(unique(m$magn), decreasing = TRUE),
@@ -369,5 +375,3 @@ load_vmdb_magnitudes <- function(
     names(m)[names(m) == "id"] <- "magn.id"
     stats::xtabs(freq ~ magn.id + magn, data = m)
 }
-
-

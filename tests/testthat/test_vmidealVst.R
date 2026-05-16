@@ -18,7 +18,7 @@ test_that("vmidealVst", {
                 t.mean = t.mean,
                 t.var = t.var
             )
-        }, model$psi, model$limmag , SIMPLIFY = FALSE)
+        }, model$psi, model$limmag, SIMPLIFY = FALSE)
     )
 
     #

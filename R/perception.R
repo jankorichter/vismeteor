@@ -17,24 +17,27 @@
 #' }
 #' and `m` is the difference between the limiting magnitude and the meteor magnitude.
 #' @return This function returns the visual perception probabilities.
-#' @references Koschack R., Rendtel J., 1990b _Determination of spatial number density and mass index from visual meteor observations (II)._ WGN 18, 119–140.
+#' @references
+#' Koschack R., Rendtel J., 1990b
+#' _Determination of spatial number density and mass index from visual meteor observations (II)._
+#' WGN 18, 119–140.
 #' @examples
 #' # Perception probability of visually estimated meteor of magnitude 3.0
 #' # with a limiting magnitude of 5.6.
 #' vmperception(5.6 - 3.0)
 #'
 #' # plot
-#' old_par <- par(mfrow = c(1,1))
+#' old_par <- par(mfrow = c(1, 1))
 #' plot(
 #'     vmperception,
 #'     -0.5, 8,
 #'     main = paste(
-#'         'perception probability of',
-#'         'visual meteor magnitudes'
+#'         "perception probability of",
+#'         "visual meteor magnitudes"
 #'     ),
 #'     col = "blue",
-#'     xlab = 'm',
-#'     ylab = 'p'
+#'     xlab = "m",
+#'     ylab = "p"
 #' )
 #'
 #' par(old_par)
@@ -66,18 +69,20 @@ f.polynomial <- function(m, poly.coef) {
 #'
 #' @noRd
 f.polynomial.coef <- function(poly.coef, deriv.degree = 1L) {
-    if (0L == deriv.degree)
+    if (0L == deriv.degree) {
         return(poly.coef)
+    }
 
-    if (1 == length(poly.coef))
+    if (1 == length(poly.coef)) {
         return(0)
+    }
 
     exponents <- as.numeric(names(poly.coef))
     poly.coef <- poly.coef * exponents
     if (0L %in% exponents) {
         intercept.idx <- 0L == exponents
-        poly.coef <- poly.coef[! intercept.idx]
-        exponents <- exponents[! intercept.idx]
+        poly.coef <- poly.coef[!intercept.idx]
+        exponents <- exponents[!intercept.idx]
     }
     exponents <- exponents - 1L
     names(poly.coef) <- exponents

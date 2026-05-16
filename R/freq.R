@@ -13,7 +13,7 @@
 #' A factor of indices is returned.
 #' The index references the corresponding passed frequency `freq`.
 #' @examples
-#' freq <- c(1,2,3,4,5,6,7,8,9)
+#' freq <- c(1, 2, 3, 4, 5, 6, 7, 8, 9)
 #' cumsum(freq)
 #' (f <- freq.quantile(freq, 10))
 #' tapply(freq, f, sum)
@@ -43,7 +43,7 @@ freq.quantile <- function(freq, min) {
     }
 
     id.max <- id[length(id)]
-    if (id.max > 1 & n.sum > 0 & sum(freq[id == id.last]) < min) {
+    if (id.max > 1 && n.sum > 0 && sum(freq[id == id.last]) < min) {
         id[id == id.max] <- id.max - 1L
     }
 
@@ -79,7 +79,7 @@ freq.quantile <- function(freq, min) {
 #' favouring the faintest bin. The mirroring is only the initial condition; the loop
 #' then processes the table cell by cell so the rounding direction alternates between
 #' bright and faint magnitudes depending on the current row and column state.
-#' 
+#'
 #' @return
 #' A rounded contingency table of meteor magnitudes is returned.
 #' @examples
@@ -89,10 +89,11 @@ freq.quantile <- function(freq, min) {
 #'         0.0, 0.0, 2.5, 0.5, 0.0, 1.0,
 #'         0.0, 1.5, 2.0, 0.5, 0.0, 0.0,
 #'         1.0, 0.0, 0.0, 3.0, 2.5, 0.5
-#'     ), nrow = 3, ncol = 6, byrow = TRUE
+#'     ),
+#'     nrow = 3, ncol = 6, byrow = TRUE
 #' ))
 #' colnames(mt) <- seq(6)
-#' rownames(mt) <- c('A', 'B', 'C')
+#' rownames(mt) <- c("A", "B", "C")
 #' mt
 #' margin.table(mt, 1)
 #' margin.table(mt, 2)
@@ -103,12 +104,12 @@ freq.quantile <- function(freq, min) {
 #' margin.table(mt.int, 2)
 #' @export
 vmtable <- function(mt) {
-    if (! methods::is(mt, 'table')) {
-        stop(paste0('Magnitude table is not a table!'))
+    if (!methods::is(mt, "table")) {
+        stop(paste0("Magnitude table is not a table!"))
     }
 
     if (2L != length(dim(mt))) {
-        stop(paste0('Magnitude table is not two-dimensional!'))
+        stop(paste0("Magnitude table is not two-dimensional!"))
     }
 
     mt.m <- as.matrix(mt) # work with raw numeric matrix to control rounding precisely
@@ -134,7 +135,8 @@ vmtable <- function(mt) {
     # phase 2: cumsum column-wise and round
     mt2c.v <- as.integer(as.vector(mt2c)) # traverse cells column-by-column to match VMDB layout
     mt2c.v.cs <- cumsum(mt2c.v) # cumulative sum acts as running total for the sum-preserving rounding logic
-    mt2c.row_ids <- rep(seq_len(nrow.mt2c), times=ncol.mt) # retain row membership so remainders alternate per observation
+    # retain row membership so remainders alternate per observation
+    mt2c.row_ids <- rep(seq_len(nrow.mt2c), times = ncol.mt)
 
     rows.reminder <- rep(0L, nrow.mt2c) # tracks whether a row already kept the previous 0.5 remainder
     mt2c.f <- integer(length(mt2c.v.cs))
@@ -171,5 +173,5 @@ vmtable <- function(mt) {
     result <- as.table(mt2c.m %/% 2L) # collapse half-meteor counts back to whole meteors
     dimnames(result) <- dimnames(mt) # restore dimnames
 
-    return(result)
+    result
 }

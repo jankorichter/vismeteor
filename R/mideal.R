@@ -15,7 +15,8 @@
 #' @details
 #' The density of the ideal distribution of meteor magnitudes is
 #' \deqn{
-#'     {\displaystyle \frac{\mathrm{d}p}{\mathrm{d}m} = \frac{3}{2} \, \log(r) \sqrt{\frac{r^{3 \, \psi + 2 \, m}}{(r^\psi + r^m)^5}}}
+#'     {\displaystyle \frac{\mathrm{d}p}{\mathrm{d}m} =
+#'      \frac{3}{2} \, \log(r) \sqrt{\frac{r^{3 \, \psi + 2 \, m}}{(r^\psi + r^m)^5}}}
 #' }
 #' where \eqn{m} is the continuous (real-valued) meteor magnitude,
 #' \eqn{r = 10^{0.4} \approx 2.51189 \dots} is a constant and
@@ -31,69 +32,69 @@
 #' @references Richter, J. (2018) \emph{About the mass and magnitude distributions of meteor showers}.
 #'   WGN, Journal of the International Meteor Organization, vol. 46, no. 1, p. 34-38
 #' @examples
-#' old_par <- par(mfrow = c(2,2))
+#' old_par <- par(mfrow = c(2, 2))
 #' psi <- 5.0
 #' plot(
 #'     \(m) dmideal(m, psi, log = FALSE),
 #'     -5, 10,
-#'     main = paste0('Density of the Ideal Meteor Magnitude\nDistribution (psi = ', psi, ')'),
+#'     main = paste0("Density of the Ideal Meteor Magnitude\nDistribution (psi = ", psi, ")"),
 #'     col = "blue",
-#'     xlab = 'm',
-#'     ylab = 'dp/dm'
+#'     xlab = "m",
+#'     ylab = "dp/dm"
 #' )
-#' abline(v=psi, col="red")
+#' abline(v = psi, col = "red")
 #'
 #' plot(
 #'     \(m) dmideal(m, psi, log = TRUE),
 #'     -5, 10,
-#'     main = paste0('Density of the Ideal Meteor Magnitude\nDistribution (psi = ', psi, ')'),
+#'     main = paste0("Density of the Ideal Meteor Magnitude\nDistribution (psi = ", psi, ")"),
 #'     col = "blue",
-#'     xlab = 'm',
-#'     ylab = 'log( dp/dm )'
+#'     xlab = "m",
+#'     ylab = "log( dp/dm )"
 #' )
-#' abline(v=psi, col="red")
+#' abline(v = psi, col = "red")
 #'
 #' plot(
 #'     \(m) pmideal(m, psi),
 #'     -5, 10,
-#'     main = paste0('Probability of the Ideal Meteor Magnitude\nDistribution (psi = ', psi, ')'),
+#'     main = paste0("Probability of the Ideal Meteor Magnitude\nDistribution (psi = ", psi, ")"),
 #'     col = "blue",
-#'     xlab = 'm',
-#'     ylab = 'p'
+#'     xlab = "m",
+#'     ylab = "p"
 #' )
-#' abline(v=psi, col="red")
+#' abline(v = psi, col = "red")
 #'
 #' plot(
 #'     \(p) qmideal(p, psi),
 #'     0.01, 0.99,
-#'     main = paste('Quantile of the Ideal Meteor Magnitude\nDistribution (psi = ', psi, ')'),
+#'     main = paste("Quantile of the Ideal Meteor Magnitude\nDistribution (psi = ", psi, ")"),
 #'     col = "blue",
-#'     xlab = 'p',
-#'     ylab = 'm'
+#'     xlab = "p",
+#'     ylab = "m"
 #' )
-#' abline(h=psi, col="red")
+#' abline(h = psi, col = "red")
 #'
 #' # generate random meteor magnitudes
 #' m <- rmideal(1000, psi)
 #'
 #' # log likelihood function
 #' llr <- function(psi) {
-#'     -sum(dmideal(m, psi, log=TRUE))
+#'     -sum(dmideal(m, psi, log = TRUE))
 #' }
 #'
 #' # maximum likelihood estimation (MLE) of psi
-#' est <- optim(2, llr, method='Brent', lower=0, upper=8, hessian=TRUE)
+#' est <- optim(2, llr, method = "Brent", lower = 0, upper = 8, hessian = TRUE)
 #'
 #' # estimations
 #' est$par # mean of psi
-#' sqrt(1/est$hessian[1][1]) # standard deviation of psi
+#' sqrt(1 / est$hessian[1][1]) # standard deviation of psi
 #'
 #' par(old_par)
 
 #' @rdname mideal
 #' @export
 dmideal <- function(m, psi = 0.0, log = FALSE) {
-    a <- -base::log(10.0)/2.5
+    a <- -base::log(10.0) / 2.5
     d <- rep(NA, length(m))
     psi.exp <- 10.0
     m <- m - psi
@@ -119,10 +120,10 @@ dmideal <- function(m, psi = 0.0, log = FALSE) {
     idx <- is.na(d)
     if (any(idx)) {
         if (log) {
-            d[idx] <- (3 * a * m[idx] - 5 * base::log(1.0 + exp(a * m[idx])))/2
+            d[idx] <- (3 * a * m[idx] - 5 * base::log(1.0 + exp(a * m[idx]))) / 2
         } else {
             d[idx] <- base::sqrt(
-                exp(3 * a * m[idx])/(1.0 + exp(a * m[idx]))^5
+                exp(3 * a * m[idx]) / (1.0 + exp(a * m[idx]))^5
             )
         }
     }
@@ -137,7 +138,7 @@ dmideal <- function(m, psi = 0.0, log = FALSE) {
 #' @rdname mideal
 #' @export
 pmideal <- function(m, psi = 0.0, lower.tail = TRUE, log = FALSE) {
-    a <- -base::log(10.0)/2.5
+    a <- -base::log(10.0) / 2.5
     psi.exp <- 10.0
 
     m <- m - psi
@@ -236,7 +237,7 @@ pmideal <- function(m, psi = 0.0, lower.tail = TRUE, log = FALSE) {
 
     idx <- lower.tail & m < -psi.exp
     if (any(idx)) {
-        p.max <- 1/(1 + exp(-f.spline(-psi.exp)))
+        p.max <- 1 / (1 + exp(-f.spline(-psi.exp)))
         if (log) {
             p[idx] <- base::log(p.max) + stats::pexp(-psi.exp - m[idx], -a, lower.tail = FALSE, log = TRUE)
         } else {
@@ -246,7 +247,7 @@ pmideal <- function(m, psi = 0.0, lower.tail = TRUE, log = FALSE) {
 
     idx <- !lower.tail & m > psi.exp
     if (any(idx)) {
-        p.max <- 1/(1 + exp(-f.spline(psi.exp)))
+        p.max <- 1 / (1 + exp(-f.spline(psi.exp)))
         if (log) {
             p[idx] <- base::log(p.max) + stats::pexp(m[idx] - psi.exp, -1.5 * a, lower.tail = FALSE, log = TRUE)
         } else {
@@ -256,7 +257,7 @@ pmideal <- function(m, psi = 0.0, lower.tail = TRUE, log = FALSE) {
 
     idx <- is.na(p)
     if (any(idx)) {
-        p[idx] <- 1/(1 + exp(-f.spline(m[idx])))
+        p[idx] <- 1 / (1 + exp(-f.spline(m[idx])))
         if (log) {
             p[idx] <- base::log(p[idx])
         }
@@ -268,11 +269,11 @@ pmideal <- function(m, psi = 0.0, lower.tail = TRUE, log = FALSE) {
 #' @rdname mideal
 #' @export
 qmideal <- function(p, psi = 0.0, lower.tail = TRUE) {
-    a <- -base::log(10.0)/2.5
+    a <- -base::log(10.0) / 2.5
     psi.exp <- 10.0
 
     m <- rep(NA, length(p))
-    apply.idx <- !is.na(p) & p>0.0 & p < 1.0
+    apply.idx <- !is.na(p) & p > 0.0 & p < 1.0
 
     if (lower.tail) {
         m[0.0 == p] <- -Inf
@@ -320,7 +321,7 @@ qmideal <- function(p, psi = 0.0, lower.tail = TRUE) {
             13.1258002217638,
             13.8198202144629
         )
-        p.min <- 1/(1 + exp(-spline.knods[1]))
+        p.min <- 1 / (1 + exp(-spline.knods[1]))
     } else {
         m[0.0 == p] <- Inf
         m[(p + 1e-07) >= 1.0 & p <= 1.0] <- -Inf
@@ -367,29 +368,29 @@ qmideal <- function(p, psi = 0.0, lower.tail = TRUE) {
             -13.1248984689238,
             -13.8155074574103
         )
-        p.min <- 1/(1 + exp(-spline.knods[length(spline.knods)]))
+        p.min <- 1 / (1 + exp(-spline.knods[length(spline.knods)]))
     }
 
     f.spline <- stats::splinefun(spline.knods, seq(-psi.exp, psi.exp, 0.5), method = "hyman")
 
     idx <- apply.idx & lower.tail & p <= p.min
     if (any(idx)) {
-        m[idx] <- -psi.exp - stats::qexp(p[idx]/p.min, -a, lower.tail = FALSE, log = FALSE)
+        m[idx] <- -psi.exp - stats::qexp(p[idx] / p.min, -a, lower.tail = FALSE, log = FALSE)
     }
 
     idx <- apply.idx & !lower.tail & p <= p.min
     if (any(idx)) {
-        m[idx] <- psi.exp + stats::qexp(p[idx]/p.min, -1.5 * a, lower.tail = FALSE, log = FALSE)
+        m[idx] <- psi.exp + stats::qexp(p[idx] / p.min, -1.5 * a, lower.tail = FALSE, log = FALSE)
     }
 
     idx <- apply.idx & is.na(m)
     if (any(idx)) {
-        p.logit <- base::log(p[idx]/(1-p[idx]))
+        p.logit <- base::log(p[idx] / (1 - p[idx]))
         m[idx] <- f.spline(p.logit)
     }
 
     if (anyNA(m)) {
-        warning('NaNs produced')
+        warning("NaNs produced")
     }
 
     m <- m + psi

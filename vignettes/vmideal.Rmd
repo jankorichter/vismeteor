@@ -15,8 +15,8 @@ vignette: >
 ```{r setup, include = FALSE}
 library(vismeteor)
 knitr::opts_chunk$set(
-  collapse = TRUE,
-  comment = "#>"
+    collapse = TRUE,
+    comment = "#>"
 )
 ```
 
@@ -72,15 +72,15 @@ Using
 
 ```{r, echo=TRUE, results='hide'}
 magnitudes <- with(new.env(), {
-  magnitudes <- merge(
-      observations,
-      as.data.frame(PER_2015_magn$magnitudes),
-      by = 'magn.id'
-  )
-  magnitudes$magn <- as.integer(as.character(magnitudes$magn))
-  subset(magnitudes, (magnitudes$lim.magn - magnitudes$magn) > -0.5)
+    magnitudes <- merge(
+        observations,
+        as.data.frame(PER_2015_magn$magnitudes),
+        by = "magn.id"
+    )
+    magnitudes$magn <- as.integer(as.character(magnitudes$magn))
+    subset(magnitudes, (magnitudes$lim.magn - magnitudes$magn) > -0.5)
 })
-head(magnitudes[magnitudes$Freq>0,], 5) # Example values
+head(magnitudes[magnitudes$Freq > 0, ], 5) # Example values
 ```
 
 we obtain a data frame with the absolute observed frequencies `Freq` for each
@@ -89,7 +89,7 @@ observation of a magnitude class. The expression
 ensures that meteors fainter than the limiting magnitude are not used if they exist.
 
 ```{r, echo=FALSE, results='asis'}
-knitr::kable(head(magnitudes[magnitudes$Freq>0,], 5))
+knitr::kable(head(magnitudes[magnitudes$Freq > 0, ], 5))
 ```
 
 This data frame contains a total of `r sum(magnitudes$Freq)` meteors.
@@ -110,12 +110,12 @@ as `optim()` identifies a minimum.
 # maximum likelihood estimation (MLE) of psi
 result <- with(magnitudes, {
     # log likelihood function
-    ll <- function(psi) -sum(Freq * dvmideal(magn, lim.magn, psi, log=TRUE))
+    ll <- function(psi) -sum(Freq * dvmideal(magn, lim.magn, psi, log = TRUE))
     psi.start <- 6.0 # starting value
     psi.lower <- 4.0 # lowest expected value
     psi.upper <- 10.0 # highest expected value
     # find minimum
-    optim(psi.start, ll, method='Brent', lower=psi.lower, upper=psi.upper, hessian=TRUE)
+    optim(psi.start, ll, method = "Brent", lower = psi.lower, upper = psi.upper, hessian = TRUE)
 })
 ```
 
@@ -124,7 +124,7 @@ This gives the expected value and the variance of the parameter:
 ```{r, echo=TRUE}
 psi.mean <- result$par # mean of psi
 print(psi.mean)
-psi.var <- 1/result$hessian[1][1] # variance of psi
+psi.var <- 1 / result$hessian[1][1] # variance of psi
 print(psi.var)
 ```
 
@@ -132,22 +132,22 @@ We can additionally visualize the likelihood function here.
 
 ```{r, echo=TRUE, results='hide'}
 with(new.env(), {
-  data.plot <- data.frame(psi = seq(4.0, 11, 0.1))
-  data.plot$ll <- mapply(function(psi){
-    with(magnitudes, {
-      # log likelihood function
-      sum(Freq * dvmideal(magn, lim.magn, psi, log=TRUE))
-    })
-  }, data.plot$psi)
-  data.plot$l <- exp(data.plot$ll - max(data.plot$ll))
-  data.plot$l <- data.plot$l / sum(data.plot$l)
-  plot(data.plot$psi, data.plot$l,
-    type = "l",
-    col = "blue",
-    xlab = "psi",
-    ylab = "likelihood"
-  )
-  abline(v = result$par, col = "red", lwd = 1)
+    data.plot <- data.frame(psi = seq(4.0, 11, 0.1))
+    data.plot$ll <- mapply(function(psi) {
+        with(magnitudes, {
+            # log likelihood function
+            sum(Freq * dvmideal(magn, lim.magn, psi, log = TRUE))
+        })
+    }, data.plot$psi)
+    data.plot$l <- exp(data.plot$ll - max(data.plot$ll))
+    data.plot$l <- data.plot$l / sum(data.plot$l)
+    plot(data.plot$psi, data.plot$l,
+        type = "l",
+        col = "blue",
+        xlab = "psi",
+        ylab = "likelihood"
+    )
+    abline(v = result$par, col = "red", lwd = 1)
 })
 ```
 
@@ -183,20 +183,20 @@ estimates for $\psi$.
 
 ```{r, echo=TRUE, results='show'}
 tm.mean <- with(magnitudes, {
-  N <- sum(Freq)
-  tm <- vmidealVstFromMagn(magn, lim.magn)
-  tm.mean <- sum(Freq * tm)/N
-  tm.var <- sum(Freq * (tm - tm.mean)^2)/(N-1)
-  tm.mean.var <- tm.var / N
-  list('val' = tm.mean, 'var' = tm.mean.var, 'sd' = sqrt(tm.mean.var))
+    N <- sum(Freq)
+    tm <- vmidealVstFromMagn(magn, lim.magn)
+    tm.mean <- sum(Freq * tm) / N
+    tm.var <- sum(Freq * (tm - tm.mean)^2) / (N - 1)
+    tm.mean.var <- tm.var / N
+    list("val" = tm.mean, "var" = tm.mean.var, "sd" = sqrt(tm.mean.var))
 })
 ```
 
 Thus, one obtains the mean and the variance of the mean of `tm`.
 
 ```{r, echo=TRUE, results='show'}
-print(paste('tm mean:', tm.mean$val))
-print(paste('tm var:', tm.mean$var))
+print(paste("tm mean:", tm.mean$val))
+print(paste("tm var:", tm.mean$var))
 ```
 
 Using the bootstrap method, it can be assessed whether the mean is normally distributed.
@@ -208,7 +208,7 @@ tm.means <- with(magnitudes, {
     N <- sum(Freq)
     tm <- vmidealVstFromMagn(magn, lim.magn)
     replicate(50000, {
-      mean(sample(tm, size = N, replace = TRUE, prob = Freq))
+        mean(sample(tm, size = N, replace = TRUE, prob = Freq))
     })
 })
 ```
@@ -217,21 +217,21 @@ The graphical representation indicates that this is indeed approximately the cas
 
 ```{r, echo=TRUE, results='show'}
 with(new.env(), {
-  tm.min <- tm.mean$val - 3 * tm.mean$sd
-  tm.max <- tm.mean$val + 3 * tm.mean$sd
-  tm.means <- subset(tm.means, tm.means > tm.min & tm.means < tm.max)
-  brks <- seq(min(tm.means) - 0.02, max(tm.means) + 0.02, by = 0.02)
-  hist(tm.means,
-    breaks = brks,
-    col = "skyblue",
-    border = "black",
-    main = "Histogram of mean tm",
-    xlab = "tm",
-    ylab = "count",
-    xaxt = "n"
-  )
-  axis(1, at = seq(round(min(brks), 1), round(max(brks), 1) + 0.1, by = 0.1))
-  abline(v = 0, col = "red", lwd = 1)
+    tm.min <- tm.mean$val - 3 * tm.mean$sd
+    tm.max <- tm.mean$val + 3 * tm.mean$sd
+    tm.means <- subset(tm.means, tm.means > tm.min & tm.means < tm.max)
+    brks <- seq(min(tm.means) - 0.02, max(tm.means) + 0.02, by = 0.02)
+    hist(tm.means,
+        breaks = brks,
+        col = "skyblue",
+        border = "black",
+        main = "Histogram of mean tm",
+        xlab = "tm",
+        ylab = "count",
+        xaxt = "n"
+    )
+    axis(1, at = seq(round(min(brks), 1), round(max(brks), 1) + 0.1, by = 0.1))
+    abline(v = 0, col = "red", lwd = 1)
 })
 ```
 
@@ -248,10 +248,10 @@ in this context to interpret the value as the median.
 ```{r, echo=TRUE}
 lim.magn.mean <- with(magnitudes, {
     N <- sum(Freq)
-    sum(Freq * lim.magn)/N
+    sum(Freq * lim.magn) / N
 })
-print(paste('lim.magn.mean:', lim.magn.mean))
-print(paste('mean psi:', vmidealVstToPsi(tm.mean$val, lim.magn.mean)))
+print(paste("lim.magn.mean:", lim.magn.mean))
+print(paste("mean psi:", vmidealVstToPsi(tm.mean$val, lim.magn.mean)))
 ```
 
 The mean limiting magnitude `lim.magn.mean` is required to estimate the location parameter $\psi$.
@@ -305,7 +305,7 @@ their probability.
 ```{r, echo=TRUE, results='asis'}
 idx <- magnitudes$magn == magn.min
 magnitudes$p[idx] <- with(
-    magnitudes[idx,],
+    magnitudes[idx, ],
     pvmideal(m = magn + 1L, lm = lim.magn, psi.mean, lower.tail = TRUE)
 )
 ```
@@ -319,7 +319,7 @@ and its margin table.
 
 ```{r, echo=TRUE}
 magnitutes.observed <- xtabs(Freq ~ magn.id + magn, data = magnitudes)
-magnitutes.observed.mt <- margin.table(magnitutes.observed, margin = 2) 
+magnitutes.observed.mt <- margin.table(magnitutes.observed, margin = 2)
 print(magnitutes.observed.mt)
 ```
 
@@ -331,8 +331,8 @@ a magnitude class `0-`. Meteors with a brightness less than `4` are grouped here
 magnitude class `4+`, and a new contingency table magnitudes.observed is created:
 
 ```{r, echo=TRUE}
-magnitudes$magn[magnitudes$magn <= 0] <- '0-'
-magnitudes$magn[magnitudes$magn >= 4] <- '4+'
+magnitudes$magn[magnitudes$magn <= 0] <- "0-"
+magnitudes$magn[magnitudes$magn >= 4] <- "4+"
 magnitutes.observed <- xtabs(Freq ~ magn.id + magn, data = magnitudes)
 print(margin.table(magnitutes.observed, margin = 2))
 ```
@@ -343,7 +343,7 @@ We now need the corresponding expected relative frequencies
 magnitutes.expected <- xtabs(p ~ magn.id + magn, data = magnitudes)
 magnitutes.row_freq <- margin.table(magnitutes.observed, margin = 1)
 magnitutes.expected <- sweep(magnitutes.expected, 1, magnitutes.row_freq, `*`)
-magnitutes.expected <- magnitutes.expected/sum(magnitutes.expected)
+magnitutes.expected <- magnitutes.expected / sum(magnitutes.expected)
 print(sum(magnitudes$Freq) * margin.table(magnitutes.expected, margin = 2))
 ```
 
@@ -384,12 +384,12 @@ chisq.test.residuals <- with(new.env(), {
 
 plot(
     chisq.test.residuals,
-    main="Residuals of the chi-square goodness-of-fit test",
-    xlab="m",
-    ylab="Residuals",
-    ylim=c(-3, 3),
+    main = "Residuals of the chi-square goodness-of-fit test",
+    xlab = "m",
+    ylab = "Residuals",
+    ylim = c(-3, 3),
     xaxt = "n"
 )
-abline(h=0.0, lwd=2)
+abline(h = 0.0, lwd = 2)
 axis(1, at = seq_along(chisq.test.residuals), labels = names(chisq.test.residuals))
 ```

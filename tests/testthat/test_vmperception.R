@@ -11,7 +11,7 @@ test_that("vmperception", {
             0.87, 0.89, 0.91, 0.93, 0.94, 0.96, 0.98, 1.0
         )
     )
-    data <- rbind(data.frame(m=-0.5, p=0.0), data)
+    data <- rbind(data.frame(m = -0.5, p = 0.0), data)
     p.fun <- approxfun(data$m, data$p, yleft = 0.0, yright = 1.0)
 
     # ignore lower magnitudes
@@ -21,7 +21,7 @@ test_that("vmperception", {
     p <- vmperception(data0$m)
     expect_true(all(p < 1.0))
     expect_true(all(p > 0.0))
-    pdiff <- (p - data0$p)/data0$p
+    pdiff <- (p - data0$p) / data0$p
     expect_lt(mean(abs(pdiff)), 0.057)
     expect_true(all(abs(pdiff) < 0.14))
 
@@ -31,7 +31,7 @@ test_that("vmperception", {
         limmag <- seq(5.6, 6.4, 0.2)
         m <- seq(-100, 6, 1)
 
-        df <- expand.grid(r=r, limmag=limmag)
+        df <- expand.grid(r = r, limmag = limmag)
         do.call(
             rbind.data.frame,
             mapply(function(r, limmag) {
@@ -39,9 +39,9 @@ test_that("vmperception", {
 
                 # maximum likelihood estimation (MLE) of r
                 llr <- function(r) {
-                    -sum(p * dvmgeom(m, limmag, r, log=TRUE))
+                    -sum(p * dvmgeom(m, limmag, r, log = TRUE))
                 }
-                r.est <- optim(r, llr, method='Brent', lower=1.1, upper=5, hessian=FALSE)$par
+                r.est <- optim(r, llr, method = "Brent", lower = 1.1, upper = 5, hessian = FALSE)$par
 
                 list(
                     r = r,

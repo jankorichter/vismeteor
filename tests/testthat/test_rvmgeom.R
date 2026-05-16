@@ -15,7 +15,7 @@ test_that("rvmgeom", {
 
     # meteor magnitudes <= 6.0
     m <- vismeteor::rvmgeom(1000, 6.5, r)
-    expect_type(m, 'double')
+    expect_type(m, "double")
     expect_length(m, 1000)
     expect_false(anyNA(m))
     expect_false(anyNA(is.infinite(m)))
@@ -24,12 +24,12 @@ test_that("rvmgeom", {
 
     # Tests with perception.fun
     m <- with_seed(7, vismeteor::rvmgeom(1000, 6.5, r, perception.fun = perception.const))
-    expect_type(m, 'double')
+    expect_type(m, "double")
     expect_length(m, 1000)
     expect_false(anyNA(m))
     expect_false(anyNA(is.infinite(m)))
     expect_true(all(m <= 6.0))
     expect_equal(as.integer(m), m)
-    m.geom <- with_seed(7, stats::rgeom(10000, 1.0 - 1/r))
-    expect_lt(mean(m.geom) - mean(6-m), 0.1)
+    m.geom <- with_seed(7, stats::rgeom(10000, 1.0 - 1 / r))
+    expect_lt(mean(m.geom) - mean(6 - m), 0.1)
 })

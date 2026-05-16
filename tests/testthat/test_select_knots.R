@@ -1,15 +1,17 @@
 test_that("select_knots", {
-
     # synthetic, deterministic signal
     set.seed(1)
-    n   <- 200
-    x   <- seq(0, 10, length.out = n)
-    y   <- sin(x) + stats::rnorm(n, sd = 0.2)
+    n <- 200
+    x <- seq(0, 10, length.out = n)
+    y <- sin(x) + stats::rnorm(n, sd = 0.2)
     dat <- data.frame(x = x, y = y)
 
     fit <- \(d, knots) {
-        f <- if (length(knots) == 0L) y ~ splines::ns(x)
-             else                     y ~ splines::ns(x, knots = knots)
+        f <- if (length(knots) == 0L) {
+            y ~ splines::ns(x)
+        } else {
+            y ~ splines::ns(x, knots = knots)
+        }
         stats::lm(f, data = d)
     }
     score_bic <- \(d, knots) stats::BIC(fit(d, knots))
@@ -17,8 +19,10 @@ test_that("select_knots", {
 
     # forward selection: result has the expected shape
     res <- select_knots(dat, cand, score_bic)
-    expect_named(res, c("backward", "knots", "fixed_knots",
-                        "score", "n_steps", "history"))
+    expect_named(res, c(
+        "backward", "knots", "fixed_knots",
+        "score", "n_steps", "history"
+    ))
     expect_false(res$backward)
     expect_true(is.numeric(res$knots))
     expect_true(is.numeric(res$fixed_knots))
@@ -29,8 +33,10 @@ test_that("select_knots", {
     expect_null(res$n_steps)
     expect_equal(res$score, tail(res$history$score, 1L))
     expect_true(is.data.frame(res$history))
-    expect_named(res$history,
-                 c("step", "n_knots", "changed_knot", "score", "extra"))
+    expect_named(
+        res$history,
+        c("step", "n_knots", "changed_knot", "score", "extra")
+    )
     # NULL-mode never records a worsening step
     expect_false(any(res$history$extra))
 
@@ -45,14 +51,16 @@ test_that("select_knots", {
     # the best point along that trajectory is at least as good as the
     # NULL-mode optimum (both follow the same path up to it).
     res_long <- select_knots(dat, cand, score_bic,
-                             n_steps = length(cand) + 5L)
+        n_steps = length(cand) + 5L
+    )
     expect_lte(min(res_long$history$score), res$score)
 
     # Single-step exploration past the optimum: take one controlled step
     # from the previous optimum and check that exactly one new knot appears.
-    anchor    <- c(res$knots, res$fixed_knots)
+    anchor <- c(res$knots, res$fixed_knots)
     res_step1 <- select_knots(dat, cand, score_bic,
-                              fixed_knots = anchor, n_steps = 1L)
+        fixed_knots = anchor, n_steps = 1L
+    )
     expect_length(res_step1$knots, 1L)
     expect_false(res_step1$knots %in% anchor)
     expect_identical(sort(res_step1$fixed_knots), sort(anchor))
@@ -70,7 +78,8 @@ test_that("select_knots", {
     # bulk_gap = 0L disables bulk; it is a different trajectory than the
     # default bulk run, so optima can differ, but both must be valid.
     res_b0 <- select_knots(dat, cand, score_bic,
-                           backward = TRUE, bulk_gap = 0L)
+        backward = TRUE, bulk_gap = 0L
+    )
     expect_true(all(res_b0$knots %in% cand))
     expect_lt(res_b0$score, score_bic(dat, numeric(0)))
 
@@ -92,7 +101,8 @@ test_that("select_knots", {
 
     # fixed_knots, backward: never removed -> still in $fixed_knots, not in $knots
     res_fb <- select_knots(dat, cand, score_bic,
-                           backward = TRUE, fixed_knots = 5.25)
+        backward = TRUE, fixed_knots = 5.25
+    )
     expect_true(5.25 %in% res_fb$fixed_knots)
     expect_false(5.25 %in% res_fb$knots)
     expect_equal(res_fb$knots, sort(res_fb$knots))
@@ -100,7 +110,8 @@ test_that("select_knots", {
     # fixed_knots = cand in backward mode: nothing is removable, the search
     # terminates immediately. $knots is empty; $fixed_knots holds the whole pool.
     res_fall <- select_knots(dat, cand, score_bic,
-                             backward = TRUE, fixed_knots = cand)
+        backward = TRUE, fixed_knots = cand
+    )
     expect_length(res_fall$knots, 0L)
     expect_equal(sort(c(res_fall$knots, res_fall$fixed_knots)), sort(cand))
 
@@ -117,10 +128,12 @@ test_that("select_knots", {
     # `length(remaining) == 0` guard at the top. Test that branch instead by
     # using a set that overfits but still has candidates to spare.)
     overfit_anchor <- cand[seq(1L, length(cand) - 2L)]
-    res_over_null  <- select_knots(dat, cand, score_bic,
-                                   fixed_knots = overfit_anchor)
-    res_over_2     <- select_knots(dat, cand, score_bic,
-                                   fixed_knots = overfit_anchor, n_steps = 2L)
+    res_over_null <- select_knots(dat, cand, score_bic,
+        fixed_knots = overfit_anchor
+    )
+    res_over_2 <- select_knots(dat, cand, score_bic,
+        fixed_knots = overfit_anchor, n_steps = 2L
+    )
     # With n_steps = 2L the loop runs both iterations regardless of improvement.
     expect_equal(nrow(res_over_2$history), 3L)
     # If the NULL run stopped at the start (no improvement possible), then the
@@ -143,17 +156,21 @@ test_that("select_knots", {
     # Names on knot_candidates and fixed_knots are preserved through the
     # returned $knots and $fixed_knots.
     cand_named <- setNames(cand, paste0("k", seq_along(cand)))
-    res_named  <- select_knots(dat, cand_named, score_bic)
+    res_named <- select_knots(dat, cand_named, score_bic)
     expect_false(is.null(names(res_named$knots)))
     expect_true(all(names(res_named$knots) %in% names(cand_named)))
 
     fk_named <- c(anchor = 5.25)
     res_fnamed <- select_knots(dat, cand_named, score_bic,
-                               fixed_knots = fk_named)
+        fixed_knots = fk_named
+    )
     expect_true("anchor" %in% names(res_fnamed$fixed_knots))
-    expect_equal(unname(res_fnamed$fixed_knots[
-                            names(res_fnamed$fixed_knots) == "anchor"]),
-                 5.25)
+    expect_equal(
+        unname(res_fnamed$fixed_knots[
+            names(res_fnamed$fixed_knots) == "anchor"
+        ]),
+        5.25
+    )
 
     # input validation
     expect_error(select_knots(dat, cand, score_bic, backward = NA))

@@ -43,14 +43,14 @@
 #' par(old_par)
 #' @export
 vmperception <- function(m) {
-    poly.coef <- c(0.0, 0.0037, 0.0019, 0.00271, 0.0009)
-    names(poly.coef) <- seq(along = poly.coef) - 1 # exponents
+    poly_coef <- c(0.0, 0.0037, 0.0019, 0.00271, 0.0009)
+    names(poly_coef) <- seq(along = poly_coef) - 1 # exponents
 
     m <- m + 0.5
     p <- rep(0.0, length(m))
     idx <- m > .Machine$double.eps
     if (any(idx)) {
-        f0 <- f_polynomial(m[idx], poly.coef)
+        f0 <- f_polynomial(m[idx], poly_coef)
         p[idx] <- 1.0 - exp(-f0)
     }
 
@@ -60,32 +60,32 @@ vmperception <- function(m) {
 #' build polynomial sum
 #'
 #' @noRd
-f_polynomial <- function(m, poly.coef) {
-    exponents <- as.numeric(names(poly.coef))
-    margin.table(poly.coef * t(outer(m, exponents, "^")), 2)
+f_polynomial <- function(m, poly_coef) {
+    exponents <- as.numeric(names(poly_coef))
+    margin.table(poly_coef * t(outer(m, exponents, "^")), 2)
 }
 
 #' returns polynomial coefficients
 #'
 #' @noRd
-f_polynomial_coef <- function(poly.coef, deriv.degree = 1L) {
+f_polynomial_coef <- function(poly_coef, deriv.degree = 1L) {
     if (0L == deriv.degree) {
-        return(poly.coef)
+        return(poly_coef)
     }
 
-    if (1 == length(poly.coef)) {
+    if (1 == length(poly_coef)) {
         return(0)
     }
 
-    exponents <- as.numeric(names(poly.coef))
-    poly.coef <- poly.coef * exponents
+    exponents <- as.numeric(names(poly_coef))
+    poly_coef <- poly_coef * exponents
     if (0L %in% exponents) {
-        intercept.idx <- 0L == exponents
-        poly.coef <- poly.coef[!intercept.idx]
-        exponents <- exponents[!intercept.idx]
+        intercept_idx <- 0L == exponents
+        poly_coef <- poly_coef[!intercept_idx]
+        exponents <- exponents[!intercept_idx]
     }
     exponents <- exponents - 1L
-    names(poly.coef) <- exponents
+    names(poly_coef) <- exponents
 
-    f_polynomial_coef(poly.coef, deriv.degree - 1L)
+    f_polynomial_coef(poly_coef, deriv.degree - 1L)
 }

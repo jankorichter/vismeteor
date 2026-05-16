@@ -65,24 +65,24 @@
 #'
 #' # Variance-stabilizing transformation
 #' tm <- vmgeomVstFromMagn(m, limmag)
-#' tm.mean <- mean(tm)
-#' tm.var <- var(tm)
+#' tm_mean <- mean(tm)
+#' tm_var <- var(tm)
 #'
 #' # Estimator for r from the transformed mean
-#' r.hat <- vmgeomVstToR(tm.mean)
+#' r_hat <- vmgeomVstToR(tm_mean)
 #'
-#' # Derivative dr/d(tm) at tm.mean (needed for the delta method)
-#' dr_dtm <- vmgeomVstToR(tm.mean, deriv.degree = 1L)
+#' # Derivative dr/d(tm) at tm_mean (needed for the delta method)
+#' dr_dtm <- vmgeomVstToR(tm_mean, deriv.degree = 1L)
 #'
 #' # Variance of the sample mean of tm
-#' var_tm.mean <- tm.var / N
+#' var_tm.mean <- tm_var / N
 #'
-#' # Delta method: variance and standard error of r.hat
+#' # Delta method: variance and standard error of r_hat
 #' var_r.hat <- (dr_dtm^2) * var_tm.mean
 #' se_r.hat <- sqrt(var_r.hat)
 #'
 #' # Results
-#' print(r.hat)
+#' print(r_hat)
 #' print(se_r.hat)
 
 #' @rdname vmgeomVst
@@ -93,10 +93,10 @@ vmgeomVstFromMagn <- function(m, lm) {
         offset <- rep(offset, length(m))
     }
 
-    a <- .vmgeomVstFromMagn.params$pa.fun(offset)
-    b <- .vmgeomVstFromMagn.params$pb.fun(offset)
-    c <- .vmgeomVstFromMagn.params$pc.fun(offset)
-    d <- .vmgeomVstFromMagn.params$pd.fun(offset)
+    a <- .vmgeomVstFromMagn.params$pa_fun(offset)
+    b <- .vmgeomVstFromMagn.params$pb_fun(offset)
+    c <- .vmgeomVstFromMagn.params$pc_fun(offset)
+    d <- .vmgeomVstFromMagn.params$pd_fun(offset)
 
     x <- lm - m
     a - exp(b + c * (x + 0.5)^d)
@@ -105,18 +105,18 @@ vmgeomVstFromMagn <- function(m, lm) {
 #' @rdname vmgeomVst
 #' @export
 vmgeomVstToR <- function(tm, log = FALSE, deriv.degree = 0L) {
-    poly.coef0 <- c(10.31637299, -5.51610811, 1.38003791, -0.18014183, 0.00946975)
-    names(poly.coef0) <- seq_along(poly.coef0) - 1 # exponents
+    poly_coef0 <- c(10.31637299, -5.51610811, 1.38003791, -0.18014183, 0.00946975)
+    names(poly_coef0) <- seq_along(poly_coef0) - 1 # exponents
 
     # tm min 3.96 (r approx 3.5)
     # tm max 5.74 (r approx 1.4)
     tm[tm < 3.96 | tm > 5.74] <- NA
 
     if (deriv.degree > 0L) {
-        poly.coef1 <- f_polynomial_coef(poly.coef0, deriv.degree = 1L)
+        poly_coef1 <- f_polynomial_coef(poly_coef0, deriv.degree = 1L)
     }
     if (deriv.degree > 1L) {
-        poly.coef2 <- f_polynomial_coef(poly.coef1, deriv.degree = 1L)
+        poly_coef2 <- f_polynomial_coef(poly_coef1, deriv.degree = 1L)
     }
     if (deriv.degree > 2L) {
         stop(paste("deriv.degree", deriv.degree, "not implemented!"))
@@ -124,28 +124,28 @@ vmgeomVstToR <- function(tm, log = FALSE, deriv.degree = 0L) {
 
     if (log) {
         if (2L == deriv.degree) {
-            f_polynomial(tm, poly.coef2)
+            f_polynomial(tm, poly_coef2)
         } else if (1L == deriv.degree) {
-            f_polynomial(tm, poly.coef1)
+            f_polynomial(tm, poly_coef1)
         } else {
-            f_polynomial(tm, poly.coef0)
+            f_polynomial(tm, poly_coef0)
         }
     } else {
         if (2L == deriv.degree) {
-            exp(f_polynomial(tm, poly.coef0)) * (
-                f_polynomial(tm, poly.coef1)^2 + f_polynomial(tm, poly.coef2)
+            exp(f_polynomial(tm, poly_coef0)) * (
+                f_polynomial(tm, poly_coef1)^2 + f_polynomial(tm, poly_coef2)
             )
         } else if (1L == deriv.degree) {
-            f_polynomial(tm, poly.coef1) * exp(f_polynomial(tm, poly.coef0))
+            f_polynomial(tm, poly_coef1) * exp(f_polynomial(tm, poly_coef0))
         } else {
-            exp(f_polynomial(tm, poly.coef0))
+            exp(f_polynomial(tm, poly_coef0))
         }
     }
 }
 
 #' @keywords internal
 .vmgeomVstFromMagn.params <- (function() {
-    param.df <- data.frame(
+    param_df <- data.frame(
         offset = c(
             -0.5, -0.48, -0.45, -0.4, -0.3, -0.2, -0.1, 0,
             0.1, 0.2, 0.3, 0.4, 0.45, 0.48, 0.5
@@ -170,9 +170,9 @@ vmgeomVstToR <- function(tm, log = FALSE, deriv.degree = 0L) {
     )
 
     list(
-        pa.fun = stats::approxfun(param.df$offset, param.df$a),
-        pb.fun = stats::approxfun(param.df$offset, param.df$b),
-        pc.fun = stats::approxfun(param.df$offset, param.df$c),
-        pd.fun = stats::approxfun(param.df$offset, param.df$d)
+        pa_fun = stats::approxfun(param_df$offset, param_df$a),
+        pb_fun = stats::approxfun(param_df$offset, param_df$b),
+        pc_fun = stats::approxfun(param_df$offset, param_df$c),
+        pd_fun = stats::approxfun(param_df$offset, param_df$d)
     )
 })()

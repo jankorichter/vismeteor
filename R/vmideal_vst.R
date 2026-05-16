@@ -59,24 +59,24 @@
 #'
 #' # Variance-stabilizing transformation
 #' tm <- vmidealVstFromMagn(m, limmag)
-#' tm.mean <- mean(tm)
-#' tm.var <- var(tm)
+#' tm_mean <- mean(tm)
+#' tm_var <- var(tm)
 #'
 #' # Estimator for psi from the transformed mean
-#' psi.hat <- vmidealVstToPsi(tm.mean, limmag)
+#' psi_hat <- vmidealVstToPsi(tm_mean, limmag)
 #'
-#' # Derivative d(psi)/d(tm) at tm.mean (needed for the delta method)
-#' dpsi_dtm <- vmidealVstToPsi(tm.mean, limmag, deriv.degree = 1L)
+#' # Derivative d(psi)/d(tm) at tm_mean (needed for the delta method)
+#' dpsi_dtm <- vmidealVstToPsi(tm_mean, limmag, deriv.degree = 1L)
 #'
 #' # Variance of the sample mean of tm
-#' var_tm.mean <- tm.var / N
+#' var_tm.mean <- tm_var / N
 #'
-#' # Delta method: variance and standard error of psi.hat
+#' # Delta method: variance and standard error of psi_hat
 #' var_psi.hat <- (dpsi_dtm^2) * var_tm.mean
 #' se_psi.hat <- sqrt(var_psi.hat)
 #'
 #' # Results
-#' print(psi.hat)
+#' print(psi_hat)
 #' print(se_psi.hat)
 
 #' @rdname vmidealVst
@@ -87,59 +87,59 @@ vmidealVstFromMagn <- function(m, lm) {
         offset <- rep(offset, length(m))
     }
 
-    arg.data <- data.frame(
+    arg_data <- data.frame(
         x = lm - m,
         offset = offset
     )
 
-    data.f <- as.factor(arg.data$offset)
-    data.s <- split(arg.data, data.f)
-    y <- lapply(data.s, \(data) {
+    data_f <- as.factor(arg_data$offset)
+    data_s <- split(arg_data, data_f)
+    y <- lapply(data_s, \(data) {
         x <- data$x
         offset <- data$offset[1]
         params <- .vmidealVstFromMagn.params
         sy <- c(
-            params$p1.fun(offset),
-            params$p2.fun(offset),
-            params$p3.fun(offset),
-            params$p4.fun(offset),
-            params$p5.fun(offset),
-            params$p6.fun(offset)
+            params$p1_fun(offset),
+            params$p2_fun(offset),
+            params$p3_fun(offset),
+            params$p4_fun(offset),
+            params$p5_fun(offset),
+            params$p6_fun(offset)
         )
         sx <- params$sx
-        f.spline <- stats::splinefun(sx, sy)
+        f_spline <- stats::splinefun(sx, sy)
         y <- rep(NA, length(x))
 
         idx <- x < sx[1]
         if (any(idx)) {
-            y[idx] <- f.spline(sx[1], deriv = 1) * (x[idx] - sx[1]) + sy[1]
+            y[idx] <- f_spline(sx[1], deriv = 1) * (x[idx] - sx[1]) + sy[1]
         }
 
         idx <- x > sx[length(sx)]
         if (any(idx)) {
-            y[idx] <- f.spline(sx[length(sx)], deriv = 1) * (x[idx] - sx[length(sx)]) + sy[length(sy)]
+            y[idx] <- f_spline(sx[length(sx)], deriv = 1) * (x[idx] - sx[length(sx)]) + sy[length(sy)]
         }
 
         idx <- x >= sx[1] & x <= sx[length(sx)]
         if (any(idx)) {
-            y[idx] <- f.spline(x[idx])
+            y[idx] <- f_spline(x[idx])
         }
 
-        y - params$p0.fun(offset)
+        y - params$p0_fun(offset)
     })
 
-    unsplit(y, data.f)
+    unsplit(y, data_f)
 }
 
 #' @rdname vmidealVst
 #' @export
 vmidealVstToPsi <- function(tm, lm, deriv.degree = 0L) {
-    poly.coef0 <- c(
+    poly_coef0 <- c(
         -2.97086442804517, -2.72858043751615, -0.683184284791628, -0.1971973188227,
         -0.0707494993259986, -0.0267813318470729, -0.00482163891332698,
         -1.03296948649241e-05, 6.01391927719714e-05
     )
-    names(poly.coef0) <- seq_along(poly.coef0) - 1 # exponents
+    names(poly_coef0) <- seq_along(poly_coef0) - 1 # exponents
 
     # x min 0.016 (psi approx 9 at limiting maginitde of 5.5)
     # x max 8.22(psi approx -10 at limiting maginitde of 6.5)
@@ -147,27 +147,27 @@ vmidealVstToPsi <- function(tm, lm, deriv.degree = 0L) {
     y <- log(tm)
 
     if (deriv.degree > 0L) {
-        poly.coef1 <- f_polynomial_coef(poly.coef0, deriv.degree = 1L)
+        poly_coef1 <- f_polynomial_coef(poly_coef0, deriv.degree = 1L)
     }
     if (deriv.degree > 1L) {
-        poly.coef2 <- f_polynomial_coef(poly.coef1, deriv.degree = 1L)
+        poly_coef2 <- f_polynomial_coef(poly_coef1, deriv.degree = 1L)
     }
     if (deriv.degree > 2L) {
         stop(paste("deriv.degree", deriv.degree, "not implemented!"))
     }
 
     if (2L == deriv.degree) {
-        (f_polynomial(y, poly.coef2) - f_polynomial(y, poly.coef1)) / tm^2
+        (f_polynomial(y, poly_coef2) - f_polynomial(y, poly_coef1)) / tm^2
     } else if (1L == deriv.degree) {
-        f_polynomial(y, poly.coef1) / tm
+        f_polynomial(y, poly_coef1) / tm
     } else {
-        lm + f_polynomial(y, poly.coef0)
+        lm + f_polynomial(y, poly_coef0)
     }
 }
 
 #' @keywords internal
 .vmidealVstFromMagn.params <- (function() {
-    param.df <- data.frame(
+    param_df <- data.frame(
         "p1" = c(
             0.379578706193683, 0.380865978506213,
             0.383646581863156, 0.386594955357005, 0.384516871380943, 0.378119364136071,
@@ -218,12 +218,12 @@ vmidealVstToPsi <- function(tm, lm, deriv.degree = 0L) {
 
     list(
         sx = c(1.0, 2.0, 4.0, 6.0, 8.0, 10.0),
-        p0.fun = stats::approxfun(param.df$offset, param.df[["intercept"]]),
-        p1.fun = stats::approxfun(param.df$offset, param.df[["p1"]]),
-        p2.fun = stats::approxfun(param.df$offset, param.df[["p2"]]),
-        p3.fun = stats::approxfun(param.df$offset, param.df[["p3"]]),
-        p4.fun = stats::approxfun(param.df$offset, param.df[["p4"]]),
-        p5.fun = stats::approxfun(param.df$offset, param.df[["p5"]]),
-        p6.fun = stats::approxfun(param.df$offset, param.df[["p6"]])
+        p0_fun = stats::approxfun(param_df$offset, param_df[["intercept"]]),
+        p1_fun = stats::approxfun(param_df$offset, param_df[["p1"]]),
+        p2_fun = stats::approxfun(param_df$offset, param_df[["p2"]]),
+        p3_fun = stats::approxfun(param_df$offset, param_df[["p3"]]),
+        p4_fun = stats::approxfun(param_df$offset, param_df[["p4"]]),
+        p5_fun = stats::approxfun(param_df$offset, param_df[["p5"]]),
+        p6_fun = stats::approxfun(param_df$offset, param_df[["p6"]])
     )
 })()

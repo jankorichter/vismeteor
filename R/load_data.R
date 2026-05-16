@@ -151,8 +151,8 @@ load_vmdb_rates <- function(
         sun.alt.max = sun.alt.max,
         moon.alt.max = moon.alt.max,
         session.id = session.id,
-        id.param = "rate_id",
-        id.values = rate.id,
+        id_param = "rate_id",
+        id_values = rate.id,
         withSessions = withSessions,
         withMagnitudes = withMagnitudes
     )
@@ -192,8 +192,8 @@ load_vmdb_magnitudes <- function(
     p <- .build_params(
         shower, period, sl, lim.magn,
         session.id = session.id,
-        id.param = "magn_id",
-        id.values = magn.id,
+        id_param = "magn_id",
+        id_values = magn.id,
         withSessions = withSessions,
         withMagnitudes = withMagnitudes
     )
@@ -222,7 +222,7 @@ load_vmdb_magnitudes <- function(
 .build_params <- function(
   shower, period, sl, lim.magn,
   sun.alt.max = NULL, moon.alt.max = NULL,
-  session.id = NULL, id.param = NULL, id.values = NULL,
+  session.id = NULL, id_param = NULL, id_values = NULL,
   withSessions = FALSE, withMagnitudes = FALSE
 ) {
     params <- list()
@@ -254,7 +254,7 @@ load_vmdb_magnitudes <- function(
     if (!is.null(moon.alt.max)) params$moon_alt_max <- moon.alt.max
 
     if (!is.null(session.id)) multi$session_id <- as.integer(session.id)
-    if (!is.null(id.values)) multi[[id.param]] <- as.integer(id.values)
+    if (!is.null(id_values)) multi[[id_param]] <- as.integer(id_values)
 
     include <- character(0)
     if (withSessions) include <- c(include, "sessions")

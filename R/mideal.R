@@ -96,10 +96,10 @@
 dmideal <- function(m, psi = 0.0, log = FALSE) {
     a <- -base::log(10.0) / 2.5
     d <- rep(NA, length(m))
-    psi.exp <- 10.0
+    psi_exp <- 10.0
     m <- m - psi
 
-    idx <- m > psi.exp
+    idx <- m > psi_exp
     if (any(idx)) {
         if (log) {
             d[idx] <- 1.5 * a * m[idx]
@@ -108,7 +108,7 @@ dmideal <- function(m, psi = 0.0, log = FALSE) {
         }
     }
 
-    idx <- m < -psi.exp
+    idx <- m < -psi_exp
     if (any(idx)) {
         if (log) {
             d[idx] <- -a * m[idx]
@@ -139,13 +139,13 @@ dmideal <- function(m, psi = 0.0, log = FALSE) {
 #' @export
 pmideal <- function(m, psi = 0.0, lower.tail = TRUE, log = FALSE) {
     a <- -base::log(10.0) / 2.5
-    psi.exp <- 10.0
+    psi_exp <- 10.0
 
     m <- m - psi
     p <- rep(NA, length(m))
 
     if (lower.tail) {
-        spline.knods <- c(
+        spline_knods <- c(
             -8.80472534014006,
             -8.34423787637494,
             -7.88372873094501,
@@ -189,7 +189,7 @@ pmideal <- function(m, psi = 0.0, lower.tail = TRUE, log = FALSE) {
             13.8198202144629
         )
     } else {
-        spline.knods <- c(
+        spline_knods <- c(
             8.80485039014547,
             8.34431865416611,
             7.88377975423457,
@@ -233,31 +233,31 @@ pmideal <- function(m, psi = 0.0, lower.tail = TRUE, log = FALSE) {
             -13.8155074574103
         )
     }
-    f.spline <- stats::splinefun(seq(-psi.exp, psi.exp, 0.5), spline.knods, method = "hyman")
+    f_spline <- stats::splinefun(seq(-psi_exp, psi_exp, 0.5), spline_knods, method = "hyman")
 
-    idx <- lower.tail & m < -psi.exp
+    idx <- lower.tail & m < -psi_exp
     if (any(idx)) {
-        p.max <- 1 / (1 + exp(-f.spline(-psi.exp)))
+        p_max <- 1 / (1 + exp(-f_spline(-psi_exp)))
         if (log) {
-            p[idx] <- base::log(p.max) + stats::pexp(-psi.exp - m[idx], -a, lower.tail = FALSE, log = TRUE)
+            p[idx] <- base::log(p_max) + stats::pexp(-psi_exp - m[idx], -a, lower.tail = FALSE, log = TRUE)
         } else {
-            p[idx] <- p.max * stats::pexp(-psi.exp - m[idx], -a, lower.tail = FALSE, log = FALSE)
+            p[idx] <- p_max * stats::pexp(-psi_exp - m[idx], -a, lower.tail = FALSE, log = FALSE)
         }
     }
 
-    idx <- !lower.tail & m > psi.exp
+    idx <- !lower.tail & m > psi_exp
     if (any(idx)) {
-        p.max <- 1 / (1 + exp(-f.spline(psi.exp)))
+        p_max <- 1 / (1 + exp(-f_spline(psi_exp)))
         if (log) {
-            p[idx] <- base::log(p.max) + stats::pexp(m[idx] - psi.exp, -1.5 * a, lower.tail = FALSE, log = TRUE)
+            p[idx] <- base::log(p_max) + stats::pexp(m[idx] - psi_exp, -1.5 * a, lower.tail = FALSE, log = TRUE)
         } else {
-            p[idx] <- p.max * stats::pexp(m[idx] - psi.exp, -1.5 * a, lower.tail = FALSE, log = FALSE)
+            p[idx] <- p_max * stats::pexp(m[idx] - psi_exp, -1.5 * a, lower.tail = FALSE, log = FALSE)
         }
     }
 
     idx <- is.na(p)
     if (any(idx)) {
-        p[idx] <- 1 / (1 + exp(-f.spline(m[idx])))
+        p[idx] <- 1 / (1 + exp(-f_spline(m[idx])))
         if (log) {
             p[idx] <- base::log(p[idx])
         }
@@ -270,15 +270,15 @@ pmideal <- function(m, psi = 0.0, lower.tail = TRUE, log = FALSE) {
 #' @export
 qmideal <- function(p, psi = 0.0, lower.tail = TRUE) {
     a <- -base::log(10.0) / 2.5
-    psi.exp <- 10.0
+    psi_exp <- 10.0
 
     m <- rep(NA, length(p))
-    apply.idx <- !is.na(p) & p > 0.0 & p < 1.0
+    apply_idx <- !is.na(p) & p > 0.0 & p < 1.0
 
     if (lower.tail) {
         m[0.0 == p] <- -Inf
         m[(p + 1e-07) >= 1.0 & p <= 1.0] <- Inf
-        spline.knods <- c(
+        spline_knods <- c(
             -8.80472534014006,
             -8.34423787637494,
             -7.88372873094501,
@@ -321,11 +321,11 @@ qmideal <- function(p, psi = 0.0, lower.tail = TRUE) {
             13.1258002217638,
             13.8198202144629
         )
-        p.min <- 1 / (1 + exp(-spline.knods[1]))
+        p_min <- 1 / (1 + exp(-spline_knods[1]))
     } else {
         m[0.0 == p] <- Inf
         m[(p + 1e-07) >= 1.0 & p <= 1.0] <- -Inf
-        spline.knods <- c(
+        spline_knods <- c(
             8.80485039014547,
             8.34431865416611,
             7.88377975423457,
@@ -368,25 +368,25 @@ qmideal <- function(p, psi = 0.0, lower.tail = TRUE) {
             -13.1248984689238,
             -13.8155074574103
         )
-        p.min <- 1 / (1 + exp(-spline.knods[length(spline.knods)]))
+        p_min <- 1 / (1 + exp(-spline_knods[length(spline_knods)]))
     }
 
-    f.spline <- stats::splinefun(spline.knods, seq(-psi.exp, psi.exp, 0.5), method = "hyman")
+    f_spline <- stats::splinefun(spline_knods, seq(-psi_exp, psi_exp, 0.5), method = "hyman")
 
-    idx <- apply.idx & lower.tail & p <= p.min
+    idx <- apply_idx & lower.tail & p <= p_min
     if (any(idx)) {
-        m[idx] <- -psi.exp - stats::qexp(p[idx] / p.min, -a, lower.tail = FALSE, log = FALSE)
+        m[idx] <- -psi_exp - stats::qexp(p[idx] / p_min, -a, lower.tail = FALSE, log = FALSE)
     }
 
-    idx <- apply.idx & !lower.tail & p <= p.min
+    idx <- apply_idx & !lower.tail & p <= p_min
     if (any(idx)) {
-        m[idx] <- psi.exp + stats::qexp(p[idx] / p.min, -1.5 * a, lower.tail = FALSE, log = FALSE)
+        m[idx] <- psi_exp + stats::qexp(p[idx] / p_min, -1.5 * a, lower.tail = FALSE, log = FALSE)
     }
 
-    idx <- apply.idx & is.na(m)
+    idx <- apply_idx & is.na(m)
     if (any(idx)) {
-        p.logit <- base::log(p[idx] / (1 - p[idx]))
-        m[idx] <- f.spline(p.logit)
+        p_logit <- base::log(p[idx] / (1 - p[idx]))
+        m[idx] <- f_spline(p_logit)
     }
 
     if (anyNA(m)) {

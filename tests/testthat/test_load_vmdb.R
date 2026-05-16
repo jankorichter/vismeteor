@@ -40,7 +40,7 @@ test_that(".build_params: scalar altitude / id params", {
     expect_equal(p$multi$session_id, c(1L, 2L))
 
     p <- vismeteor:::.build_params(NULL, NULL, NULL, NULL,
-        id.param = "rate_id", id.values = 100L
+        id_param = "rate_id", id_values = 100L
     )
     expect_equal(p$multi$rate_id, 100L)
 })

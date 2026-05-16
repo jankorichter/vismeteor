@@ -1,5 +1,13 @@
 # vismeteor 3.0.0
 
+## New features
+
+- `select_knots()` performs forward/backward stepwise selection of spline
+  knots from a candidate set, scoring each fit with a user-supplied function
+  (e.g. AIC/BIC). Supports a "bulk removal" mode for backward selection and
+  optional parallel scoring via the `parallel` package. See
+  `?select_knots` and the new `vignette("select_knots")` for details.
+
 ## Breaking changes
 
 Naming overhaul: all dotted and camelCase public identifiers were migrated to

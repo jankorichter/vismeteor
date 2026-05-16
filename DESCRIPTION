@@ -15,7 +15,6 @@ Encoding: UTF-8
 LazyData: true
 Depends: R (>= 4.1.0)
 Imports: methods, stats, httr2 (>= 1.0.0)
-RoxygenNote: 7.3.3
 Roxygen: list(markdown = TRUE)
 Suggests:
     testthat (>= 3.2.0),
@@ -24,3 +23,4 @@ Suggests:
     rmarkdown
 Config/testthat/edition: 3
 VignetteBuilder: knitr
+Config/roxygen2/version: 8.0.0

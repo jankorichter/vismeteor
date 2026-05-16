@@ -25,7 +25,6 @@ jobs:
           extra-packages: |
             any::lintr
             any::styler
-          needs: lint
 
       - name: Run lintr
         run: |

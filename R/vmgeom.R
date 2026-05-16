@@ -151,7 +151,7 @@ dvmgeom <- function(m, lm, r, log = FALSE, perception.fun = NULL) {
         p.geom <- rep(p.geom, length(m))
     }
 
-    std_res <- vmgeom.std(m, lm)
+    std_res <- vmgeom_std(m, lm)
     m <- std_res$m
     offset <- std_res$offset
 
@@ -163,7 +163,7 @@ dvmgeom <- function(m, lm, r, log = FALSE, perception.fun = NULL) {
             d[idx] <- d[idx] + base::log(perception.fun(m[idx] + offset))
         }
 
-        d - base::log(vmgeom.norm(offset, p.geom, m.max, perception.fun))
+        d - base::log(vmgeom_norm(offset, p.geom, m.max, perception.fun))
     }
 
     arg.data <- data.frame(
@@ -233,7 +233,7 @@ pvmgeom <- function(m, lm, r, lower.tail = TRUE, log = FALSE, perception.fun = N
         p.geom <- rep(p.geom, length(m))
     }
 
-    std_res <- vmgeom.std(m, lm)
+    std_res <- vmgeom_std(m, lm)
     m <- std_res$m
     offset <- std_res$offset
 
@@ -248,7 +248,7 @@ pvmgeom <- function(m, lm, r, lower.tail = TRUE, log = FALSE, perception.fun = N
 
     f.prob <- function(m, offset, p.geom) {
         m.max <- 15L
-        norm <- vmgeom.norm(offset, p.geom, m.max, perception.fun)
+        norm <- vmgeom_norm(offset, p.geom, m.max, perception.fun)
         p <- rep(0.0, length(m))
 
         if (lower.tail) {
@@ -465,7 +465,7 @@ rvmgeom <- function(n, lm, r, perception.fun = NULL) {
 #' standardization
 #'
 #' @noRd
-vmgeom.std <- function(m, lm) {
+vmgeom_std <- function(m, lm) {
     m <- lm - m
     m.round <- round(m)
     offset <- rep(0.0, length(m))
@@ -486,7 +486,7 @@ vmgeom.std <- function(m, lm) {
 #' normalization
 #'
 #' @noRd
-vmgeom.norm <- function(offset, p.geom, m.max, perception.fun) {
+vmgeom_norm <- function(offset, p.geom, m.max, perception.fun) {
     m <- as.integer(seq(0, m.max))
     sum(stats::dgeom(m, p.geom) * perception.fun(m + offset)) +
         stats::pgeom(m.max, p.geom, lower.tail = FALSE)

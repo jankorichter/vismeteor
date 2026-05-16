@@ -113,10 +113,10 @@ vmgeomVstToR <- function(tm, log = FALSE, deriv.degree = 0L) {
     tm[tm < 3.96 | tm > 5.74] <- NA
 
     if (deriv.degree > 0L) {
-        poly.coef1 <- f.polynomial.coef(poly.coef0, deriv.degree = 1L)
+        poly.coef1 <- f_polynomial_coef(poly.coef0, deriv.degree = 1L)
     }
     if (deriv.degree > 1L) {
-        poly.coef2 <- f.polynomial.coef(poly.coef1, deriv.degree = 1L)
+        poly.coef2 <- f_polynomial_coef(poly.coef1, deriv.degree = 1L)
     }
     if (deriv.degree > 2L) {
         stop(paste("deriv.degree", deriv.degree, "not implemented!"))
@@ -124,21 +124,21 @@ vmgeomVstToR <- function(tm, log = FALSE, deriv.degree = 0L) {
 
     if (log) {
         if (2L == deriv.degree) {
-            f.polynomial(tm, poly.coef2)
+            f_polynomial(tm, poly.coef2)
         } else if (1L == deriv.degree) {
-            f.polynomial(tm, poly.coef1)
+            f_polynomial(tm, poly.coef1)
         } else {
-            f.polynomial(tm, poly.coef0)
+            f_polynomial(tm, poly.coef0)
         }
     } else {
         if (2L == deriv.degree) {
-            exp(f.polynomial(tm, poly.coef0)) * (
-                f.polynomial(tm, poly.coef1)^2 + f.polynomial(tm, poly.coef2)
+            exp(f_polynomial(tm, poly.coef0)) * (
+                f_polynomial(tm, poly.coef1)^2 + f_polynomial(tm, poly.coef2)
             )
         } else if (1L == deriv.degree) {
-            f.polynomial(tm, poly.coef1) * exp(f.polynomial(tm, poly.coef0))
+            f_polynomial(tm, poly.coef1) * exp(f_polynomial(tm, poly.coef0))
         } else {
-            exp(f.polynomial(tm, poly.coef0))
+            exp(f_polynomial(tm, poly.coef0))
         }
     }
 }

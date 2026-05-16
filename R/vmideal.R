@@ -171,7 +171,7 @@ dvmideal <- function(m, lm, psi, log = FALSE, perception.fun = NULL) {
             return(vismeteor::dvmgeom(m, lm, 10^0.4, log = log))
         }
 
-        norm.res <- vmideal.norm(lm, psi, perception.fun)
+        norm.res <- vmideal_norm(lm, psi, perception.fun)
         p <- norm.res$p
         m.lower <- norm.res$m.lower
         m.upper <- norm.res$m.upper
@@ -201,9 +201,9 @@ dvmideal <- function(m, lm, psi, log = FALSE, perception.fun = NULL) {
         idx <- m > -Inf & m < m.lower
         if (any(idx)) {
             if (log) {
-                d[idx] <- dmideal.int(m[idx], psi, log = TRUE) - base::log(norm.res$norm)
+                d[idx] <- dmideal_int(m[idx], psi, log = TRUE) - base::log(norm.res$norm)
             } else {
-                d[idx] <- dmideal.int(m[idx], psi) / norm.res$norm
+                d[idx] <- dmideal_int(m[idx], psi) / norm.res$norm
             }
         }
 
@@ -269,7 +269,7 @@ pvmideal <- function(m, lm, psi, lower.tail = TRUE, log = FALSE, perception.fun 
             return(vismeteor::pvmgeom(m, lm, 10^0.4, lower.tail = lower.tail, log = log))
         }
 
-        norm.res <- vmideal.norm(lm, psi, perception.fun)
+        norm.res <- vmideal_norm(lm, psi, perception.fun)
         m.lower <- norm.res$m.lower
         m.upper <- norm.res$m.upper
 
@@ -391,7 +391,7 @@ qvmideal <- function(p, lm, psi, lower.tail = TRUE, perception.fun = NULL) {
             return(vismeteor::qvmgeom(p, lm, r.lower, lower.tail = lower.tail))
         }
 
-        m.upper <- vmideal.upper.lm(lm)
+        m.upper <- vmideal_upper_lm(lm)
         m.lower <- m.upper - m.max
         m <- rep(NA, length(p))
 
@@ -520,13 +520,13 @@ cvmideal <- function(lm, psi, log = FALSE, perception.fun = NULL) {
         psi <- rep(psi, length(lm))
     }
 
-    # Integration - similar to vmideal.norm()
+    # Integration - similar to vmideal_norm()
     f.integrate <- function(lm, psi) {
         m.max <- 15L
-        m.upper <- vmideal.upper.lm(lm)
+        m.upper <- vmideal_upper_lm(lm)
         m.lower <- m.upper - m.max
         m <- as.integer(seq(m.lower, m.upper))
-        p <- dmideal.int(m, psi) * perception.fun(lm - m)
+        p <- dmideal_int(m, psi) * perception.fun(lm - m)
         p.lower.tail <- vismeteor::pmideal(m.lower - 0.5, psi, lower.tail = TRUE)
         sum(p) + p.lower.tail
     }
@@ -562,7 +562,7 @@ cvmideal <- function(lm, psi, log = FALSE, perception.fun = NULL) {
 #' upper available magnitude
 #'
 #' @noRd
-vmideal.upper.lm <- function(lm) {
+vmideal_upper_lm <- function(lm) {
     lm.round <- round(lm)
     offset <- lm - lm.round
     if (-0.5 == offset) {
@@ -575,7 +575,7 @@ vmideal.upper.lm <- function(lm) {
 #' density of ideal integer magnitude distribution
 #'
 #' @noRd
-dmideal.int <- function(m, psi, log = FALSE) {
+dmideal_int <- function(m, psi, log = FALSE) {
     psi.exp <- 10.0
     r.lower <- 10^0.4
 
@@ -618,12 +618,12 @@ dmideal.int <- function(m, psi, log = FALSE) {
 #' normalization
 #'
 #' @noRd
-vmideal.norm <- function(lm, psi, perception.fun) {
+vmideal_norm <- function(lm, psi, perception.fun) {
     m.max <- 15L
-    m.upper <- vmideal.upper.lm(lm)
+    m.upper <- vmideal_upper_lm(lm)
     m.lower <- m.upper - m.max
     m <- as.integer(seq(m.lower, m.upper))
-    p <- dmideal.int(m, psi) * perception.fun(lm - m)
+    p <- dmideal_int(m, psi) * perception.fun(lm - m)
     names(p) <- as.character(m)
     p.lower.tail <- vismeteor::pmideal(m.lower - 0.5, psi, lower.tail = TRUE)
     norm <- sum(p) + p.lower.tail

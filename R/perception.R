@@ -50,7 +50,7 @@ vmperception <- function(m) {
     p <- rep(0.0, length(m))
     idx <- m > .Machine$double.eps
     if (any(idx)) {
-        f0 <- f.polynomial(m[idx], poly.coef)
+        f0 <- f_polynomial(m[idx], poly.coef)
         p[idx] <- 1.0 - exp(-f0)
     }
 
@@ -60,7 +60,7 @@ vmperception <- function(m) {
 #' build polynomial sum
 #'
 #' @noRd
-f.polynomial <- function(m, poly.coef) {
+f_polynomial <- function(m, poly.coef) {
     exponents <- as.numeric(names(poly.coef))
     margin.table(poly.coef * t(outer(m, exponents, "^")), 2)
 }
@@ -68,7 +68,7 @@ f.polynomial <- function(m, poly.coef) {
 #' returns polynomial coefficients
 #'
 #' @noRd
-f.polynomial.coef <- function(poly.coef, deriv.degree = 1L) {
+f_polynomial_coef <- function(poly.coef, deriv.degree = 1L) {
     if (0L == deriv.degree) {
         return(poly.coef)
     }
@@ -87,5 +87,5 @@ f.polynomial.coef <- function(poly.coef, deriv.degree = 1L) {
     exponents <- exponents - 1L
     names(poly.coef) <- exponents
 
-    f.polynomial.coef(poly.coef, deriv.degree - 1L)
+    f_polynomial_coef(poly.coef, deriv.degree - 1L)
 }

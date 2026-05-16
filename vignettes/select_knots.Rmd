@@ -109,13 +109,13 @@ data(PER_2015_rates)
 obs <- PER_2015_rates$observations
 obs <- subset(
     obs,
-    radiant.alt > 15 & moon.alt < 0 & sun.alt < -5 &
-        sl.start >= 139.2 & sl.end <= 140.6
+    radiant_alt > 15 & moon_alt < 0 & sun_alt < -5 &
+        sl_start >= 139.2 & sl_end <= 140.6
 )
 
 deg2rad <- \(x) x * pi / 180
-obs$sl <- (obs$sl.start + obs$sl.end) / 2
-obs$t <- with(obs, t.eff * sin(deg2rad(radiant.alt)) / f)
+obs$sl <- (obs$sl_start + obs$sl_end) / 2
+obs$t <- with(obs, t_eff * sin(deg2rad(radiant_alt)) / f)
 
 rates <- data.frame(
     sl     = obs$sl,
@@ -129,38 +129,38 @@ nrow(rates)
 
 What each step does:
 
-- **`radiant.alt > 15`** — when the radiant is low above the horizon
-  the geometric correction `sin(radiant.alt)` becomes numerically
+- **`radiant_alt > 15`** — when the radiant is low above the horizon
+  the geometric correction `sin(radiant_alt)` becomes numerically
   fragile and atmospheric extinction dominates; observations below
   15 degrees are discarded by convention.
-- **`moon.alt < 0`** — the Moon above the horizon brightens the sky and
+- **`moon_alt < 0`** — the Moon above the horizon brightens the sky and
   reduces the effective limiting magnitude in a way the simple `limmag`
   correction does not capture; these observations are excluded rather
   than corrected.
-- **`sun.alt < -5`** — nautical or astronomical twilight; before that
+- **`sun_alt < -5`** — nautical or astronomical twilight; before that
   the sky is too bright.
-- **`sl.start >= 139.2 & sl.end <= 140.6`** — *only for this vignette*:
+- **`sl_start >= 139.2 & sl_end <= 140.6`** — *only for this vignette*:
   a tight window centred on the Perseid main peak, chosen narrow enough
   to keep the vignette build fast while still containing the peak
   (≈ 140.0 deg) and visible curvature on both sides. In a real analysis
   you would use the full activity range (roughly 107–155 deg for the
   Perseids).
-- **`sl = (sl.start + sl.end) / 2`** — VMDB observations are intervals;
+- **`sl = (sl_start + sl_end) / 2`** — VMDB observations are intervals;
   we summarise each by its midpoint, the standard choice for the
   regressor.
-- **`t = t.eff * sin(radiant.alt) / f`** is the central correction. It
+- **`t = t_eff * sin(radiant_alt) / f`** is the central correction. It
   rescales the raw observing time to what the observer would have
   spent under ideal sky conditions *at their own limiting magnitude*:
-  radiant in the zenith (`sin(radiant.alt)`) and a clear sky (`f`).
-  `t.eff` is the effective observing time after deducting breaks; `f`
+  radiant in the zenith (`sin(radiant_alt)`) and a clear sky (`f`).
+  `t_eff` is the effective observing time after deducting breaks; `f`
   is the cloud-cover correction factor (`>= 1`, larger when more sky
   is obstructed). The correction from each observer's own limiting
   magnitude to the ZHR reference 6.5 is **not** built into `t`; the
   GLM below picks it up via the `limmag` covariate.
 
 We will call `t` simply the **observing time** from now on — not to be
-confused with `t.eff`, the raw effective observing time after breaks;
-`t` is `t.eff` after the zenith (`sin(radiant.alt)`) and cloud-cover
+confused with `t_eff`, the raw effective observing time after breaks;
+`t` is `t_eff` after the zenith (`sin(radiant_alt)`) and cloud-cover
 (`/ f`) corrections.
 
 ## Model: Poisson GLM with a spline of solar longitude

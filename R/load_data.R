@@ -52,26 +52,26 @@
 #'
 #' \tabular{ll}{
 #' \code{rate_id} \tab unique identifier of the rate observation,\cr
-#' \code{shower.code} \tab IAU code of the shower. \code{NA} for sporadic.\cr
-#' \code{period.start} \tab start of observation,\cr
-#' \code{period.end} \tab end of observation,\cr
-#' \code{sl.start} \tab solar longitude at start,\cr
-#' \code{sl.end} \tab solar longitude at end,\cr
+#' \code{shower_code} \tab IAU code of the shower. \code{NA} for sporadic.\cr
+#' \code{period_start} \tab start of observation,\cr
+#' \code{period_end} \tab end of observation,\cr
+#' \code{sl_start} \tab solar longitude at start,\cr
+#' \code{sl_end} \tab solar longitude at end,\cr
 #' \code{session_id} \tab reference to the session,\cr
 #' \code{freq} \tab count of observed meteors,\cr
 #' \code{lim_magn} \tab limiting magnitude,\cr
-#' \code{t.eff} \tab net observed time in hours,\cr
+#' \code{t_eff} \tab net observed time in hours,\cr
 #' \code{f} \tab correction factor of cloud cover,\cr
-#' \code{time.sidereal} \tab sidereal time,\cr
-#' \code{sun.alt} \tab altitude of the sun,\cr
-#' \code{sun.az} \tab azimuth of the sun,\cr
-#' \code{moon.alt} \tab altitude of the moon,\cr
-#' \code{moon.az} \tab azimuth of the moon,\cr
-#' \code{moon.illum} \tab illumination of the moon (\code{0.0 .. 1.0}),\cr
-#' \code{field.alt} \tab altitude of the field of view (optional),\cr
-#' \code{field.az} \tab azimuth of the field of view (optional),\cr
-#' \code{radiant.alt} \tab altitude of the radiant (optional),\cr
-#' \code{radiant.az} \tab azimuth of the radiant (optional),\cr
+#' \code{sidereal_time} \tab sidereal time,\cr
+#' \code{sun_alt} \tab altitude of the sun,\cr
+#' \code{sun_az} \tab azimuth of the sun,\cr
+#' \code{moon_alt} \tab altitude of the moon,\cr
+#' \code{moon_az} \tab azimuth of the moon,\cr
+#' \code{moon_illum} \tab illumination of the moon (\code{0.0 .. 1.0}),\cr
+#' \code{field_alt} \tab altitude of the field of view (optional),\cr
+#' \code{field_az} \tab azimuth of the field of view (optional),\cr
+#' \code{radiant_alt} \tab altitude of the radiant (optional),\cr
+#' \code{radiant_az} \tab azimuth of the radiant (optional),\cr
 #' \code{magn_id} \tab reference to the magnitude observations (optional).
 #' }
 #'
@@ -79,14 +79,14 @@
 #'
 #' \tabular{ll}{
 #' \code{magn_id} \tab unique identifier of the magnitude observation,\cr
-#' \code{shower.code} \tab IAU code of the shower. \code{NA} for sporadic.\cr
-#' \code{period.start} \tab start of observation,\cr
-#' \code{period.end} \tab end of observation,\cr
-#' \code{sl.start} \tab solar longitude at start,\cr
-#' \code{sl.end} \tab solar longitude at end,\cr
+#' \code{shower_code} \tab IAU code of the shower. \code{NA} for sporadic.\cr
+#' \code{period_start} \tab start of observation,\cr
+#' \code{period_end} \tab end of observation,\cr
+#' \code{sl_start} \tab solar longitude at start,\cr
+#' \code{sl_end} \tab solar longitude at end,\cr
 #' \code{session_id} \tab reference to the session,\cr
 #' \code{freq} \tab count of observed meteors,\cr
-#' \code{magn.mean} \tab mean magnitude,\cr
+#' \code{magn_mean} \tab mean magnitude,\cr
 #' \code{lim_magn} \tab limiting magnitude (optional).
 #' }
 #'
@@ -98,9 +98,9 @@
 #' \code{latitude} \tab location's latitude,\cr
 #' \code{elevation} \tab height above mean sea level in km,\cr
 #' \code{country} \tab country name,\cr
-#' \code{location.name} \tab location name,\cr
-#' \code{observer.id} \tab observer id (optional),\cr
-#' \code{observer.name} \tab observer name (optional).
+#' \code{location_name} \tab location name,\cr
+#' \code{observer_id} \tab observer id (optional),\cr
+#' \code{observer_name} \tab observer name (optional).
 #' }
 #'
 #' \code{magnitudes} is a contingency table of meteor magnitude frequencies.
@@ -163,7 +163,7 @@ load_vmdb_rates <- function(
         observations <- data.frame()
     } else {
         observations <- .remap_cols(as.data.frame(body$observations), .rate_col_map)
-        observations$shower.code <- factor(observations$shower.code)
+        observations$shower_code <- factor(observations$shower_code)
         observations$session_id <- factor(observations$session_id)
         observations$magn_id <- factor(observations$magn_id)
         row.names(observations) <- observations$rate_id
@@ -204,7 +204,7 @@ load_vmdb_magnitudes <- function(
         observations <- data.frame()
     } else {
         observations <- .remap_cols(as.data.frame(body$observations), .magn_col_map)
-        observations$shower.code <- factor(observations$shower.code)
+        observations$shower_code <- factor(observations$shower_code)
         observations$session_id <- factor(observations$session_id)
         row.names(observations) <- observations$magn_id
     }
@@ -287,58 +287,32 @@ load_vmdb_magnitudes <- function(
 }
 
 
-# Explicit column maps: API name (DB column) -> R output name.
+# Semantic renames only: disambiguate ambiguous API names and clarify
+# kryptic abbreviations. Columns not listed here are passed through
+# from the imo-vmdb API unchanged (it already uses snake_case).
 .rate_col_map <- c(
-    id            = "rate_id",
-    shower        = "shower.code",
-    period_start  = "period.start",
-    period_end    = "period.end",
-    sl_start      = "sl.start",
-    sl_end        = "sl.end",
-    session_id    = "session_id",
-    freq          = "freq",
-    lim_mag       = "lim_magn",
-    t_eff         = "t.eff",
-    f             = "f",
-    sidereal_time = "time.sidereal",
-    sun_alt       = "sun.alt",
-    sun_az        = "sun.az",
-    moon_alt      = "moon.alt",
-    moon_az       = "moon.az",
-    moon_illum    = "moon.illum",
-    field_alt     = "field.alt",
-    field_az      = "field.az",
-    rad_alt       = "radiant.alt",
-    rad_az        = "radiant.az",
-    magn_id       = "magn_id"
+    id       = "rate_id",
+    shower   = "shower_code",
+    lim_mag  = "lim_magn",
+    rad_alt  = "radiant_alt",
+    rad_az   = "radiant_az"
 )
 
 .magn_col_map <- c(
-    id           = "magn_id",
-    shower       = "shower.code",
-    period_start = "period.start",
-    period_end   = "period.end",
-    sl_start     = "sl.start",
-    sl_end       = "sl.end",
-    session_id   = "session_id",
-    freq         = "freq",
-    mean         = "magn.mean",
-    lim_mag      = "lim_magn"
+    id      = "magn_id",
+    shower  = "shower_code",
+    mean    = "magn_mean",
+    lim_mag = "lim_magn"
 )
 
 .session_col_map <- c(
-    id            = "session_id",
-    longitude     = "longitude",
-    latitude      = "latitude",
-    elevation     = "elevation",
-    country       = "country",
-    city          = "location.name",
-    observer_id   = "observer.id",
-    observer_name = "observer.name"
+    id   = "session_id",
+    city = "location_name"
 )
 
 .remap_cols <- function(df, col_map) {
-    names(df) <- col_map[names(df)]
+    new_names <- col_map[names(df)]
+    names(df) <- ifelse(is.na(new_names), names(df), new_names)
     df
 }
 
@@ -350,9 +324,9 @@ load_vmdb_magnitudes <- function(
     }
     s <- .remap_cols(as.data.frame(sessions_list), .session_col_map)
     s$country <- factor(s$country)
-    s$location.name <- factor(s$location.name)
-    s$observer.id <- factor(s$observer.id)
-    s$observer.name <- factor(s$observer.name)
+    s$location_name <- factor(s$location_name)
+    s$observer_id <- factor(s$observer_id)
+    s$observer_name <- factor(s$observer_name)
     row.names(s) <- s$session_id
     s
 }

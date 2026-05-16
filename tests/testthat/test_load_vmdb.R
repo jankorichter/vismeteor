@@ -77,13 +77,13 @@ test_that(".parse_sessions: correct data.frame with factors and row names", {
     expect_true(is.data.frame(s))
     expect_equal(names(s), c(
         "session_id", "longitude", "latitude", "elevation",
-        "country", "location.name", "observer.id", "observer.name"
+        "country", "location_name", "observer_id", "observer_name"
     ))
     expect_equal(s$session_id, 1L)
     expect_true(is.factor(s$country))
-    expect_true(is.factor(s$location.name))
-    expect_true(is.factor(s$observer.id))
-    expect_true(is.factor(s$observer.name))
+    expect_true(is.factor(s$location_name))
+    expect_true(is.factor(s$observer_id))
+    expect_true(is.factor(s$observer_name))
     expect_equal(row.names(s), "1")
 
     expect_null(vismeteor:::.parse_sessions(NULL))
@@ -134,8 +134,8 @@ test_that("load_vmdb_rates: parses observations, sessions, magnitudes", {
         expect_true(is.data.frame(obs))
         expect_equal(nrow(obs), 1)
         expect_equal(obs$rate_id, 100L)
-        expect_true(is.factor(obs$shower.code))
-        expect_equal(as.character(obs$shower.code), "PER")
+        expect_true(is.factor(obs$shower_code))
+        expect_equal(as.character(obs$shower_code), "PER")
         expect_true(is.factor(obs$session_id))
         expect_true(is.factor(obs$magn_id))
         expect_equal(row.names(obs), "100")
@@ -163,8 +163,8 @@ test_that("load_vmdb_magnitudes: parses observations, sessions, magnitudes", {
         expect_true(is.data.frame(obs))
         expect_equal(nrow(obs), 1)
         expect_equal(obs$magn_id, 200L)
-        expect_true(is.factor(obs$shower.code))
-        expect_equal(as.character(obs$shower.code), "PER")
+        expect_true(is.factor(obs$shower_code))
+        expect_equal(as.character(obs$shower_code), "PER")
         expect_equal(row.names(obs), "200")
 
         expect_true(is.data.frame(res$sessions))

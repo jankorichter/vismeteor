@@ -46,7 +46,7 @@ which also includes the limiting magnitude.
 
 ```{r, echo=TRUE, results='hide'}
 observations <- with(PER_2015_magn$observations, {
-    idx <- !is.na(lim_magn) & sl.start > 135.81 & sl.end < 135.87
+    idx <- !is.na(lim_magn) & sl_start > 135.81 & sl_end < 135.87
     data.frame(
         magn_id = magn_id[idx],
         lim_magn = lim_magn[idx]

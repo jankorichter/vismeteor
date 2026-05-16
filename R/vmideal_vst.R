@@ -147,21 +147,21 @@ vmideal_vst_to_psi <- function(tm, lm, deriv_degree = 0L) {
     y <- log(tm)
 
     if (deriv_degree > 0L) {
-        poly_coef1 <- f_polynomial_coef(poly_coef0, deriv_degree = 1L)
+        poly_coef1 <- .f_polynomial_coef(poly_coef0, deriv_degree = 1L)
     }
     if (deriv_degree > 1L) {
-        poly_coef2 <- f_polynomial_coef(poly_coef1, deriv_degree = 1L)
+        poly_coef2 <- .f_polynomial_coef(poly_coef1, deriv_degree = 1L)
     }
     if (deriv_degree > 2L) {
         stop(paste("deriv_degree", deriv_degree, "not implemented!"))
     }
 
     if (2L == deriv_degree) {
-        (f_polynomial(y, poly_coef2) - f_polynomial(y, poly_coef1)) / tm^2
+        (.f_polynomial(y, poly_coef2) - .f_polynomial(y, poly_coef1)) / tm^2
     } else if (1L == deriv_degree) {
-        f_polynomial(y, poly_coef1) / tm
+        .f_polynomial(y, poly_coef1) / tm
     } else {
-        lm + f_polynomial(y, poly_coef0)
+        lm + .f_polynomial(y, poly_coef0)
     }
 }
 

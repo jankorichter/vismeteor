@@ -1,13 +1,13 @@
 #' @title Perception Probabilities of Visual Meteor Magnitudes
 #' @description
 #' Provides the perception probability of visual meteor magnitudes.
-#' @param m numeric; difference between the limiting magnitude and the meteor magnitude.
+#' @param dm numeric; difference between the limiting magnitude and the meteor magnitude.
 #' @details
 #' The perception probabilities of _Koschack R., Rendtel J., 1990b_
 #' are estimated with the formula
 #' \deqn{
-#'     p(m) = \begin{cases}
-#'         1.0 - \exp\left(-z(m + 0.5)\right)\  & \text{ if } m > -0.5,\\
+#'     p(dm) = \begin{cases}
+#'         1.0 - \exp\left(-z(dm + 0.5)\right)\  & \text{ if } dm > -0.5,\\
 #'         0.0 \  & \text{ otherwise,}
 #'     \end{cases}
 #' }
@@ -15,7 +15,7 @@
 #' \deqn{
 #' z(x) = 0.0037 \, x + 0.0019 \, x^2 + 0.00271 \, x^3 + 0.0009 \, x^4
 #' }
-#' and `m` is the difference between the limiting magnitude and the meteor magnitude.
+#' and `dm` is the difference between the limiting magnitude and the meteor magnitude.
 #' @return This function returns the visual perception probabilities.
 #' @references
 #' Koschack R., Rendtel J., 1990b
@@ -36,21 +36,21 @@
 #'         "visual meteor magnitudes"
 #'     ),
 #'     col = "blue",
-#'     xlab = "m",
+#'     xlab = "dm",
 #'     ylab = "p"
 #' )
 #'
 #' par(old_par)
 #' @export
-vmperception <- function(m) {
+vmperception <- function(dm) {
     poly_coef <- c(0.0, 0.0037, 0.0019, 0.00271, 0.0009)
     names(poly_coef) <- seq(along = poly_coef) - 1 # exponents
 
-    m <- m + 0.5
-    p <- rep(0.0, length(m))
-    idx <- m > .Machine$double.eps
+    dm <- dm + 0.5
+    p <- rep(0.0, length(dm))
+    idx <- dm > .Machine$double.eps
     if (any(idx)) {
-        f0 <- .f_polynomial(m[idx], poly_coef)
+        f0 <- .f_polynomial(dm[idx], poly_coef)
         p[idx] <- 1.0 - exp(-f0)
     }
 

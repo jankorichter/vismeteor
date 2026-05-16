@@ -3,8 +3,8 @@ test_that("rvmideal", {
 
     with_seed <- function(seed, code) {
         code <- substitute(code)
-        orig.seed <- .Random.seed
-        on.exit(.Random.seed <<- orig.seed)
+        orig_seed <- .Random.seed
+        on.exit(.Random.seed <<- orig_seed)
         set.seed(seed)
         eval.parent(code)
     }
@@ -27,6 +27,6 @@ test_that("rvmideal", {
     expect_false(any(is.infinite(m)))
     expect_true(all(m <= 6))
     expect_equal(as.integer(m), m)
-    m.geom <- with_seed(8, rvmgeom(100000, lm, 10^(1 / 2.5)))
-    expect_equal(round(mean(m.geom), 2), round(mean(m), 2))
+    m_geom <- with_seed(8, rvmgeom(100000, lm, 10^(1 / 2.5)))
+    expect_equal(round(mean(m_geom), 2), round(mean(m), 2))
 })

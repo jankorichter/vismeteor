@@ -49,20 +49,20 @@ test_that("qvmgeom", {
 
     # quantile of meteor magnitudes equals geometric distribution
 
-    perception.const <- function(m, log = FALSE) {
+    perception_const <- function(m, log = FALSE) {
         rep(ifelse(log, 0.0, 1.0), length(m))
     }
 
     m <- as.integer(seq(0, 17, 1))
-    p <- round(vismeteor::pvmgeom(6 - m, 6.5, r, lower.tail = FALSE, perception_fun = perception.const), 6)
-    m <- vismeteor::qvmgeom(p, 6.5, r, lower.tail = FALSE, perception_fun = perception.const)
+    p <- round(vismeteor::pvmgeom(6 - m, 6.5, r, lower.tail = FALSE, perception_fun = perception_const), 6)
+    m <- vismeteor::qvmgeom(p, 6.5, r, lower.tail = FALSE, perception_fun = perception_const)
     expect_type(m, "double")
     expect_length(m, length(m))
     expect_equal(stats::qgeom(p, 1 - 1 / r, lower.tail = TRUE), 6 - m)
 
     m <- as.integer(seq(10, 30, 1))
-    p <- round(vismeteor::pvmgeom(6 - m, 6.5, r, lower.tail = TRUE, perception_fun = perception.const), 6)
-    m <- vismeteor::qvmgeom(p, 6.5, r, lower.tail = TRUE, perception_fun = perception.const)
+    p <- round(vismeteor::pvmgeom(6 - m, 6.5, r, lower.tail = TRUE, perception_fun = perception_const), 6)
+    m <- vismeteor::qvmgeom(p, 6.5, r, lower.tail = TRUE, perception_fun = perception_const)
     expect_type(m, "double")
     expect_length(m, length(m))
     expect_equal(stats::qgeom(p, 1 - 1 / r, lower.tail = FALSE), 6 - m)

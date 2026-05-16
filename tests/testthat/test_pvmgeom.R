@@ -3,14 +3,14 @@ test_that("pvmgeom", {
     lm <- 6.5
 
     # from documentation
-    dp.fun <- function(m) {
+    dp_fun <- function(m) {
         stats::dgeom(m, 1 - 1 / r) * vismeteor::vmperception(m + 0.5)
     }
 
     # probability lower tail
 
     m <- seq(40, 0)
-    expected_p <- dp.fun(m)
+    expected_p <- dp_fun(m)
     expected_p[1] <- expected_p[1] + stats::pgeom(m[1], 1 - 1 / r, lower.tail = FALSE)
     expected_p <- expected_p / sum(expected_p)
     expected_p <- cumsum(expected_p) # lower tail
@@ -30,7 +30,7 @@ test_that("pvmgeom", {
     # probability upper tail
 
     m <- seq(0, 40)
-    expected_p <- dp.fun(m)
+    expected_p <- dp_fun(m)
     expected_p <- expected_p / sum(expected_p)
     expected_p <- cumsum(expected_p) # upper tail
     m <- 6.0 - m
@@ -116,18 +116,18 @@ test_that("pvmgeom", {
 
     # probability of meteor magnitudes equals geometric distribution
 
-    perception.const <- function(m, log = FALSE) {
+    perception_const <- function(m, log = FALSE) {
         rep(ifelse(log, 0.0, 1.0), length(m))
     }
 
     m <- seq(0, 30, 1)
-    p <- vismeteor::pvmgeom(6 - m, 6.5, r, lower.tail = FALSE, perception_fun = perception.const)
+    p <- vismeteor::pvmgeom(6 - m, 6.5, r, lower.tail = FALSE, perception_fun = perception_const)
     expect_type(p, "double")
     expect_length(p, length(m))
     expect_equal(p, stats::pgeom(m, 1 - 1 / r, lower.tail = TRUE))
 
     m <- seq(0, 30, 1)
-    p <- vismeteor::pvmgeom(6 - m, 6.5, r, lower.tail = TRUE, perception_fun = perception.const)
+    p <- vismeteor::pvmgeom(6 - m, 6.5, r, lower.tail = TRUE, perception_fun = perception_const)
     expect_type(p, "double")
     expect_length(p, length(m))
     expect_equal(p, stats::pgeom(m, 1 - 1 / r, lower.tail = FALSE))

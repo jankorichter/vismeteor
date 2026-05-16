@@ -3,7 +3,7 @@ test_that("pvmideal", {
     psi <- 4.0
 
     # from documentation
-    dp.fun <- function(m, psi) {
+    dp_fun <- function(m, psi) {
         r <- 10^0.4
         1.5 * log(r) * sqrt(r^(3 * psi + 2 * m) / ((r^psi + r^m)^5))
     }
@@ -13,7 +13,7 @@ test_that("pvmideal", {
 
         m <- seq(current.psi - 25, 6)
         expected_p <- sapply(m, function(m) {
-            stats::integrate(function(m) dp.fun(m, current.psi), m - 0.5, m + 0.5)$value *
+            stats::integrate(function(m) dp_fun(m, current.psi), m - 0.5, m + 0.5)$value *
                 vismeteor::vmperception(lm - m)
         })
         expected_p[1] <- expected_p[1] + vismeteor::pmideal(m[1] - 0.5, current.psi, lower.tail = TRUE)
@@ -33,7 +33,7 @@ test_that("pvmideal", {
 
         m <- seq(6, current.psi - 25, -1)
         expected_p <- sapply(m, function(m) {
-            stats::integrate(function(m) dp.fun(m, current.psi), m - 0.5, m + 0.5)$value *
+            stats::integrate(function(m) dp_fun(m, current.psi), m - 0.5, m + 0.5)$value *
                 vismeteor::vmperception(lm - m)
         })
         expected_p <- cumsum(expected_p) / sum(expected_p) # upper tail

@@ -2,12 +2,12 @@ test_that("dmideal", {
     psi <- 4.0
 
     # from documentation
-    dp.fun <- function(m, psi) {
+    dp_fun <- function(m, psi) {
         r <- 10^0.4
         1.5 * log(r) * sqrt(r^(3 * psi + 2 * m) / ((r^psi + r^m)^5))
     }
 
-    expected_p <- dp.fun(3, psi)
+    expected_p <- dp_fun(3, psi)
 
     # density of meteor magnitudes
     p <- vismeteor::dmideal(c(-Inf, Inf, 3), psi)

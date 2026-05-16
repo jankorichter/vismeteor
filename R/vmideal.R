@@ -145,8 +145,8 @@ dvmideal <- function(m, lm, psi, log = FALSE, perception_fun = vmperception) {
         stop("Infinite psi values are not allowed!")
     }
 
-    is.wholenumber <- function(x, tol = .Machine$double.eps^0.5) all(is.infinite(x) | abs(x - round(x)) < tol)
-    if (!is.wholenumber(m)) {
+    is_wholenumber <- function(x, tol = .Machine$double.eps^0.5) all(is.infinite(x) | abs(x - round(x)) < tol)
+    if (!is_wholenumber(m)) {
         stop("magnitudes must be integer values!")
     }
 
@@ -239,8 +239,8 @@ pvmideal <- function(m, lm, psi, lower.tail = TRUE, log = FALSE, perception_fun 
         stop("Infinite psi values are not allowed!")
     }
 
-    is.wholenumber <- function(x, tol = .Machine$double.eps^0.5) all(is.infinite(x) | abs(x - round(x)) < tol)
-    if (!is.wholenumber(m)) {
+    is_wholenumber <- function(x, tol = .Machine$double.eps^0.5) all(is.infinite(x) | abs(x - round(x)) < tol)
+    if (!is_wholenumber(m)) {
         stop("magnitudes must be integer values!")
     }
 

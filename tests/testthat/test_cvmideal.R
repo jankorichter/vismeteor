@@ -3,7 +3,7 @@ test_that("cvmideal", {
     lm <- 6.5
 
     # from documentation
-    dp.fun <- function(m, psi) {
+    dp_fun <- function(m, psi) {
         r <- 10^0.4
         1.5 * log(r) * sqrt(r^(3 * psi + 2 * m) / ((r^psi + r^m)^5))
     }
@@ -11,7 +11,7 @@ test_that("cvmideal", {
     # test convolution
     m <- seq(6, -15, -1)
     expected_p <- sum(sapply(m, function(m) {
-        stats::integrate(function(m) dp.fun(m, psi), m - 0.5, m + 0.5)$value *
+        stats::integrate(function(m) dp_fun(m, psi), m - 0.5, m + 0.5)$value *
             vismeteor::vmperception(lm - m)
     }))
 

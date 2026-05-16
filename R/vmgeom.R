@@ -133,8 +133,8 @@ dvmgeom <- function(m, lm, r, log = FALSE, perception_fun = vmperception) {
         stop(paste0('r must be greater than 1.0 instead of "', r, '"!'))
     }
 
-    is.wholenumber <- function(x, tol = .Machine$double.eps^0.5) all(is.infinite(x) | abs(x - round(x)) < tol)
-    if (!is.wholenumber(m)) {
+    is_wholenumber <- function(x, tol = .Machine$double.eps^0.5) all(is.infinite(x) | abs(x - round(x)) < tol)
+    if (!is_wholenumber(m)) {
         stop("magnitudes must be integer values!")
     }
 
@@ -211,8 +211,8 @@ pvmgeom <- function(m, lm, r, lower.tail = TRUE, log = FALSE, perception_fun = v
         stop(paste0('r must be greater than 1.0 instead of "', r, '"!'))
     }
 
-    is.wholenumber <- function(x, tol = .Machine$double.eps^0.5) all(is.infinite(x) | abs(x - round(x)) < tol)
-    if (!is.wholenumber(m)) {
+    is_wholenumber <- function(x, tol = .Machine$double.eps^0.5) all(is.infinite(x) | abs(x - round(x)) < tol)
+    if (!is_wholenumber(m)) {
         stop("magnitudes must be integer values!")
     }
 

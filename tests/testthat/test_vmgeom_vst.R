@@ -30,14 +30,14 @@ test_that("vmgeom_vst", {
     #
     # test vmgeom_vst_to_r
     #
-    model$r.est <- vmgeom_vst_to_r(model$t.mean)
-    expect_true(all(abs(model$r - model$r.est) < 0.013))
+    model$r_est <- vmgeom_vst_to_r(model$t.mean)
+    expect_true(all(abs(model$r - model$r_est) < 0.013))
 
     # test with non-exotic values
     model0 <- with(model, {
         subset(model, r < 2.7)
     })
-    expect_true(all(abs(model0$r - model0$r.est) < 0.007))
+    expect_true(all(abs(model0$r - model0$r_est) < 0.007))
 
     # test first derivative
     f <- function(x) {

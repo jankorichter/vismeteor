@@ -3,11 +3,11 @@ test_that("dvmgeom", {
     lm <- 6.5
 
     # from documentation
-    dp.fun <- function(m) {
+    dp_fun <- function(m) {
         stats::dgeom(m, 1 - 1 / r) * vismeteor::vmperception(m + 0.5)
     }
     m <- seq(0, 40)
-    expected_p <- dp.fun(m)
+    expected_p <- dp_fun(m)
     expected_p <- expected_p / sum(expected_p)
     m <- 6.0 - m
 
@@ -71,14 +71,14 @@ test_that("dvmgeom", {
     f <- function(m) {
         m * exp(-q * m) * vmperception(m) / norm
     }
-    expected_m.mean <- stats::integrate(f, -0.5, Inf)$value
-    expect_equal(round(expected_m.mean, 2), 4.42)
+    expected_m_mean <- stats::integrate(f, -0.5, Inf)$value
+    expect_equal(round(expected_m_mean, 2), 4.42)
 
     f <- function(m) {
         m * vismeteor::dvmgeom(m, lm, r)
     }
-    m.mean <- sum(f(as.integer(6 - seq(0, 100, 1))))
-    expect_equal(round(lm - m.mean, 2), round(expected_m.mean, 2))
+    m_mean <- sum(f(as.integer(6 - seq(0, 100, 1))))
+    expect_equal(round(lm - m_mean, 2), round(expected_m_mean, 2))
 
     # test maximum likelihood estimation (MLE) of q of meteor magnitudes
     lm <- 5.8
@@ -91,12 +91,12 @@ test_that("dvmgeom", {
     expect_equal(round(est$par, 6), round(base::log(r), 6))
 
     # density of meteor magnitudes equals geometric distribution
-    perception.const <- function(m, log = FALSE) {
+    perception_const <- function(m, log = FALSE) {
         rep(ifelse(log, 0.0, 1.0), length(m))
     }
 
     m <- as.integer(seq(6, -30, -1))
-    p <- vismeteor::dvmgeom(m, lm, r, perception_fun = perception.const)
+    p <- vismeteor::dvmgeom(m, lm, r, perception_fun = perception_const)
     expect_type(p, "double")
     expect_length(p, length(m))
     expect_equal(stats::dgeom(6 - m, 1 - 1 / r), p)

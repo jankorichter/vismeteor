@@ -200,9 +200,9 @@ margin.table(mt, 1)
 margin.table(mt, 2)
 
 # contingency table with integer values
-(mt.int <- vmtable(mt))
-margin.table(mt.int, 1)
-margin.table(mt.int, 2)
+(mt_int <- vmtable(mt))
+margin.table(mt_int, 1)
+margin.table(mt_int, 2)
 ```
 
 See `?vmtable` for more information.

@@ -1,5 +1,12 @@
 linters: linters_with_defaults(
-    object_name_linter = NULL,
+    object_name_linter = object_name_linter(
+      styles = c("snake_case", "symbols", "SNAKE_CASE"),
+      regexes = c(
+        "^lower\\.tail$",
+        "^\\.Random\\.seed$",
+        "^PER_[0-9]+_[a-z]+$"
+      )
+    ),
     commented_code_linter = NULL,
     indentation_linter = NULL,
     line_length_linter = line_length_linter(120L)

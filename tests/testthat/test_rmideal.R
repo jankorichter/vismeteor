@@ -3,8 +3,8 @@ test_that("rmideal", {
 
     with_seed <- function(seed, code) {
         code <- substitute(code)
-        orig.seed <- .Random.seed
-        on.exit(.Random.seed <<- orig.seed)
+        orig_seed <- .Random.seed
+        on.exit(.Random.seed <<- orig_seed)
         set.seed(seed)
         eval.parent(code)
     }

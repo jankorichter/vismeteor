@@ -4,59 +4,56 @@
 
 - `select_knots()` performs forward/backward stepwise selection of spline
   knots from a candidate set, scoring each fit with a user-supplied function
-  (e.g. AIC/BIC). Supports a "bulk removal" mode for backward selection and
-  optional parallel scoring via the `parallel` package. See
-  `?select_knots` and the new `vignette("select_knots")` for details.
+  (e.g. AIC/BIC). Backward selection supports a "bulk removal" mode, and
+  scoring can run in parallel via the `parallel` package. See
+  `?select_knots` and `vignette("select_knots")`.
 
 ## Breaking changes
 
-Naming overhaul: all dotted and camelCase public identifiers were migrated to
-`snake_case` to align with the tidyverse / r-lib convention and to eliminate
-visual confusion with S3 dispatch (`print.foo`). The d/p/q/r distribution
-prefixes (`dvmgeom`, `pvmideal`, ...) are unchanged.
+### Naming overhaul (snake_case)
 
-### Renamed exported functions
+All public identifiers were migrated from dotted / camelCase to `snake_case` to
+match the tidyverse / r-lib convention and to remove visual confusion with S3
+dispatch (`print.foo`). This affects exported functions, function parameters,
+and `data.frame` columns returned by `load_vmdb_*()` and the example datasets
+`PER_2015_rates` / `PER_2015_magn` (which were regenerated).
 
-| 2.1.0                | 3.0.0                       |
-|----------------------|-----------------------------|
-| `freq.quantile`      | `freq_quantile`             |
-| `vmgeomVstFromMagn`  | `vmgeom_vst_from_magn`      |
-| `vmgeomVstToR`       | `vmgeom_vst_to_r`           |
-| `vmidealVstFromMagn` | `vmideal_vst_from_magn`     |
-| `vmidealVstToPsi`    | `vmideal_vst_to_psi`        |
+The d/p/q/r distribution prefixes (`dvmgeom`, `pvmideal`, ...) are unchanged,
+and `lower.tail` is preserved to match base R conventions.
 
-### Renamed exported parameters
+Renamed exported functions:
 
-| 2.1.0             | 3.0.0              |
-|-------------------|--------------------|
-| `lim.magn`        | `lim_magn`         |
-| `magn.id`         | `magn_id`          |
-| `rate.id`         | `rate_id`          |
-| `session.id`     | `session_id`       |
-| `perception.fun`  | `perception_fun`   |
-| `sun.alt.max`     | `sun_alt_max`      |
-| `moon.alt.max`    | `moon_alt_max`     |
-| `deriv.degree`    | `deriv_degree`     |
-| `withSessions`    | `with_sessions`    |
-| `withMagnitudes`  | `with_magnitudes`  |
+| 2.1.0                | 3.0.0                    |
+|----------------------|--------------------------|
+| `freq.quantile`      | `freq_quantile`          |
+| `vmgeomVstFromMagn`  | `vmgeom_vst_from_magn`   |
+| `vmgeomVstToR`       | `vmgeom_vst_to_r`        |
+| `vmidealVstFromMagn` | `vmideal_vst_from_magn`  |
+| `vmidealVstToPsi`    | `vmideal_vst_to_psi`     |
 
-`lower.tail` is preserved to match base R conventions (`pnorm`, `pgeom`, ...).
+Renamed parameters: `lim.magn`, `magn.id`, `rate.id`, `session.id`,
+`perception.fun`, `sun.alt.max`, `moon.alt.max`, `deriv.degree`, `withSessions`,
+`withMagnitudes` → their snake_case forms.
 
-### Renamed data.frame columns from `load_vmdb_*` and the example datasets
+### Closer alignment with the imo-vmdb API
 
-The imo-vmdb API already uses snake_case; mappings are now reduced to a few
-semantic renames. Most dotted column names (`shower.code`, `period.start`,
-`sl.start`, `lim.magn`, `t.eff`, `sun.alt`, `moon.alt`, `field.alt`,
-`radiant.alt`, `magn.mean`, `location.name`, `observer.id`, ...) become their
-snake_case equivalents. `time.sidereal` becomes `sidereal_time`. The example
-datasets `PER_2015_rates` and `PER_2015_magn` were regenerated with the new
-column names.
+The imo-vmdb API already uses snake_case, so column remapping is reduced to a
+few semantic renames: `id` → `rate_id` / `magn_id` / `session_id` (so foreign
+keys in the same data frame stay unambiguous) and `mean` → `magn_mean` (to
+avoid shadowing base R `mean()`). Three columns that previously carried
+R-specific names now pass through unchanged from the API:
+
+| 2.1.0           | 3.0.0       |
+|-----------------|-------------|
+| `shower.code`   | `shower`    |
+| `radiant.alt`   | `rad_alt`   |
+| `radiant.az`    | `rad_az`    |
 
 ### Other breaking changes
 
-- The default for `perception_fun` is now `vmperception` (previously `NULL`
-  with an internal fallback). Callers that explicitly passed
-  `perception.fun = NULL` need to drop the argument or supply a function.
+- `perception_fun` now defaults to `vmperception` instead of `NULL` with an
+  internal fallback. Callers that explicitly passed `perception.fun = NULL`
+  must drop the argument or supply a function.
 - `vmperception(m)` is now `vmperception(dm)` — the parameter is the
   difference between the limiting magnitude and the meteor magnitude, and
   the new name reflects that. Positional calls remain compatible.
@@ -80,7 +77,7 @@ sed -i '' -E '
   s/\bderiv\.degree\b/deriv_degree/g;
   s/\bwithSessions\b/with_sessions/g;
   s/\bwithMagnitudes\b/with_magnitudes/g;
-  s/\bshower\.code\b/shower_code/g;
+  s/\bshower\.code\b/shower/g;
   s/\bperiod\.start\b/period_start/g;
   s/\bperiod\.end\b/period_end/g;
   s/\bsl\.start\b/sl_start/g;
@@ -94,8 +91,8 @@ sed -i '' -E '
   s/\bmoon\.illum\b/moon_illum/g;
   s/\bfield\.alt\b/field_alt/g;
   s/\bfield\.az\b/field_az/g;
-  s/\bradiant\.alt\b/radiant_alt/g;
-  s/\bradiant\.az\b/radiant_az/g;
+  s/\bradiant\.alt\b/rad_alt/g;
+  s/\bradiant\.az\b/rad_az/g;
   s/\bmagn\.mean\b/magn_mean/g;
   s/\blocation\.name\b/location_name/g;
   s/\bobserver\.id\b/observer_id/g;

@@ -49,6 +49,75 @@ For visual observations of meteor magnitudes, the observed counts can be specifi
 fractional values (half meteors). This package includes a function for unbiased rounding
 of these fractional values to use standard tools in R that only allow integer values.
 
+Beyond magnitude distributions, the package also helps in analyzing how meteor activity
+varies over time or solar longitude. It provides a routine for fitting smooth, parsimonious
+profiles to noisy meteor count series, automatically choosing a small set of spline knot
+positions from a user-supplied candidate grid under an information criterion or
+cross-validation score.
+
+## Knot Selection for Spline Models
+
+The function `select_knots()` performs greedy stepwise selection of interior spline knots from
+a user-supplied candidate grid. In each step it adds (forward) or removes (backward) the single
+knot that most improves a user-defined score, such as BIC, AIC, or a cross-validation criterion.
+The routine is model-agnostic: the scoring function is responsible for fitting the model — a
+Poisson GLM, a natural cubic spline via `lm()`, or any other form — so `select_knots()` can
+be reused across very different analyses.
+
+A typical application is fitting the activity profile of a meteor shower over solar longitude
+through noisy counts. A fine grid of candidate positions captures where the curve *could* bend;
+`select_knots()` reduces it to a small subset where the data actually demand a bend, yielding
+a smooth, parsimonious fit.
+
+```{r, echo=TRUE}
+set.seed(1)
+x <- seq(0, 10, length.out = 200)
+y <- rpois(length(x), lambda = 50 + 30 * sin(x))
+dat <- data.frame(x = x, y = y)
+
+fit <- \(d, knots) {
+    f <- if (length(knots) == 0L) {
+        y ~ splines::ns(x)
+    } else {
+        y ~ splines::ns(x, knots = knots)
+    }
+    glm(f, family = poisson(), data = d)
+}
+score_bic <- \(d, knots) fit(d, knots) |> BIC()
+
+result <- select_knots(
+    dat,
+    knot_candidates = seq(1, 9, by = 0.5),
+    score_fun = score_bic
+)
+final_knots <- sort(c(result$knots, result$fixed_knots))
+final_fit <- fit(dat, final_knots)
+
+op <- par(mar = c(7, 4, 4, 2) + 0.1)
+plot(
+    x, y,
+    pch = 20, col = "gray",
+    main = "Poisson spline fit with selected knots",
+    xlab = "x", ylab = "count"
+)
+lines(x, 50 + 30 * sin(x), col = "darkgreen", lwd = 2, lty = 2)
+lines(x, final_fit |> predict(type = "response"), col = "blue", lwd = 2)
+abline(v = final_knots, col = "red", lty = 3)
+legend(
+    "bottom", inset = c(0, -0.35),
+    legend = c("true mean", "spline fit", "selected knots"),
+    col = c("darkgreen", "blue", "red"),
+    lty = c(2, 1, 3),
+    lwd = c(2, 2, 1),
+    horiz = TRUE,
+    bty = "n",
+    xpd = TRUE
+)
+par(op)
+```
+
+See `?select_knots` and `vignette("select_knots")` for more information.
+
 ## Perception probabilities
 
 Meteors appear randomly distributed across the sky. The perception of an observer can
@@ -240,17 +309,17 @@ See `?freq_quantile` for more information.
 
 ## Interfacing VMDB Data with VMDB Loaders
 
-The functions `load_vmdb_rates()` and `load_vmdb_magnitudes()` are designed to interface with the
-[imo-vmdb](https://pypi.org/project/imo-vmdb/)
-application, processing data specifically exported from the Visual Meteor Database (VMDB) in
-CSV format. After these CSV exports are verified and validated with the _imo-vmdb_ application,
-they are stored in a relational database, which enhances the accessibility and usability of the
-data compared to its original CSV format. This storage method establishes relationships between
-data records and enriches them with additional information derived from the original data records.
+The functions `load_vmdb_rates()` and `load_vmdb_magnitudes()` query an
+[imo-vmdb](https://pypi.org/project/imo-vmdb/) web server through its REST API to retrieve
+visual meteor observations from the Visual Meteor Database (VMDB). The imo-vmdb server ingests
+and validates the original VMDB exports and serves them in a structured, relational form, so
+callers receive enriched and consistent observation records rather than raw exports.
 
-Utilizing these helpers, users can efficiently query and retrieve specific datasets relevant
-to their meteor observation analysis. This streamlined access facilitates more comprehensive
-and targeted research.
+Both functions take a `base_url` pointing at the API endpoint and accept filters such as
+`shower`, `period`, `sl` (solar longitude) and `lim_magn` (limiting magnitude). For rate
+observations, `sun_alt_max` and `moon_alt_max` further constrain sky conditions. Optional
+companion data — observing session metadata and per-observation magnitude distributions —
+can be requested via `with_sessions` and `with_magnitudes`.
 
 Within this package, `PER_2015_rates` and `PER_2015_magn` are provided as example data sets.
 They are included for testing and training purposes, allowing users to

@@ -109,13 +109,13 @@ data(PER_2015_rates)
 obs <- PER_2015_rates$observations
 obs <- subset(
     obs,
-    radiant_alt > 15 & moon_alt < 0 & sun_alt < -5 &
+    rad_alt > 15 & moon_alt < 0 & sun_alt < -5 &
         sl_start >= 139.2 & sl_end <= 140.6
 )
 
 deg2rad <- \(x) x * pi / 180
 obs$sl <- (obs$sl_start + obs$sl_end) / 2
-obs$t <- with(obs, t_eff * sin(deg2rad(radiant_alt)) / f)
+obs$t <- with(obs, t_eff * sin(deg2rad(rad_alt)) / f)
 
 rates <- data.frame(
     sl     = obs$sl,
@@ -129,8 +129,8 @@ nrow(rates)
 
 What each step does:
 
-- **`radiant_alt > 15`** — when the radiant is low above the horizon
-  the geometric correction `sin(radiant_alt)` becomes numerically
+- **`rad_alt > 15`** — when the radiant is low above the horizon
+  the geometric correction `sin(rad_alt)` becomes numerically
   fragile and atmospheric extinction dominates; observations below
   15 degrees are discarded by convention.
 - **`moon_alt < 0`** — the Moon above the horizon brightens the sky and
@@ -148,10 +148,10 @@ What each step does:
 - **`sl = (sl_start + sl_end) / 2`** — VMDB observations are intervals;
   we summarise each by its midpoint, the standard choice for the
   regressor.
-- **`t = t_eff * sin(radiant_alt) / f`** is the central correction. It
+- **`t = t_eff * sin(rad_alt) / f`** is the central correction. It
   rescales the raw observing time to what the observer would have
   spent under ideal sky conditions *at their own limiting magnitude*:
-  radiant in the zenith (`sin(radiant_alt)`) and a clear sky (`f`).
+  radiant in the zenith (`sin(rad_alt)`) and a clear sky (`f`).
   `t_eff` is the effective observing time after deducting breaks; `f`
   is the cloud-cover correction factor (`>= 1`, larger when more sky
   is obstructed). The correction from each observer's own limiting
@@ -160,7 +160,7 @@ What each step does:
 
 We will call `t` simply the **observing time** from now on — not to be
 confused with `t_eff`, the raw effective observing time after breaks;
-`t` is `t_eff` after the zenith (`sin(radiant_alt)`) and cloud-cover
+`t` is `t_eff` after the zenith (`sin(rad_alt)`) and cloud-cover
 (`/ f`) corrections.
 
 ## Model: Poisson GLM with a spline of solar longitude

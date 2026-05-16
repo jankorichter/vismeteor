@@ -199,17 +199,18 @@
 #' set.seed(1)
 #' n <- 200
 #' x <- seq(0, 10, length.out = n)
-#' y <- sin(x) + stats::rnorm(n, sd = 0.2)
+#' y <- stats::rpois(n, lambda = 50 + 30 * sin(x))
 #' dat <- data.frame(x = x, y = y)
 #'
-#' # score_fun: fit a natural cubic spline, return BIC. Lower is better.
+#' # score_fun: fit a Poisson GLM with a natural cubic spline, return BIC.
+#' # Lower is better.
 #' fit <- \(d, knots) {
 #'     f <- if (length(knots) == 0L) {
 #'         y ~ splines::ns(x)
 #'     } else {
 #'         y ~ splines::ns(x, knots = knots)
 #'     }
-#'     stats::lm(f, data = d)
+#'     stats::glm(f, family = stats::poisson(), data = d)
 #' }
 #' score_bic <- \(d, knots) stats::BIC(fit(d, knots))
 #'

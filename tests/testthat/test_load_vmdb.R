@@ -68,7 +68,7 @@ test_that(".parse_sessions: correct data.frame with factors and row names", {
         latitude = 50.0,
         elevation = 0.3,
         country = "DE",
-        city = "Somewhere",
+        location_name = "Somewhere",
         observer_id = "XX",
         observer_name = "Doe, J.",
         stringsAsFactors = FALSE
@@ -134,8 +134,8 @@ test_that("load_vmdb_rates: parses observations, sessions, magnitudes", {
         expect_true(is.data.frame(obs))
         expect_equal(nrow(obs), 1)
         expect_equal(obs$rate_id, 100L)
-        expect_true(is.factor(obs$shower_code))
-        expect_equal(as.character(obs$shower_code), "PER")
+        expect_true(is.factor(obs$shower))
+        expect_equal(as.character(obs$shower), "PER")
         expect_true(is.factor(obs$session_id))
         expect_true(is.factor(obs$magn_id))
         expect_equal(row.names(obs), "100")
@@ -163,8 +163,8 @@ test_that("load_vmdb_magnitudes: parses observations, sessions, magnitudes", {
         expect_true(is.data.frame(obs))
         expect_equal(nrow(obs), 1)
         expect_equal(obs$magn_id, 200L)
-        expect_true(is.factor(obs$shower_code))
-        expect_equal(as.character(obs$shower_code), "PER")
+        expect_true(is.factor(obs$shower))
+        expect_equal(as.character(obs$shower), "PER")
         expect_equal(row.names(obs), "200")
 
         expect_true(is.data.frame(res$sessions))

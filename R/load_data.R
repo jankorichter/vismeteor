@@ -52,7 +52,7 @@
 #'
 #' \tabular{ll}{
 #' \code{rate_id} \tab unique identifier of the rate observation,\cr
-#' \code{shower_code} \tab IAU code of the shower. \code{NA} for sporadic.\cr
+#' \code{shower} \tab IAU code of the shower. \code{NA} for sporadic.\cr
 #' \code{period_start} \tab start of observation,\cr
 #' \code{period_end} \tab end of observation,\cr
 #' \code{sl_start} \tab solar longitude at start,\cr
@@ -70,8 +70,8 @@
 #' \code{moon_illum} \tab illumination of the moon (\code{0.0 .. 1.0}),\cr
 #' \code{field_alt} \tab altitude of the field of view (optional),\cr
 #' \code{field_az} \tab azimuth of the field of view (optional),\cr
-#' \code{radiant_alt} \tab altitude of the radiant (optional),\cr
-#' \code{radiant_az} \tab azimuth of the radiant (optional),\cr
+#' \code{rad_alt} \tab altitude of the radiant (optional),\cr
+#' \code{rad_az} \tab azimuth of the radiant (optional),\cr
 #' \code{magn_id} \tab reference to the magnitude observations (optional).
 #' }
 #'
@@ -79,7 +79,7 @@
 #'
 #' \tabular{ll}{
 #' \code{magn_id} \tab unique identifier of the magnitude observation,\cr
-#' \code{shower_code} \tab IAU code of the shower. \code{NA} for sporadic.\cr
+#' \code{shower} \tab IAU code of the shower. \code{NA} for sporadic.\cr
 #' \code{period_start} \tab start of observation,\cr
 #' \code{period_end} \tab end of observation,\cr
 #' \code{sl_start} \tab solar longitude at start,\cr
@@ -163,7 +163,7 @@ load_vmdb_rates <- function(
         observations <- data.frame()
     } else {
         observations <- .remap_cols(as.data.frame(body$observations), .rate_col_map)
-        observations$shower_code <- factor(observations$shower_code)
+        observations$shower <- factor(observations$shower)
         observations$session_id <- factor(observations$session_id)
         observations$magn_id <- factor(observations$magn_id)
         row.names(observations) <- observations$rate_id
@@ -204,7 +204,7 @@ load_vmdb_magnitudes <- function(
         observations <- data.frame()
     } else {
         observations <- .remap_cols(as.data.frame(body$observations), .magn_col_map)
-        observations$shower_code <- factor(observations$shower_code)
+        observations$shower <- factor(observations$shower)
         observations$session_id <- factor(observations$session_id)
         row.names(observations) <- observations$magn_id
     }
@@ -287,27 +287,21 @@ load_vmdb_magnitudes <- function(
 }
 
 
-# Semantic renames only: disambiguate ambiguous API names and clarify
-# kryptic abbreviations. Columns not listed here are passed through
-# from the imo-vmdb API unchanged (it already uses snake_case).
+# Semantic renames only: disambiguate the generic `id` column against
+# foreign-key columns in the same data frame, and avoid shadowing base R's
+# `mean()`. Columns not listed here are passed through from the imo-vmdb
+# API unchanged (it already uses snake_case).
 .rate_col_map <- c(
-    id       = "rate_id",
-    shower   = "shower_code",
-    lim_mag  = "lim_magn",
-    rad_alt  = "radiant_alt",
-    rad_az   = "radiant_az"
+    id = "rate_id"
 )
 
 .magn_col_map <- c(
-    id      = "magn_id",
-    shower  = "shower_code",
-    mean    = "magn_mean",
-    lim_mag = "lim_magn"
+    id   = "magn_id",
+    mean = "magn_mean"
 )
 
 .session_col_map <- c(
-    id   = "session_id",
-    city = "location_name"
+    id = "session_id"
 )
 
 .remap_cols <- function(df, col_map) {

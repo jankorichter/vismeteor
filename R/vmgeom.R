@@ -116,7 +116,7 @@
 
 #' @rdname vmgeom
 #' @export
-dvmgeom <- function(m, lm, r, log = FALSE, perception_fun = NULL) {
+dvmgeom <- function(m, lm, r, log = FALSE, perception_fun = vmperception) {
     if (anyNA(m) || anyNA(lm) || anyNA(r)) {
         stop("NA's are not allowed!")
     }
@@ -138,11 +138,7 @@ dvmgeom <- function(m, lm, r, log = FALSE, perception_fun = NULL) {
         stop("magnitudes must be integer values!")
     }
 
-    if (is.null(perception_fun)) {
-        perception_fun <- vismeteor::vmperception
-    } else {
-        perception_fun <- match.fun(perception_fun)
-    }
+    perception_fun <- match.fun(perception_fun)
 
     p_geom <- 1.0 - 1.0 / r
 
@@ -198,7 +194,7 @@ dvmgeom <- function(m, lm, r, log = FALSE, perception_fun = NULL) {
 
 #' @rdname vmgeom
 #' @export
-pvmgeom <- function(m, lm, r, lower.tail = TRUE, log = FALSE, perception_fun = NULL) {
+pvmgeom <- function(m, lm, r, lower.tail = TRUE, log = FALSE, perception_fun = vmperception) {
     if (anyNA(m) || anyNA(lm) || anyNA(r)) {
         stop("NA's are not allowed!")
     }
@@ -220,11 +216,7 @@ pvmgeom <- function(m, lm, r, lower.tail = TRUE, log = FALSE, perception_fun = N
         stop("magnitudes must be integer values!")
     }
 
-    if (is.null(perception_fun)) {
-        perception_fun <- vismeteor::vmperception
-    } else {
-        perception_fun <- match.fun(perception_fun)
-    }
+    perception_fun <- match.fun(perception_fun)
 
     p_geom <- 1.0 - 1.0 / r
 
@@ -317,7 +309,7 @@ pvmgeom <- function(m, lm, r, lower.tail = TRUE, log = FALSE, perception_fun = N
 
 #' @rdname vmgeom
 #' @export
-qvmgeom <- function(p, lm, r, lower.tail = TRUE, perception_fun = NULL) {
+qvmgeom <- function(p, lm, r, lower.tail = TRUE, perception_fun = vmperception) {
     if (anyNA(p) || anyNA(lm) || anyNA(r)) {
         stop("NA's are not allowed!")
     }
@@ -334,11 +326,7 @@ qvmgeom <- function(p, lm, r, lower.tail = TRUE, perception_fun = NULL) {
         stop(paste0('r must be greater than 1.0 instead of "', r, '"!'))
     }
 
-    if (is.null(perception_fun)) {
-        perception_fun <- vismeteor::vmperception
-    } else {
-        perception_fun <- match.fun(perception_fun)
-    }
+    perception_fun <- match.fun(perception_fun)
 
     p_geom <- 1.0 - 1.0 / r
 
@@ -424,7 +412,7 @@ qvmgeom <- function(p, lm, r, lower.tail = TRUE, perception_fun = NULL) {
 
 #' @rdname vmgeom
 #' @export
-rvmgeom <- function(n, lm, r, perception_fun = NULL) {
+rvmgeom <- function(n, lm, r, perception_fun = vmperception) {
     if (anyNA(lm) || anyNA(r)) {
         stop("NA's are not allowed!")
     }
@@ -441,11 +429,7 @@ rvmgeom <- function(n, lm, r, perception_fun = NULL) {
         stop(paste0('r must be greater than 1.0 instead of "', r, '"!'))
     }
 
-    if (is.null(perception_fun)) {
-        perception_fun <- vismeteor::vmperception
-    } else {
-        perception_fun <- match.fun(perception_fun)
-    }
+    perception_fun <- match.fun(perception_fun)
 
     p <- stats::runif(n)
     m <- rep(NA, n)

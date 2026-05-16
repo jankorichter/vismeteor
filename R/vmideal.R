@@ -132,7 +132,7 @@
 
 #' @rdname vmideal
 #' @export
-dvmideal <- function(m, lm, psi, log = FALSE, perception_fun = NULL) {
+dvmideal <- function(m, lm, psi, log = FALSE, perception_fun = vmperception) {
     if (anyNA(m) || anyNA(lm) || anyNA(psi)) {
         stop("NA's are not allowed!")
     }
@@ -150,11 +150,7 @@ dvmideal <- function(m, lm, psi, log = FALSE, perception_fun = NULL) {
         stop("magnitudes must be integer values!")
     }
 
-    if (is.null(perception_fun)) {
-        perception_fun <- vismeteor::vmperception
-    } else {
-        perception_fun <- match.fun(perception_fun)
-    }
+    perception_fun <- match.fun(perception_fun)
 
     if (1 == length(lm)) {
         lm <- rep(lm, length(m))
@@ -230,7 +226,7 @@ dvmideal <- function(m, lm, psi, log = FALSE, perception_fun = NULL) {
 
 #' @rdname vmideal
 #' @export
-pvmideal <- function(m, lm, psi, lower.tail = TRUE, log = FALSE, perception_fun = NULL) {
+pvmideal <- function(m, lm, psi, lower.tail = TRUE, log = FALSE, perception_fun = vmperception) {
     if (anyNA(m) || anyNA(lm) || anyNA(psi)) {
         stop("NA's are not allowed!")
     }
@@ -248,11 +244,7 @@ pvmideal <- function(m, lm, psi, lower.tail = TRUE, log = FALSE, perception_fun 
         stop("magnitudes must be integer values!")
     }
 
-    if (is.null(perception_fun)) {
-        perception_fun <- vismeteor::vmperception
-    } else {
-        perception_fun <- match.fun(perception_fun)
-    }
+    perception_fun <- match.fun(perception_fun)
 
     if (1 == length(lm)) {
         lm <- rep(lm, length(m))
@@ -354,7 +346,7 @@ pvmideal <- function(m, lm, psi, lower.tail = TRUE, log = FALSE, perception_fun 
 
 #' @rdname vmideal
 #' @export
-qvmideal <- function(p, lm, psi, lower.tail = TRUE, perception_fun = NULL) {
+qvmideal <- function(p, lm, psi, lower.tail = TRUE, perception_fun = vmperception) {
     if (anyNA(p) || anyNA(lm) || anyNA(psi)) {
         stop("NA's are not allowed!")
     }
@@ -367,11 +359,7 @@ qvmideal <- function(p, lm, psi, lower.tail = TRUE, perception_fun = NULL) {
         stop("Infinite psi values are not allowed!")
     }
 
-    if (is.null(perception_fun)) {
-        perception_fun <- vismeteor::vmperception
-    } else {
-        perception_fun <- match.fun(perception_fun)
-    }
+    perception_fun <- match.fun(perception_fun)
 
     if (1 == length(lm)) {
         lm <- rep(lm, length(p))
@@ -469,7 +457,7 @@ qvmideal <- function(p, lm, psi, lower.tail = TRUE, perception_fun = NULL) {
 
 #' @rdname vmideal
 #' @export
-rvmideal <- function(n, lm, psi, perception_fun = NULL) {
+rvmideal <- function(n, lm, psi, perception_fun = vmperception) {
     if (anyNA(lm) || anyNA(psi)) {
         stop("NA's are not allowed!")
     }
@@ -482,11 +470,7 @@ rvmideal <- function(n, lm, psi, perception_fun = NULL) {
         stop("Infinite psi values are not allowed!")
     }
 
-    if (is.null(perception_fun)) {
-        perception_fun <- vismeteor::vmperception
-    } else {
-        perception_fun <- match.fun(perception_fun)
-    }
+    perception_fun <- match.fun(perception_fun)
 
     p <- stats::runif(n)
     m <- rep(NA, n)
@@ -505,16 +489,12 @@ rvmideal <- function(n, lm, psi, perception_fun = NULL) {
 
 #' @rdname vmideal
 #' @export
-cvmideal <- function(lm, psi, log = FALSE, perception_fun = NULL) {
+cvmideal <- function(lm, psi, log = FALSE, perception_fun = vmperception) {
     if (anyNA(lm) || anyNA(psi)) {
         stop("NA's are not allowed!")
     }
 
-    if (is.null(perception_fun)) {
-        perception_fun <- vismeteor::vmperception
-    } else {
-        perception_fun <- match.fun(perception_fun)
-    }
+    perception_fun <- match.fun(perception_fun)
 
     if (1 == length(psi)) {
         psi <- rep(psi, length(lm))

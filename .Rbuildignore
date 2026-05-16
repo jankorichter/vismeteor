@@ -13,3 +13,7 @@
 ^CRAN-SUBMISSION$
 ^\.positai$
 ^\.claude$
+^\.lintr$
+^dev$
+^Makefile$
+^\.git-blame-ignore-revs$

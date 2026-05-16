@@ -1,3 +1,100 @@
+# vismeteor 3.0.0
+
+## Breaking changes
+
+Naming overhaul: all dotted and camelCase public identifiers were migrated to
+`snake_case` to align with the tidyverse / r-lib convention and to eliminate
+visual confusion with S3 dispatch (`print.foo`). The d/p/q/r distribution
+prefixes (`dvmgeom`, `pvmideal`, ...) are unchanged.
+
+### Renamed exported functions
+
+| 2.1.0                | 3.0.0                       |
+|----------------------|-----------------------------|
+| `freq.quantile`      | `freq_quantile`             |
+| `vmgeomVstFromMagn`  | `vmgeom_vst_from_magn`      |
+| `vmgeomVstToR`       | `vmgeom_vst_to_r`           |
+| `vmidealVstFromMagn` | `vmideal_vst_from_magn`     |
+| `vmidealVstToPsi`    | `vmideal_vst_to_psi`        |
+
+### Renamed exported parameters
+
+| 2.1.0             | 3.0.0              |
+|-------------------|--------------------|
+| `lim.magn`        | `lim_magn`         |
+| `magn.id`         | `magn_id`          |
+| `rate.id`         | `rate_id`          |
+| `session.id`     | `session_id`       |
+| `perception.fun`  | `perception_fun`   |
+| `sun.alt.max`     | `sun_alt_max`      |
+| `moon.alt.max`    | `moon_alt_max`     |
+| `deriv.degree`    | `deriv_degree`     |
+| `withSessions`    | `with_sessions`    |
+| `withMagnitudes`  | `with_magnitudes`  |
+
+`lower.tail` is preserved to match base R conventions (`pnorm`, `pgeom`, ...).
+
+### Renamed data.frame columns from `load_vmdb_*` and the example datasets
+
+The imo-vmdb API already uses snake_case; mappings are now reduced to a few
+semantic renames. Most dotted column names (`shower.code`, `period.start`,
+`sl.start`, `lim.magn`, `t.eff`, `sun.alt`, `moon.alt`, `field.alt`,
+`radiant.alt`, `magn.mean`, `location.name`, `observer.id`, ...) become their
+snake_case equivalents. `time.sidereal` becomes `sidereal_time`. The example
+datasets `PER_2015_rates` and `PER_2015_magn` were regenerated with the new
+column names.
+
+### Other breaking changes
+
+- The default for `perception_fun` is now `vmperception` (previously `NULL`
+  with an internal fallback). Callers that explicitly passed
+  `perception.fun = NULL` need to drop the argument or supply a function.
+- `vmperception(m)` is now `vmperception(dm)` — the parameter is the
+  difference between the limiting magnitude and the meteor magnitude, and
+  the new name reflects that. Positional calls remain compatible.
+
+### Migration
+
+A `sed` sweep of your scripts is usually sufficient:
+
+```sh
+sed -i '' -E '
+  s/\bfreq\.quantile\b/freq_quantile/g;
+  s/\bvmgeomVstFromMagn\b/vmgeom_vst_from_magn/g;
+  s/\bvmgeomVstToR\b/vmgeom_vst_to_r/g;
+  s/\bvmidealVstFromMagn\b/vmideal_vst_from_magn/g;
+  s/\bvmidealVstToPsi\b/vmideal_vst_to_psi/g;
+  s/\blim\.magn\b/lim_magn/g;
+  s/\bmagn\.id\b/magn_id/g;
+  s/\brate\.id\b/rate_id/g;
+  s/\bsession\.id\b/session_id/g;
+  s/\bperception\.fun\b/perception_fun/g;
+  s/\bderiv\.degree\b/deriv_degree/g;
+  s/\bwithSessions\b/with_sessions/g;
+  s/\bwithMagnitudes\b/with_magnitudes/g;
+  s/\bshower\.code\b/shower_code/g;
+  s/\bperiod\.start\b/period_start/g;
+  s/\bperiod\.end\b/period_end/g;
+  s/\bsl\.start\b/sl_start/g;
+  s/\bsl\.end\b/sl_end/g;
+  s/\bt\.eff\b/t_eff/g;
+  s/\btime\.sidereal\b/sidereal_time/g;
+  s/\bsun\.alt\b/sun_alt/g;
+  s/\bsun\.az\b/sun_az/g;
+  s/\bmoon\.alt\b/moon_alt/g;
+  s/\bmoon\.az\b/moon_az/g;
+  s/\bmoon\.illum\b/moon_illum/g;
+  s/\bfield\.alt\b/field_alt/g;
+  s/\bfield\.az\b/field_az/g;
+  s/\bradiant\.alt\b/radiant_alt/g;
+  s/\bradiant\.az\b/radiant_az/g;
+  s/\bmagn\.mean\b/magn_mean/g;
+  s/\blocation\.name\b/location_name/g;
+  s/\bobserver\.id\b/observer_id/g;
+  s/\bobserver\.name\b/observer_name/g;
+' your-script.R
+```
+
 # vismeteor 2.1.0
 
 ## Breaking changes

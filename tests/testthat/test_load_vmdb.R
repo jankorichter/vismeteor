@@ -213,6 +213,54 @@ test_that("load_vmdb_rates: parses observations, sessions, magnitudes", {
     })
 })
 
+test_that("load_vmdb_rates: all-sporadic response maps to SPO factor", {
+    testthat::skip_if_not_installed("httptest2")
+    httptest2::with_mock_dir("fixtures/sporadic_only", {
+        res <- load_vmdb_rates("http://example.com/api/v1")
+        obs <- res$observations
+        expect_equal(nrow(obs), 2)
+        expect_true(is.factor(obs$shower))
+        expect_true("SPO" %in% levels(obs$shower))
+        expect_equal(as.character(obs$shower), c("SPO", "SPO"))
+        expect_false(any(is.na(obs$shower)))
+    })
+})
+
+test_that("load_vmdb_rates: mixed PER/sporadic response gets SPO mapping", {
+    testthat::skip_if_not_installed("httptest2")
+    httptest2::with_mock_dir("fixtures/sporadic_mixed", {
+        res <- load_vmdb_rates("http://example.com/api/v1")
+        obs <- res$observations
+        expect_equal(nrow(obs), 2)
+        expect_true(is.factor(obs$shower))
+        expect_setequal(as.character(obs$shower), c("PER", "SPO"))
+        expect_false(any(is.na(obs$shower)))
+    })
+})
+
+test_that("load_vmdb_magnitudes: all-sporadic response maps to SPO factor", {
+    testthat::skip_if_not_installed("httptest2")
+    httptest2::with_mock_dir("fixtures/sporadic_only_magn", {
+        res <- load_vmdb_magnitudes("http://example.com/api/v1",
+                                    with_magnitudes = FALSE)
+        obs <- res$observations
+        expect_equal(nrow(obs), 2)
+        expect_true(is.factor(obs$shower))
+        expect_equal(as.character(obs$shower), c("SPO", "SPO"))
+    })
+})
+
+test_that("load_vmdb_magnitudes: mixed PER/sporadic response gets SPO mapping", {
+    testthat::skip_if_not_installed("httptest2")
+    httptest2::with_mock_dir("fixtures/sporadic_mixed_magn", {
+        res <- load_vmdb_magnitudes("http://example.com/api/v1",
+                                    with_magnitudes = FALSE)
+        obs <- res$observations
+        expect_equal(nrow(obs), 2)
+        expect_setequal(as.character(obs$shower), c("PER", "SPO"))
+    })
+})
+
 test_that("load_vmdb_magnitudes: parses observations, sessions, magnitudes", {
     testthat::skip_if_not_installed("httptest2")
     # with_magnitudes defaults to TRUE → suppress include param for clean fixture path

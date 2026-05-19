@@ -181,7 +181,7 @@ load_vmdb_rates <- function(
         observations <- data.frame()
     } else {
         observations <- .remap_cols(as.data.frame(body$observations), .rate_col_map)
-        observations$shower <- factor(observations$shower)
+        observations$shower <- .normalize_shower(observations)
         observations$session_id <- factor(observations$session_id)
         observations$magn_id <- factor(observations$magn_id)
         observations$magn_solo <- as.logical(observations$magn_solo)
@@ -225,7 +225,7 @@ load_vmdb_magnitudes <- function(
         observations <- data.frame()
     } else {
         observations <- .remap_cols(as.data.frame(body$observations), .magn_col_map)
-        observations$shower <- factor(observations$shower)
+        observations$shower <- .normalize_shower(observations)
         observations$session_id <- factor(observations$session_id)
         observations$period_start <- .parse_dt(observations$period_start)
         observations$period_end <- .parse_dt(observations$period_end)
@@ -331,6 +331,22 @@ load_vmdb_magnitudes <- function(
     new_names <- col_map[names(df)]
     names(df) <- ifelse(is.na(new_names), names(df), new_names)
     df
+}
+
+
+# Normalize the response-side shower column.  The imo-vmdb server omits
+# `null`-valued fields entirely from JSON observations, so a fully
+# sporadic page has no `shower` column at all (NULL after data.frame
+# conversion), and a mixed page leaves sporadic rows as NA.  Both shapes
+# need NA -> "SPO" mapped, matching the request-side encoding in
+# `.build_params`.
+.normalize_shower <- function(observations) {
+    sh <- observations$shower
+    if (is.null(sh)) {
+        sh <- rep(NA_character_, nrow(observations))
+    }
+    sh <- ifelse(is.na(sh), "SPO", as.character(sh))
+    factor(sh)
 }
 
 

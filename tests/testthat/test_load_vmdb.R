@@ -261,6 +261,14 @@ test_that("load_vmdb_magnitudes: mixed PER/sporadic response gets SPO mapping", 
     })
 })
 
+test_that(".build_params: POSIXct period preserves class", {
+    pt <- as.POSIXct(c("2015-08-12 00:00:00", "2015-08-13 23:59:59"),
+                     tz = "UTC")
+    p <- vismeteor:::.build_params(NULL, pt, NULL, NULL)
+    expect_equal(p$scalar$period_start, "2015-08-12T00:00:00")
+    expect_equal(p$scalar$period_end, "2015-08-13T23:59:59")
+})
+
 test_that("load_vmdb_magnitudes: parses observations, sessions, magnitudes", {
     testthat::skip_if_not_installed("httptest2")
     # with_magnitudes defaults to TRUE → suppress include param for clean fixture path

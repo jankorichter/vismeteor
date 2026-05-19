@@ -256,21 +256,21 @@ load_vmdb_magnitudes <- function(
     }
 
     if (!is.null(period)) {
-        period <- matrix(period, ncol = 2)
-        params$period_start <- .fmt_period(min(period[, 1]), "lower")
-        params$period_end <- .fmt_period(max(period[, 2]), "upper")
+        stopifnot(length(period) == 2)
+        params$period_start <- .fmt_period(period[1], "lower")
+        params$period_end <- .fmt_period(period[2], "upper")
     }
 
     if (!is.null(sl)) {
-        sl <- matrix(sl, ncol = 2)
-        params$sl_min <- min(sl[, 1])
-        params$sl_max <- max(sl[, 2])
+        stopifnot(length(sl) == 2)
+        params$sl_min <- sl[1]
+        params$sl_max <- sl[2]
     }
 
     if (!is.null(lim_magn)) {
-        lim_magn <- matrix(lim_magn, ncol = 2)
-        params$lim_magn_min <- min(lim_magn[, 1])
-        params$lim_magn_max <- max(lim_magn[, 2])
+        stopifnot(length(lim_magn) == 2)
+        params$lim_magn_min <- lim_magn[1]
+        params$lim_magn_max <- lim_magn[2]
     }
 
     if (!is.null(sun_alt_max)) params$sun_alt_max <- sun_alt_max

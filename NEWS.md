@@ -1,3 +1,20 @@
+# vismeteor 3.0.1
+
+## Bug fixes
+
+- `load_vmdb_rates()` and `load_vmdb_magnitudes()` now correctly request
+  the per-magnitude-class frequencies from the imo-vmdb REST API.
+  Previously `with_magnitudes = TRUE` sent `include=magnitudes`, which on
+  `/magnitudes` returned `HTTP 400` and on `/rates` produced a response
+  shape that `.parse_magnitudes()` could not handle.  The functions now
+  send `include=magnitude_details`, restoring the documented behaviour.
+
+## Compatibility
+
+- Requires **imo-vmdb ≥ 1.9.0** on the server side.  Older servers reject
+  `include=magnitude_details` without `include=magnitudes` with
+  `HTTP 400`.
+
 # vismeteor 3.0.0
 
 ## New features

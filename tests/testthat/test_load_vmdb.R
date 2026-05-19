@@ -53,12 +53,12 @@ test_that(".build_params: include parameter", {
     expect_equal(p$scalar$include, "sessions")
 
     p <- vismeteor:::.build_params(NULL, NULL, NULL, NULL, with_magnitudes = TRUE)
-    expect_equal(p$scalar$include, "magnitudes")
+    expect_equal(p$scalar$include, "magnitude_details")
 
     p <- vismeteor:::.build_params(NULL, NULL, NULL, NULL,
         with_sessions = TRUE, with_magnitudes = TRUE
     )
-    expect_equal(p$scalar$include, "sessions,magnitudes")
+    expect_equal(p$scalar$include, "sessions,magnitude_details")
 })
 
 test_that(".parse_sessions: correct data.frame with factors and row names", {

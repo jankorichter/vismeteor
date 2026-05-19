@@ -172,7 +172,7 @@ load_vmdb_rates <- function(
     list(
         observations = observations,
         sessions     = .parse_sessions(body$sessions),
-        magnitudes   = .parse_magnitudes(body$magnitudes)
+        magnitudes   = .parse_magnitudes(body$magnitude_details)
     )
 }
 
@@ -212,7 +212,7 @@ load_vmdb_magnitudes <- function(
     list(
         observations = observations,
         sessions     = .parse_sessions(body$sessions),
-        magnitudes   = .parse_magnitudes(body$magnitudes)
+        magnitudes   = .parse_magnitudes(body$magnitude_details)
     )
 }
 
@@ -258,7 +258,7 @@ load_vmdb_magnitudes <- function(
 
     include <- character(0)
     if (with_sessions) include <- c(include, "sessions")
-    if (with_magnitudes) include <- c(include, "magnitudes")
+    if (with_magnitudes) include <- c(include, "magnitude_details")
     if (length(include) > 0) params$include <- paste(include, collapse = ",")
 
     list(scalar = params, multi = multi)

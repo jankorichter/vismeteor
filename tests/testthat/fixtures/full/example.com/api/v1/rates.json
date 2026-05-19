@@ -37,7 +37,7 @@
       "observer_name": "Doe, J."
     }
   ],
-  "magnitudes": [
+  "magnitude_details": [
     {"id": 200, "magn": 3, "freq": 2.5},
     {"id": 200, "magn": 2, "freq": 4.0},
     {"id": 200, "magn": 1, "freq": 5.5}

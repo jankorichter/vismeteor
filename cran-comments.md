@@ -1,19 +1,15 @@
 ## Release summary
 
-This is a major release (3.0.0) with breaking changes:
+This is a patch release (3.0.1) with one bug fix and no API changes:
 
-* All exported functions, parameters, and `load_vmdb_*()` columns were
-  renamed to snake_case to align with tidyverse / r-lib conventions and
-  with the imo-vmdb API (which itself uses snake_case). A migration sed
-  snippet for downstream scripts is included in NEWS.md.
-* `vmperception()` parameter renamed from `m` to `dm` to reflect that it
-  is the difference (limiting magnitude − meteor magnitude); positional
-  calls remain compatible.
-* `perception_fun` now defaults to `vmperception` instead of `NULL` with
-  an internal fallback.
-* New `select_knots()` performs forward/backward stepwise selection of
-  spline knots with a user-supplied scoring function (see
-  `vignette("select_knots")`).
+* `load_vmdb_rates()` and `load_vmdb_magnitudes()` now correctly request
+  the per-magnitude-class frequencies from the imo-vmdb REST API.  The
+  previous release sent `include=magnitudes`, which on `/magnitudes`
+  returned `HTTP 400` and on `/rates` produced a response shape the
+  internal parser could not handle.  The functions now send
+  `include=magnitude_details`, restoring the documented behaviour.
+  This requires imo-vmdb >= 1.9.0 on the server side; older servers
+  reject the new include combination with `HTTP 400`.
 
 ## Test environments
 

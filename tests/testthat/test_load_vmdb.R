@@ -193,6 +193,8 @@ test_that("load_vmdb_rates: parses observations, sessions, magnitudes", {
         expect_equal(as.character(obs$shower), "PER")
         expect_true(is.factor(obs$session_id))
         expect_true(is.factor(obs$magn_id))
+        expect_true(is.logical(obs$magn_solo))
+        expect_true(obs$magn_solo)
         expect_s3_class(obs$period_start, "POSIXct")
         expect_s3_class(obs$period_end, "POSIXct")
         expect_equal(attr(obs$period_start, "tzone"), "UTC")

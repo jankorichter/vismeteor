@@ -78,7 +78,11 @@
 #' \code{field_az} \tab azimuth of the field of view (optional),\cr
 #' \code{rad_alt} \tab altitude of the radiant (optional),\cr
 #' \code{rad_az} \tab azimuth of the radiant (optional),\cr
-#' \code{magn_id} \tab reference to the magnitude observations (optional).
+#' \code{magn_id} \tab reference to the magnitude observations (optional),\cr
+#' \code{magn_solo} \tab \code{TRUE} if this rate is the sole contributor
+#'   to its linked magnitude observation; \code{FALSE} if the magnitude
+#'   aggregates this rate with others; \code{NA} when \code{magn_id} is
+#'   \code{NA} (optional).
 #' }
 #'
 #' \code{load_vmdb_magnitudes} returns an \code{observations} data frame with:
@@ -180,6 +184,7 @@ load_vmdb_rates <- function(
         observations$shower <- factor(observations$shower)
         observations$session_id <- factor(observations$session_id)
         observations$magn_id <- factor(observations$magn_id)
+        observations$magn_solo <- as.logical(observations$magn_solo)
         observations$period_start <- .parse_dt(observations$period_start)
         observations$period_end <- .parse_dt(observations$period_end)
         row.names(observations) <- observations$rate_id

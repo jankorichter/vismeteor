@@ -22,7 +22,8 @@
       "field_az": 180.0,
       "rad_alt": 45.0,
       "rad_az": 90.0,
-      "magn_id": 200
+      "magn_id": 200,
+      "magn_solo": true
     }
   ],
   "sessions": [

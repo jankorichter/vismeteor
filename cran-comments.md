@@ -8,8 +8,7 @@ This is a patch release (3.0.1) with one bug fix and no API changes:
   returned `HTTP 400` and on `/rates` produced a response shape the
   internal parser could not handle.  The functions now send
   `include=magnitude_details`, restoring the documented behaviour.
-  This requires imo-vmdb >= 1.9.0 on the server side; older servers
-  reject the new include combination with `HTTP 400`.
+  This requires imo-vmdb >= 2.0.0 on the server side; older servers reject the new include combination with `HTTP 400`.
 
 ## Test environments
 

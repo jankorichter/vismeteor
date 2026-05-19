@@ -16,9 +16,11 @@ test_that(".build_params: shower encoding", {
 })
 
 test_that(".build_params: range params", {
+    # Date-only character input is expanded to strict ISO-T form:
+    # lower bound -> midnight, upper bound -> 23:59:59 UTC.
     p <- vismeteor:::.build_params(NULL, c("2015-08-01", "2015-08-31"), NULL, NULL)
-    expect_equal(p$scalar$period_start, "2015-08-01")
-    expect_equal(p$scalar$period_end, "2015-08-31")
+    expect_equal(p$scalar$period_start, "2015-08-01T00:00:00")
+    expect_equal(p$scalar$period_end, "2015-08-31T23:59:59")
 
     p <- vismeteor:::.build_params(NULL, NULL, c(135.5, 145.5), NULL)
     expect_equal(p$scalar$sl_min, 135.5)
@@ -27,6 +29,59 @@ test_that(".build_params: range params", {
     p <- vismeteor:::.build_params(NULL, NULL, NULL, c(5.5, 6.5))
     expect_equal(p$scalar$lim_magn_min, 5.5)
     expect_equal(p$scalar$lim_magn_max, 6.5)
+})
+
+test_that(".parse_dt: strict ISO-T parser", {
+    v <- vismeteor:::.parse_dt("2015-08-12T22:00:00")
+    expect_s3_class(v, "POSIXct")
+    expect_equal(attr(v, "tzone"), "UTC")
+    expect_equal(
+        as.numeric(v),
+        as.numeric(as.POSIXct("2015-08-12 22:00:00", tz = "UTC"))
+    )
+
+    # Non-canonical forms are NOT tolerated.
+    expect_true(is.na(vismeteor:::.parse_dt("2015-08-12 22:00:00")))
+    expect_true(is.na(vismeteor:::.parse_dt("2015-08-12")))
+    expect_true(is.na(vismeteor:::.parse_dt("not a date")))
+})
+
+test_that(".fmt_period: strict ISO-T formatter", {
+    # POSIXct in -> T-form out, UTC.
+    pt <- as.POSIXct("2015-08-12 22:00:00", tz = "UTC")
+    expect_equal(vismeteor:::.fmt_period(pt, "lower"), "2015-08-12T22:00:00")
+    expect_equal(vismeteor:::.fmt_period(pt, "upper"), "2015-08-12T22:00:00")
+
+    # Date -> midnight (lower) / 23:59:59 (upper).
+    d <- as.Date("2015-08-12")
+    expect_equal(vismeteor:::.fmt_period(d, "lower"), "2015-08-12T00:00:00")
+    expect_equal(vismeteor:::.fmt_period(d, "upper"), "2015-08-12T23:59:59")
+
+    # character T-form -> identity.
+    expect_equal(
+        vismeteor:::.fmt_period("2015-08-12T22:00:00", "lower"),
+        "2015-08-12T22:00:00"
+    )
+
+    # character space-form -> reformatted with T.
+    expect_equal(
+        vismeteor:::.fmt_period("2015-08-12 22:00:00", "lower"),
+        "2015-08-12T22:00:00"
+    )
+
+    # character date-only -> bound expansion.
+    expect_equal(
+        vismeteor:::.fmt_period("2015-08-12", "lower"),
+        "2015-08-12T00:00:00"
+    )
+    expect_equal(
+        vismeteor:::.fmt_period("2015-08-12", "upper"),
+        "2015-08-12T23:59:59"
+    )
+
+    # Unparseable -> error.
+    expect_error(vismeteor:::.fmt_period("not a date", "lower"))
+    expect_error(vismeteor:::.fmt_period(list(), "lower"))
 })
 
 test_that(".build_params: scalar altitude / id params", {
@@ -138,6 +193,10 @@ test_that("load_vmdb_rates: parses observations, sessions, magnitudes", {
         expect_equal(as.character(obs$shower), "PER")
         expect_true(is.factor(obs$session_id))
         expect_true(is.factor(obs$magn_id))
+        expect_s3_class(obs$period_start, "POSIXct")
+        expect_s3_class(obs$period_end, "POSIXct")
+        expect_equal(attr(obs$period_start, "tzone"), "UTC")
+        expect_equal(attr(obs$period_end, "tzone"), "UTC")
         expect_equal(row.names(obs), "100")
 
         sess <- res$sessions
@@ -165,6 +224,10 @@ test_that("load_vmdb_magnitudes: parses observations, sessions, magnitudes", {
         expect_equal(obs$magn_id, 200L)
         expect_true(is.factor(obs$shower))
         expect_equal(as.character(obs$shower), "PER")
+        expect_s3_class(obs$period_start, "POSIXct")
+        expect_s3_class(obs$period_end, "POSIXct")
+        expect_equal(attr(obs$period_start, "tzone"), "UTC")
+        expect_equal(attr(obs$period_end, "tzone"), "UTC")
         expect_equal(row.names(obs), "200")
 
         expect_true(is.data.frame(res$sessions))

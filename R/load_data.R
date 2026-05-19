@@ -12,7 +12,13 @@
 #'   \code{"http://localhost:8000/api/v1"}.
 #' @param shower character; selects by meteor shower codes.
 #'   \code{NA} loads sporadic meteors.
-#' @param period time; selects a time range by minimum/maximum.
+#' @param period selects an observation time range by minimum/maximum.
+#'   Accepts \code{POSIXct}, \code{Date}, or character.  Character
+#'   elements may be \code{"YYYY-MM-DDTHH:MM:SS"},
+#'   \code{"YYYY-MM-DD HH:MM:SS"}, or date-only \code{"YYYY-MM-DD"}.
+#'   Date-only inputs are expanded to midnight (lower bound) and
+#'   23:59:59 (upper bound) of the given day, in UTC.  IMO data is UTC
+#'   by convention; the timezone marker is omitted on the wire.
 #' @param sl numeric; selects a range of solar longitudes by minimum/maximum.
 #' @param lim_magn numeric; selects a range of limiting magnitudes by
 #'   minimum/maximum.
@@ -53,8 +59,8 @@
 #' \tabular{ll}{
 #' \code{rate_id} \tab unique identifier of the rate observation,\cr
 #' \code{shower} \tab IAU code of the shower. \code{NA} for sporadic.\cr
-#' \code{period_start} \tab start of observation,\cr
-#' \code{period_end} \tab end of observation,\cr
+#' \code{period_start} \tab \code{POSIXct} (UTC); start of observation,\cr
+#' \code{period_end} \tab \code{POSIXct} (UTC); end of observation,\cr
 #' \code{sl_start} \tab solar longitude at start,\cr
 #' \code{sl_end} \tab solar longitude at end,\cr
 #' \code{session_id} \tab reference to the session,\cr
@@ -80,8 +86,8 @@
 #' \tabular{ll}{
 #' \code{magn_id} \tab unique identifier of the magnitude observation,\cr
 #' \code{shower} \tab IAU code of the shower. \code{NA} for sporadic.\cr
-#' \code{period_start} \tab start of observation,\cr
-#' \code{period_end} \tab end of observation,\cr
+#' \code{period_start} \tab \code{POSIXct} (UTC); start of observation,\cr
+#' \code{period_end} \tab \code{POSIXct} (UTC); end of observation,\cr
 #' \code{sl_start} \tab solar longitude at start,\cr
 #' \code{sl_end} \tab solar longitude at end,\cr
 #' \code{session_id} \tab reference to the session,\cr
@@ -129,6 +135,14 @@
 #'     lim_magn     = c(5.3, 6.7),
 #'     with_sessions = TRUE
 #' )
+#'
+#' # Period can also be given as POSIXct or as full ISO 8601 datetime
+#' # strings — useful for narrowing to a specific time window within a day.
+#' data <- load_vmdb_rates(
+#'     base_url = "http://localhost:8000/api/v1",
+#'     shower   = "PER",
+#'     period   = c("2015-08-12T20:00:00", "2015-08-13T04:00:00")
+#' )
 #' }
 
 #' @rdname load_vmdb
@@ -166,6 +180,8 @@ load_vmdb_rates <- function(
         observations$shower <- factor(observations$shower)
         observations$session_id <- factor(observations$session_id)
         observations$magn_id <- factor(observations$magn_id)
+        observations$period_start <- .parse_dt(observations$period_start)
+        observations$period_end <- .parse_dt(observations$period_end)
         row.names(observations) <- observations$rate_id
     }
 
@@ -206,6 +222,8 @@ load_vmdb_magnitudes <- function(
         observations <- .remap_cols(as.data.frame(body$observations), .magn_col_map)
         observations$shower <- factor(observations$shower)
         observations$session_id <- factor(observations$session_id)
+        observations$period_start <- .parse_dt(observations$period_start)
+        observations$period_end <- .parse_dt(observations$period_end)
         row.names(observations) <- observations$magn_id
     }
 
@@ -234,8 +252,8 @@ load_vmdb_magnitudes <- function(
 
     if (!is.null(period)) {
         period <- matrix(period, ncol = 2)
-        params$period_start <- min(period[, 1])
-        params$period_end <- max(period[, 2])
+        params$period_start <- .fmt_period(min(period[, 1]), "lower")
+        params$period_end <- .fmt_period(max(period[, 2]), "upper")
     }
 
     if (!is.null(sl)) {
@@ -308,6 +326,58 @@ load_vmdb_magnitudes <- function(
     new_names <- col_map[names(df)]
     names(df) <- ifelse(is.na(new_names), names(df), new_names)
     df
+}
+
+
+# Parse a strict ISO 8601 datetime string from the imo-vmdb REST API to
+# POSIXct (UTC).  Matches the imo-vmdb 2.0 wire format
+# (`YYYY-MM-DDTHH:MM:SS`, T separator, no timezone marker — IMO data is
+# UTC by convention).  R's strptime treats the literal `T` in the format
+# string.  Non-canonical input yields NA.
+.parse_dt <- function(x) {
+    as.POSIXct(x, tz = "UTC", format = "%Y-%m-%dT%H:%M:%S")
+}
+
+
+# Format a user-supplied period value to the strict ISO 8601 form
+# imo-vmdb 2.0 expects (`YYYY-MM-DDTHH:MM:SS`, UTC, no timezone marker).
+#
+# Accepted shapes per element:
+# - POSIXct                          -> formatted in UTC.
+# - Date                             -> midnight (lower) / 23:59:59 (upper) UTC.
+# - character "YYYY-MM-DDTHH:MM:SS"  -> reformatted (identity in practice).
+# - character "YYYY-MM-DD HH:MM:SS"  -> parsed as datetime, reformatted with T.
+# - character "YYYY-MM-DD"           -> midnight (lower) / 23:59:59 (upper) UTC.
+# - anything else / parse failure    -> stop() with a clear message.
+.fmt_period <- function(x, bound = c("lower", "upper")) {
+    bound <- match.arg(bound)
+    pt <- if (inherits(x, "POSIXct")) {
+        as.POSIXct(format(x, tz = "UTC"), tz = "UTC")
+    } else if (inherits(x, "Date")) {
+        as.POSIXct(as.character(x), tz = "UTC") +
+            (if (bound == "upper") 86399 else 0)
+    } else if (is.character(x)) {
+        v <- as.POSIXct(x, tz = "UTC", format = "%Y-%m-%dT%H:%M:%S")
+        if (is.na(v)) {
+            v <- as.POSIXct(x, tz = "UTC", format = "%Y-%m-%d %H:%M:%S")
+        }
+        if (is.na(v)) {
+            v <- as.POSIXct(x, tz = "UTC", format = "%Y-%m-%d")
+            if (!is.na(v) && bound == "upper") {
+                v <- v + 86399
+            }
+        }
+        v
+    } else {
+        stop(
+            "period values must be POSIXct, Date, or character; got ",
+            class(x)[1]
+        )
+    }
+    if (is.na(pt)) {
+        stop("Cannot parse period value: ", x)
+    }
+    format(pt, format = "%Y-%m-%dT%H:%M:%S", tz = "UTC")
 }
 
 

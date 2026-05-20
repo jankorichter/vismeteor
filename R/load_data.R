@@ -121,22 +121,22 @@
 #' \dontrun{
 #' # Load rate observations including session and magnitude data
 #' data <- load_vmdb_rates(
-#'     base_url       = "http://localhost:8000/api/v1",
-#'     shower         = "PER",
-#'     sl             = c(135.5, 145.5),
-#'     period         = c("2015-08-01", "2015-08-31"),
-#'     lim_magn       = c(5.3, 6.7),
+#'     base_url = "http://localhost:8000/api/v1",
+#'     shower = "PER",
+#'     sl = c(135.5, 145.5),
+#'     period = c("2015-08-01", "2015-08-31"),
+#'     lim_magn = c(5.3, 6.7),
 #'     with_magnitudes = TRUE,
-#'     with_sessions   = TRUE
+#'     with_sessions = TRUE
 #' )
 #'
 #' # Load magnitude observations
 #' data <- load_vmdb_magnitudes(
-#'     base_url     = "http://localhost:8000/api/v1",
-#'     shower       = "PER",
-#'     sl           = c(135.5, 145.5),
-#'     period       = c("2015-08-01", "2015-08-31"),
-#'     lim_magn     = c(5.3, 6.7),
+#'     base_url = "http://localhost:8000/api/v1",
+#'     shower = "PER",
+#'     sl = c(135.5, 145.5),
+#'     period = c("2015-08-01", "2015-08-31"),
+#'     lim_magn = c(5.3, 6.7),
 #'     with_sessions = TRUE
 #' )
 #'

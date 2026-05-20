@@ -242,7 +242,8 @@ test_that("load_vmdb_magnitudes: all-sporadic response maps to SPO factor", {
     testthat::skip_if_not_installed("httptest2")
     httptest2::with_mock_dir("fixtures/sporadic_only_magn", {
         res <- load_vmdb_magnitudes("http://example.com/api/v1",
-                                    with_magnitudes = FALSE)
+            with_magnitudes = FALSE
+        )
         obs <- res$observations
         expect_equal(nrow(obs), 2)
         expect_true(is.factor(obs$shower))
@@ -254,7 +255,8 @@ test_that("load_vmdb_magnitudes: mixed PER/sporadic response gets SPO mapping", 
     testthat::skip_if_not_installed("httptest2")
     httptest2::with_mock_dir("fixtures/sporadic_mixed_magn", {
         res <- load_vmdb_magnitudes("http://example.com/api/v1",
-                                    with_magnitudes = FALSE)
+            with_magnitudes = FALSE
+        )
         obs <- res$observations
         expect_equal(nrow(obs), 2)
         expect_setequal(as.character(obs$shower), c("PER", "SPO"))
@@ -263,7 +265,8 @@ test_that("load_vmdb_magnitudes: mixed PER/sporadic response gets SPO mapping", 
 
 test_that(".build_params: POSIXct period preserves class", {
     pt <- as.POSIXct(c("2015-08-12 00:00:00", "2015-08-13 23:59:59"),
-                     tz = "UTC")
+        tz = "UTC"
+    )
     p <- vismeteor:::.build_params(NULL, pt, NULL, NULL)
     expect_equal(p$scalar$period_start, "2015-08-12T00:00:00")
     expect_equal(p$scalar$period_end, "2015-08-13T23:59:59")

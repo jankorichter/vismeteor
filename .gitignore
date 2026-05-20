@@ -11,5 +11,6 @@
 inst/doc
 .positai
 .claude
+.Renviron
 /vismeteor_*.tar.gz
 /vismeteor.Rcheck/

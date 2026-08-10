@@ -1,3 +1,29 @@
+# vismeteor unreleased
+
+## New features
+
+- `vmgeom_glm()` fits the geometric model of visual meteor magnitudes as a
+  generalized linear model, allowing the population index `r` to be modelled
+  as a function of covariates.  The response is given as a
+  two-column matrix `cbind(magn, lim_magn)`, so that the limiting magnitude
+  is subsetted together with the remaining data.  The link function is
+  `logit(1/r)`, which enforces `r > 1` for every finite linear predictor.
+  Magnitude counts can be supplied as `weights`, which is equivalent to
+  repeating each row accordingly; the dispersion is fixed at `1`, so the
+  aggregated and the replicated form also agree in their standard errors.
+- `predict()` on such a fit returns the population index (`type = "r"`, the
+  default), `1/r`, `log(r)`, or the linear predictor.  With `se.fit = TRUE` it
+  also returns standard errors and confidence limits, which are formed on the
+  link scale and therefore never fall below `1`.
+- `vignette("vmgeom")` gained a section demonstrating the new model.
+
+## Performance
+
+- Fitting a model whose population index depends on covariates is roughly ten
+  times faster.  The perception probabilities depend on the fractional part of
+  the limiting magnitude alone, and are now evaluated once per distinct value
+  instead of once per observation.  The results are unchanged.
+
 # vismeteor 3.0.1
 
 ## Bug fixes

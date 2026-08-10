@@ -39,7 +39,7 @@ The function $f(\cdot)$ denotes the perception probability function.
 
 The estimation of the population index r, briefly called the r-value,
 is a common task in the evaluation of meteor magnitudes.
-Here we demonstrate two methods to estimate this parameter.
+Here we demonstrate several methods to estimate this parameter.
 
 First, we obtain some magnitude observations from the example data set,
 which also includes the limiting magnitude.
@@ -155,6 +155,93 @@ with(new.env(), {
 ```
 
 The likelihood function is approximately a normal distribution in this case. This is important in this context because the variance of the estimated r-value is derived from the curvature (the second derivative at the maximum) of the log-likelihood function.
+
+
+## Generalized Linear Model
+
+The maximum likelihood estimate can also be obtained as a generalized linear
+model. `vmgeom_glm()` fits the same likelihood through `glm()`, which becomes
+useful as soon as the r-value is no longer assumed to be constant.
+
+The response is passed as a two-column matrix holding the meteor magnitude and
+the corresponding limiting magnitude. Supplying the limiting magnitude as part
+of the response ensures that it is subsetted together with the remaining data
+whenever `glm()` drops rows. The observed frequencies enter as `weights`.
+
+```{r, echo=TRUE, results='hide'}
+# rows with a frequency of zero carry no information
+magnitudes_obs <- subset(magnitudes, magnitudes$Freq > 0)
+
+result_glm <- vmgeom_glm(
+    cbind(magn, lim_magn) ~ 1,
+    data = magnitudes_obs,
+    weights = magnitudes_obs$Freq
+)
+```
+
+The link function is $\eta = \mathrm{logit}(1/r) = -\log(r-1)$. The quantity $1/r$ is
+the factor by which the observable rate drops when the limiting magnitude is lowered
+by one, and therefore lies between $0$ and $1$, which makes a logit link the natural
+choice. It also enforces $r > 1$ for every finite $\eta$, a constraint the geometric
+model requires.
+
+Rather than back-transforming the coefficients by hand, `predict()` returns the
+population index directly. Both methods agree, which is expected: without
+covariates this is an intercept-only fit of the same likelihood.
+
+```{r, echo=TRUE}
+# the model has no covariates, so any single row predicts the global r-value
+newdata <- data.frame(row.names = "")
+print(c(
+    "ML" = result_ml$par,
+    "GLM" = as.numeric(predict(result_glm, newdata, type = "r"))
+))
+```
+
+The same holds for the uncertainty. The maximum likelihood standard deviation
+comes from the curvature of the log-likelihood, the one of the linear model from
+the standard error of $\eta$, transformed with the delta method:
+
+```{r, echo=TRUE}
+print(c(
+    "ML" = sqrt(1 / result_ml$hessian[1][1]),
+    "GLM" = as.numeric(predict(result_glm, newdata, type = "r", se.fit = TRUE)$se.fit)
+))
+```
+
+For a single r-value the likelihood approach is the cheaper one. On the data set
+used here it is roughly twice as fast as the linear model, since `glm()` carries
+the overhead of its iterative fitting on top of the same likelihood. Both are a
+matter of milliseconds, and for aggregated frequencies the cost is governed by
+the number of magnitude classes rather than by the number of meteors.
+
+Predictions are available on several scales — `"r"`, `"inv_r"`, `"log_r"` and
+`"link"` — and `se.fit = TRUE` adds confidence limits in addition to the
+standard error. The limits are formed on the link scale and then transformed, so
+they never fall below `1`.
+
+```{r, echo=TRUE}
+print(predict(result_glm, newdata, se.fit = TRUE))
+```
+
+The real benefit appears once covariates are added. Because the fit is an
+ordinary `glm` object, `summary()`, `anova()`, `AIC()`/`BIC()` and
+`select_knots()` can all be used. A model in which the r-value varies with
+solar longitude would be written as
+
+```r
+vmgeom_glm(cbind(magn, lim_magn) ~ sl, data = magnitudes, weights = Freq)
+```
+
+and a smooth activity-dependent profile as
+
+```r
+vmgeom_glm(cbind(magn, lim_magn) ~ splines::ns(sl, df = 3), data = magnitudes, weights = Freq)
+```
+
+Covariates can also be accommodated on a different basis, by transforming the
+magnitudes first; see the section on the variance-stabilizing transformation
+below.
 
 
 ## By Rate

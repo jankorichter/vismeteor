@@ -3,6 +3,7 @@ linters: linters_with_defaults(
       styles = c("snake_case", "symbols", "SNAKE_CASE"),
       regexes = c(
         "^lower\\.tail$",
+        "^se\\.fit$",
         "^\\.Random\\.seed$",
         "^PER_[0-9]+_[a-z]+$"
       )

@@ -246,27 +246,164 @@ below.
 
 ## By Rate
 
-This method leverages the idea that we can estimate how many meteors would have been observed if the limiting magnitude had been reduced by `1`. This yields the statistic
+This method asks how strongly the observed rate would drop if the limiting magnitude were
+lowered by one. Under the model of the introduction, the expected number of meteors
+recorded at limiting magnitude $m_{\mathrm{lim}}$ is proportional to
 
 $$
-\mathbb{E}\!\left[\frac{1}{r}\right] = \frac{1}{n}\sum \frac{
-    f(m_{\mathrm{lim}} - m - 1)
-}{
-    f(m_{\mathrm{lim}} - m)
-}
+S(m_{\mathrm{lim}}) \;=\; \sum_{m \in \mathbb{Z}} f(m_{\mathrm{lim}} - m)\, r^{m},
 $$
 
-where $f(\cdot)$ denotes the perception probability function.
+each magnitude class contributing its population share $r^{m}$ weighted by the probability
+$f(\cdot)$ of actually perceiving it. Lowering the limiting magnitude by one and forming
+the ratio gives the relative drop of the rate,
 
-The appeal of this statistic is that the r-value can be estimated by taking a mean of the ratio above.
-Very bright meteors are inherently grouped into a single magnitude class whenever their
-perception probability is approximately `1.0`, which suppresses outliers in this part of the magnitude range.
-The resulting estimator is therefore inexpensive to compute and directly comparable to the likelihood-based approaches discussed earlier.
+$$
+\frac{S(m_{\mathrm{lim}} - 1)}{S(m_{\mathrm{lim}})} \;=\; \frac{1}{r},
+$$
 
-We estimate $r = 1/a$ from the sample mean of $a$. Since $r$ is a function
-of $a$, we apply the delta method to correct for bias and to compute the variance of $r$.
-The delta method uses a Taylor expansion around the mean of $a$ to approximate the
-distribution of $r$.
+which turns out to be exactly $1/r$ — independent of $m_{\mathrm{lim}}$ and of the shape of
+$f(\cdot)$. Measuring this drop is what gives the method its name.
+
+The rates themselves are not observed, but the same ratio can be formed per meteor. For a
+meteor of magnitude $m$ observed at limiting magnitude $m_{\mathrm{lim}}$ let
+
+$$
+a(m, m_{\mathrm{lim}}) \;=\; \frac{f(m_{\mathrm{lim}} - m - 1)}{f(m_{\mathrm{lim}} - m)},
+$$
+
+the factor by which its chance of being perceived would shrink if the limiting magnitude
+were lowered by one, and write $a_i = a(m_i, m_{\mathrm{lim},i})$ for the $i$-th observed
+meteor. This leads to
+
+$$
+\mathbb{E}\!\left[\frac{1}{n}\sum_{i=1}^{n} a_i\right] = \frac{1}{r},
+$$
+
+so averaging $a$ over the observed meteors estimates $1/r$ without bias. The derivation
+below proves both identities.
+
+### Derivation
+
+**Setting.** Fix a limiting magnitude $m_{\mathrm{lim}}$ and let $M$ denote the magnitude
+of a randomly selected observed meteor. Its distribution is
+
+$$
+P[M = m] \;=\; \frac{f(m_{\mathrm{lim}} - m)\, r^{m}}{S(m_{\mathrm{lim}})}.
+$$
+
+Two properties of the perception probability are used, and nothing else:
+
+1. $f(x) = 0$ for $x \le -0.5$, that is, a meteor fainter than the limiting magnitude is
+   never perceived. Hence $f(m_{\mathrm{lim}} - m) = 0$ for all $m \ge m_{\mathrm{lim}} +
+   0.5$, and the sum is bounded above.
+2. $0 \le f \le 1$. Together with $r > 1$ this bounds the sum from below as well, since
+   $\sum_{m \le 0} r^{m}$ converges. So $0 < S(m_{\mathrm{lim}}) < \infty$ and the
+   distribution is proper.
+
+Let $m_{\max}$ be the largest class with $f(m_{\mathrm{lim}} - m_{\max}) > 0$. The support
+of $M$ is contained in $\{m \le m_{\max}\}$, and on it the denominator of
+$a(m, m_{\mathrm{lim}})$ is strictly positive, so $a(M, m_{\mathrm{lim}})$ is well defined
+almost surely.
+
+**Claim.** $\mathbb{E}\bigl[a(M, m_{\mathrm{lim}})\bigr] = 1/r$ for every
+$m_{\mathrm{lim}}$.
+
+**Proof.** Writing out the expectation and cancelling the perception probability, which is
+legitimate because it is non-zero on the support,
+
+$$
+\begin{aligned}
+\mathbb{E}\bigl[a(M, m_{\mathrm{lim}})\bigr]
+ &= \sum_{m \le m_{\max}} \frac{f(m_{\mathrm{lim}} - m)\, r^{m}}{S(m_{\mathrm{lim}})}
+    \cdot \frac{f(m_{\mathrm{lim}} - m - 1)}{f(m_{\mathrm{lim}} - m)} \\[5pt]
+ &= \frac{1}{S(m_{\mathrm{lim}})} \sum_{m \le m_{\max}} f(m_{\mathrm{lim}} - m - 1)\, r^{m}.
+\end{aligned}
+$$
+
+The remaining sum is by definition $S(m_{\mathrm{lim}} - 1)$, so that
+$\mathbb{E}\bigl[a(M, m_{\mathrm{lim}})\bigr] = S(m_{\mathrm{lim}} - 1) / S(m_{\mathrm{lim}})$: the expectation of $a$
+is precisely the relative drop of the rate stated above.
+
+Before shifting the index, note that its uppermost term already vanishes. At $m = m_{\max}$
+the numerator is evaluated one class beyond the faintest perceptible one,
+
+$$
+f\bigl(m_{\mathrm{lim}} - m_{\max} - 1\bigr) = 0,
+$$
+
+so the summation effectively stops at $m_{\max} - 1$. This is the step where the vanishing
+perception probability enters, and it is what makes the shift below land exactly on the
+range of $S(m_{\mathrm{lim}})$. Replacing $m$ by $m - 1$ therefore gives
+
+$$
+\begin{aligned}
+\sum_{m \,\le\, m_{\max}} f(m_{\mathrm{lim}} - m - 1)\, r^{m}
+ &= \sum_{m \,\le\, m_{\max} - 1} f(m_{\mathrm{lim}} - m - 1)\, r^{m} \\[5pt]
+ &= \sum_{m \,\le\, m_{\max}} f(m_{\mathrm{lim}} - m)\, r^{m - 1} \\[5pt]
+ &= \frac{1}{r} \sum_{m \,\le\, m_{\max}} f(m_{\mathrm{lim}} - m)\, r^{m} \\[5pt]
+ &= \frac{S(m_{\mathrm{lim}})}{r},
+\end{aligned}
+$$
+
+where the last sum is $S(m_{\mathrm{lim}})$ because $f(m_{\mathrm{lim}} - m) = 0$ for every
+$m > m_{\max}$, so extending it to all integers adds nothing. Both series converge
+absolutely, since $r^{m} \to 0$ as $m \to -\infty$, which is what permits the shift.
+Altogether
+
+$$
+\begin{aligned}
+\mathbb{E}\bigl[a(M, m_{\mathrm{lim}})\bigr]
+ &= \frac{1}{S(m_{\mathrm{lim}})} \cdot \frac{S(m_{\mathrm{lim}})}{r} \\[5pt]
+ &= \frac{1}{r}. \qquad \blacksquare
+\end{aligned}
+$$
+
+Along the way this also proves the rate identity claimed above, since the intermediate
+result was $S(m_{\mathrm{lim}} - 1) = S(m_{\mathrm{lim}})/r$.
+
+Finally, the second identity follows. For $n$ meteors observed under limiting magnitudes
+$m_{\mathrm{lim},1}, \dots, m_{\mathrm{lim},n}$, each $a_i$ satisfies
+$\mathbb{E}[a_i] = 1/r$ by the claim, since it holds for *every* limiting magnitude
+separately. Linearity of the expectation then gives
+
+$$
+\mathbb{E}\!\left[\frac{1}{n}\sum_{i=1}^{n} a_i\right] = \frac{1}{r}.
+$$
+
+### Properties of the estimator
+
+The sample mean of $a$ is thus an unbiased estimator of $1/r$ — exactly, not merely
+asymptotically, and irrespective of whether the observations share the same limiting
+magnitude. This is what allows observations made under different conditions to be pooled.
+The estimator is inexpensive to compute and directly comparable to the likelihood-based
+approaches discussed earlier.
+
+Unbiasedness for $1/r$ does not carry over to $r$ itself, however: $1/\bar{a}$ is a
+non-linear function of $\bar{a}$, which is why the delta method is applied below.
+
+A second property concerns the bright end. Once a meteor is bright enough that both
+perception probabilities are close to `1.0`, the ratio approaches `1` as well, and it no
+longer matters *how* bright the meteor actually was. At a limiting magnitude of `6.0` the
+ratio is already `0.999` for a magnitude $-3$ meteor and indistinguishable from `1` for
+anything brighter. Such meteors are therefore effectively pooled into a single class, and
+the information about their exact brightness is lost.
+
+In practice this is not a drawback but an advantage. Meteors that bright are rare — at
+$r = 2.5$ and the same limiting magnitude, magnitude $-3$ and brighter accounts for less
+than one percent of all observed meteors — so little information is discarded. In exchange, the pooling keeps a
+single very bright meteor from acting as an outlier, precisely in the part of the
+magnitude range where one observation would otherwise carry a lot of weight. The same
+applies to the variance-stabilizing transformation below, which is built on this ratio.
+
+### Estimation
+
+We estimate $r$ as $1/\bar{a}$ from the sample mean $\bar{a}$. Since $r$ is a non-linear
+function of $\bar{a}$, we apply the delta method to correct for bias and to compute the
+variance of $r$. The delta method uses a Taylor expansion around the mean of $a$ to
+approximate the distribution of $r$. Note that the variance of $a$ entering it depends on
+$r$ itself; the section on the variance-stabilizing transformation below starts from this
+same statistic and removes that dependency.
 
 ```{r, echo=TRUE, results='hide'}
 result_rate <- with(magnitudes, {
@@ -336,19 +473,115 @@ with(new.env(), {
 
 ## Variance-Stabilizing Transformation as an Alternative Method
 
-Estimation based on the maximum likelihood principle is computationally demanding.
-As an alternative, a variance-stabilizing transformation can be applied.
-This transformation maps meteor magnitudes onto a different scale,
-yielding a distribution whose variance no longer depends on the parameter `r`.
+This method is a refinement of the rate-based one. It uses the same quantity
+$a(m, m_{\mathrm{lim}})$, but rescales it so that its variance no longer depends on the
+parameter `r`. It is likewise far cheaper than estimation based on the maximum likelihood
+principle.
 
-The variance-stabilizing transformation has the following additional advantages:
+Recall what was established in the previous section. The sample mean of $a$ estimates
+$1/r$ without bias, exactly and for pooled limiting magnitudes alike, which is a strong
+property. Its weakness is the second moment: the variance of $a$ is itself a function of
+$r$. At a limiting magnitude of `6.0` it falls from about `0.066` at $r = 1.4$ to `0.033`
+at $r = 4$, a factor of two across the range of interest. Two consequences follow. The
+precision of the estimate cannot be judged without already knowing $r$, and the delta
+method is needed to convert $\bar{a}$ into an estimate of $r$ at all.
 
-- Since the variance does not depend on the r-value, the accuracy of estimators (e.g., maximum likelihood estimators) is easier to assess,
-- The variance bound (Cramér–Rao lower bound) then often depends only on the sample size `n`, but not on the true r-value,
-- Estimators such as the sample mean are homoscedastic, i.e., their dispersion is constant across the parameter space. As a result, many classical results of linear estimation theory (BLUE properties, Gauss–Markov theorem) hold without additional transformations,
-- Because the variance is fixed, the calculation of standard errors is independent of the unknown r-value,
-- Confidence intervals can be more easily standardized and are equally well calibrated across the entire parameter space,
-- Test statistics (e.g., likelihood ratio or score tests) exhibit a more uniform distribution, since the variance does not need to be treated as an additional unknown. This improves test power and simplifies asymptotic approximations.
+The variance-stabilizing transformation removes exactly this weakness. It maps $a$ onto a
+scale on which the variance is approximately `1.0` regardless of $r$ — over
+$1.4 \le r \le 4$ it stays within about `0.2` of that value, comfortably covering the
+$1.7 \le r \le 3.3$ met in visual meteor work. Outside that window the stabilization
+degrades on both sides, which bounds the use of the transformed magnitudes as a response
+in linear models, but not the reading of a single $r$ off their mean.
+`vmgeom_vst_from_magn()` performs the mapping and `vmgeom_vst_to_r()` maps the mean of the
+transformed magnitudes back onto $r$.
+
+The price is paid on the first moment. The transformation raises $a$ to a power, and the
+mean of a power is not the power of the mean, so the exact unbiasedness of the rate-based
+estimator is lost. This deviation is systematic: it does not average out, and it does not
+shrink as the sample grows.
+
+Its cause is a slight dependence of the transformed mean on the limiting magnitude, which
+the statistic $a$ itself does not have. Over $1.7 \le r \le 3.3$, the range met in visual
+meteor work, it amounts to at most `1.5%` of $r$.
+
+What matters in practice is how that compares with the random error, and this depends on
+the number of meteors. The random error shrinks as the sample grows while the systematic
+one does not, so the two meet at a certain sample size: for a few hundred meteors the
+random error still dominates by a factor of three, at a few thousand the two are
+comparable, and beyond roughly ten thousand the systematic part sets the accuracy — no
+matter how many more meteors are added. Visual meteor data sets of that size are the
+exception, so for most analyses the deviation can be ignored.
+
+Where it does matter — for a very large data set, or wherever an unbiased estimate counts
+for more than a constant variance — the rate-based method of the previous section remains
+exactly unbiased for $1/r$, and `vmgeom_glm()` fits the exact likelihood.
+
+Everything the rate-based method offers is retained. Since the transformation is a
+monotone rescaling of $a$, the pooling of bright meteors described above carries over
+unchanged. And because $a$ lies between `0` and `1`, the transformed values are bounded as
+well, with the upper bound corresponding to $r = 1$; the estimate can consequently never
+fall below the value the geometric model requires.
+
+The same monotonicity matters when the transformation is used inside a predictive model.
+`vmgeom_vst_to_r()` is defined on the whole range of values the transformation can produce
+and returns `NA` only for values it cannot. Should sparse data drive a prediction into an
+implausible region, the result is therefore a value that is too large but still ordered,
+rather than a missing one — usually far easier to handle downstream than an `NA`.
+
+The delta method is applied below in this section as well, since the back-transformation
+is non-linear here too. What changes is the variance that enters it: a constant one
+instead of a value that depends on the very parameter being estimated.
+
+Beyond stabilizing the variance, the transformation also puts the parameter on a scale
+with a simple structure. Classically, transformations of this kind are judged by three
+criteria, which Box and Cox (1964, *An Analysis of Transformations*, J. R. Stat. Soc. B
+26, 211–252) treat together: constant variance, an approximately symmetric distribution,
+and *additivity*, meaning that effects combine linearly on the transformed scale. The
+third one holds here in a strict sense. The transformation is a power of $a$, and $a$
+estimates $1/r$, so
+
+$$
+\log t \;=\; \mathrm{const.} - \beta \, \log r
+$$
+
+with a fixed $\beta > 0$: the relation is linear on the logarithmic scale. A multiplicative
+change of the population index therefore becomes an additive shift of $\log t$. This holds
+per meteor by construction; for the mean of the transformed magnitudes it holds to the
+accuracy stated above, which is what the calibration of `vmgeom_vst_to_r()` rests on.
+
+This is what makes the transformed magnitudes usable as a response in ordinary linear
+models. A profile in which $r$ varies with a covariate can be fitted with `lm()` on the
+transformed magnitudes, and the estimated coefficients translate back into changes of
+$\log r$ up to the constant factor $\beta$ — with residuals that are homoscedastic by
+construction, which is precisely what such models assume.
+
+That makes this approach a lightweight alternative to `vmgeom_glm()`, and the choice
+between them is a trade-off. In favour of the transformation is its cost: on the data set
+used here a single estimate takes well under a millisecond, some two orders of magnitude
+less than the generalized linear model, which iterates over the full likelihood. Since the
+transformation is applied once per meteor and everything afterwards is ordinary least
+squares, this advantage grows with the size of the data set, and the whole toolbox built
+around `lm()` becomes available.
+
+Against it stands a loss of accuracy, though not where one would expect it. The dispersion
+of the estimate is practically that of the maximum likelihood estimate — in a simulation
+with `n = 500` the two standard deviations agree to within a few percent over
+$2 \le r \le 4$. What the transformation costs is not variance but the systematic
+deviation of the back-transformation described above, which adds to the total error and,
+unlike the random part, does not shrink with the sample size. At `n = 500` and $r = 3$ it
+raises the root mean squared error by roughly `6%` over that of the maximum likelihood
+estimate; for larger samples its share grows. `vmgeom_glm()`, fitting
+the exact likelihood, carries no such deviation and additionally provides the
+inferential machinery of a `glm` object — `summary()`, `anova()`, information criteria.
+The transformation is therefore preferable for quick estimates and exploratory work, the
+generalized linear model whenever accuracy matters — including, unlike the usual
+trade-off, for large data sets, where the systematic part comes to dominate.
+
+A constant variance carries a few further consequences worth noting:
+
+- Standard errors and confidence intervals no longer depend on the unknown r-value, so they are equally well calibrated across the entire parameter space,
+- Since the sample mean is homoscedastic, the classical results of linear estimation theory (BLUE properties, Gauss–Markov theorem) apply without further transformation,
+- Test statistics such as likelihood ratio or score tests follow a more uniform distribution, because the variance need not be treated as an additional unknown. This improves test power and simplifies asymptotic approximations.
 
 The resulting procedure is straightforward: it suffices to compute the mean of
 the transformed meteor magnitudes, from which an estimate of the parameter `r` is obtained.

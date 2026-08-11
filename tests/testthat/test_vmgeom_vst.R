@@ -1,5 +1,6 @@
 test_that("vmgeom_vst", {
-    r <- seq(1.5, 3.3, 0.1)
+    # the range both functions are calibrated on
+    r <- seq(1.4, 4.0, 0.1)
     limmag <- c(5.5, 5.52, 5.55, seq(5.6, 6.4, 0.1), 6.45, 6.48, 6.5)
     m <- seq(-200, 6, 1)
     model <- expand.grid(r = r, limmag = limmag)
@@ -11,10 +12,15 @@ test_that("vmgeom_vst", {
             t.mean <- sum(p * t)
             t.var <- sum(p * (t - t.mean)^2)
 
+            # the rate-based statistic the transformation is built on
+            den <- vmperception(limmag - m)
+            g <- ifelse(den > 0.0, vmperception(limmag - m - 1.0) / den, 0.0)
+
             list(
                 r = r,
                 q = log(r),
                 limmag = limmag,
+                g.mean = sum(p * g),
                 t.mean = t.mean,
                 t.var = t.var
             )
@@ -24,57 +30,122 @@ test_that("vmgeom_vst", {
     #
     # test vmgeom_vst_from_magn
     #
-    expect_true(vmgeom_vst_from_magn(6, 5.5) > 0.0)
-    expect_true(all(abs(model$t.var - 1.0) < 0.018))
+
+    # the transformation rests on E[g] = 1/r, which holds exactly and for
+    # every limiting magnitude; the calibration of c and d relies on it
+    expect_equal(model$g.mean, 1.0 / model$r)
+
+    # outside the support the transform is zero; it must stay finite, as
+    # otherwise sum(p * t) above would be poisoned by 0 * NaN
+    expect_equal(vmgeom_vst_from_magn(6, 5.5), 0.0)
+    expect_false(any(is.nan(vmgeom_vst_from_magn(c(6, 7, 8), 5.5))))
+
+    # a missing magnitude propagates as NA instead of reaching vmperception(),
+    # which does not accept one
+    expect_true(is.na(vmgeom_vst_from_magn(NA_real_, 5.5)))
+    expect_equal(
+        vmgeom_vst_from_magn(c(2, NA_real_), 6.0),
+        c(vmgeom_vst_from_magn(2, 6.0), NA_real_)
+    )
+
+    expect_true(all(abs(model$t.var - 1.0) < 0.19))
+    expect_true(all(abs(subset(model, r <= 3.5)$t.var - 1.0) < 0.15))
+
+    # the perception probability increases monotonically, hence the ratio it is
+    # built from lies between 0 and 1 and the transform is bounded by the
+    # factor `a` of the transformation
+    tm_max <- vmgeom_vst_from_magn(-100, 0)
+    dm <- seq(-1.0, 200.0, 0.01)
+    expect_true(all(vmgeom_vst_from_magn(0.0, dm) <= tm_max))
+    expect_equal(max(vmgeom_vst_from_magn(0.0, dm)), tm_max)
 
     #
     # test vmgeom_vst_to_r
     #
-    model$r_est <- vmgeom_vst_to_r(model$t.mean)
-    expect_true(all(abs(model$r - model$r_est) < 0.013))
 
-    # test with non-exotic values
-    model0 <- with(model, {
-        subset(model, r < 2.7)
+    # `vmgeom_vst_to_r` is applied to the mean of the transformed magnitudes,
+    # so that is what has to be tested. Testing it against
+    # `a * mean(g)^b` instead would only restate how c and d are defined and
+    # would hold for any b, hence catch nothing.
+    # q = log(r) is the scale the deviation is even on; in r it grows with r
+    # itself, which is why the bound below is the looser one of the two
+    model$q_est <- vmgeom_vst_to_r(model$t.mean, log = TRUE)
+    expect_true(all(abs(model$q - model$q_est) < 0.03))
+
+    model$r_est <- vmgeom_vst_to_r(model$t.mean)
+    expect_true(all(abs(model$r - model$r_est) < 0.12))
+    expect_true(all(abs(subset(model, r <= 3.5)$r -
+        subset(model, r <= 3.5)$r_est) < 0.07))
+
+    # The estimator must be consistent: the error may not survive an
+    # arbitrarily large sample. The delta-method correction of the vignette
+    # scales with var/n and vanishes, so whatever is left at n -> Inf is a
+    # property of the back-transformation itself.
+    with(new.env(), {
+        r <- 2.5
+        limmag <- 6.0
+        p <- dvmgeom(m, limmag, r)
+        t <- vmgeom_vst_from_magn(m, limmag)
+        t.mean <- sum(p * t)
+        t.var <- sum(p * (t - t.mean)^2)
+
+        for (n in c(1e3, 1e5, 1e7)) {
+            r_hat <- vmgeom_vst_to_r(t.mean) -
+                0.5 * vmgeom_vst_to_r(t.mean, deriv_degree = 2L) * t.var / n
+            expect_true(abs(r_hat - r) < 0.07)
+        }
     })
-    expect_true(all(abs(model0$r - model0$r_est) < 0.007))
+
+    # the upper bound of tm corresponds to the degenerate case r = 1,
+    # so the geometric model's requirement r >= 1 holds by construction
+    expect_true(vmgeom_vst_to_r(tm_max) >= 1.0)
+
+    # unlike the former polynomial there is no calibration window:
+    # the inverse stays finite and monotonic between its bounds
+    tm_probe <- c(0.5, 1.72, 3.53, 4.5)
+    expect_true(all(is.finite(vmgeom_vst_to_r(tm_probe))))
+    expect_true(all(diff(vmgeom_vst_to_r(tm_probe)) < 0.0))
+
+    # tm = 0 means g = 0 and hence r = Inf; values outside [0, tm_max]
+    # cannot occur under the model
+    expect_identical(vmgeom_vst_to_r(0.0), Inf)
+    expect_true(is.na(vmgeom_vst_to_r(-1.0)))
+    expect_true(is.na(vmgeom_vst_to_r(tm_max + 0.1)))
+    # both branches must reject impossible input alike, without a warning
+    expect_silent(vmgeom_vst_to_r(-1.0, log = TRUE))
 
     # test first derivative
     f <- function(x) {
         vmgeom_vst_to_r(x, deriv_degree = 1L)
     }
-    y <- vmgeom_vst_to_r(5.5) - vmgeom_vst_to_r(4.5)
-    expect_true(abs(y - stats::integrate(f, 4.5, 5.5)$value) < 1e-10)
+    y <- vmgeom_vst_to_r(3.0) - vmgeom_vst_to_r(2.0)
+    expect_true(abs(y - stats::integrate(f, 2.0, 3.0)$value) < 1e-10)
 
     # test second derivative
     f <- function(x) {
         vmgeom_vst_to_r(x, deriv_degree = 2L)
     }
-    y <- vmgeom_vst_to_r(5.5, deriv_degree = 1L) - vmgeom_vst_to_r(4.5, deriv_degree = 1L)
-    expect_true(abs(y - stats::integrate(f, 4.5, 5.5)$value) < 1e-10)
+    y <- vmgeom_vst_to_r(3.0, deriv_degree = 1L) - vmgeom_vst_to_r(2.0, deriv_degree = 1L)
+    expect_true(abs(y - stats::integrate(f, 2.0, 3.0)$value) < 1e-10)
 
-    # log ...
-    model$q.est <- vmgeom_vst_to_r(model$t.mean, log = TRUE)
-    expect_true(all(abs(model$q - model$q.est) < 0.004))
-
-    # test with non-exotic values
-    model0 <- with(model, {
-        subset(model, r < 2.7)
-    })
-    expect_true(all(abs(model0$q - model0$q.est) < 0.004))
+    # log ... both branches must agree with each other
+    expect_equal(
+        vmgeom_vst_to_r(model$t.mean, log = TRUE),
+        base::log(vmgeom_vst_to_r(model$t.mean))
+    )
 
     # test log first derivative
     f <- function(x) {
         vmgeom_vst_to_r(x, log = TRUE, deriv_degree = 1L)
     }
-    y <- vmgeom_vst_to_r(5.5, log = TRUE) - vmgeom_vst_to_r(4.5, log = TRUE)
-    expect_true(abs(y - stats::integrate(f, 4.5, 5.5)$value) < 1e-10)
+    y <- vmgeom_vst_to_r(3.0, log = TRUE) - vmgeom_vst_to_r(2.0, log = TRUE)
+    expect_true(abs(y - stats::integrate(f, 2.0, 3.0)$value) < 1e-10)
 
     # test log second derivative
     f <- function(x) {
         vmgeom_vst_to_r(x, log = TRUE, deriv_degree = 2L)
     }
-    y <- vmgeom_vst_to_r(5.5, log = TRUE, deriv_degree = 1L) -
-        vmgeom_vst_to_r(4.5, log = TRUE, deriv_degree = 1L)
-    expect_true(abs(y - stats::integrate(f, 4.5, 5.5)$value) < 1e-10)
+    y <- vmgeom_vst_to_r(3.0, log = TRUE, deriv_degree = 1L) -
+        vmgeom_vst_to_r(2.0, log = TRUE, deriv_degree = 1L)
+    expect_true(abs(y - stats::integrate(f, 2.0, 3.0)$value) < 1e-10)
 })

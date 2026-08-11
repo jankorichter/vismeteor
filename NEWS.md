@@ -17,6 +17,43 @@
   link scale and therefore never fall below `1`.
 - `vignette("vmgeom")` gained a section demonstrating the new model.
 
+## Changes
+
+- `vmgeom_vst_from_magn()` and `vmgeom_vst_to_r()` use a new algorithm.  The
+  transformation is now derived from the rate-based statistic
+  `f(lm - m - 1) / f(lm - m)`, whose expectation is `1/r`, and stabilises its
+  variance with a power transformation.  This replaces the interpolated table
+  of fitted parameters.  Both functions keep their arguments and their usage
+  unchanged; `vignette("vmgeom")` explains the relation to the rate-based
+  method.
+- The scale of the transformed magnitudes changed accordingly: `1.4 <= r <= 4`
+  now corresponds to `tm` between about `1.59` and `3.53`, previously `3.96` and
+  `5.74` over the narrower range `1.4 <= r <= 3.5`.  Transformed values stored
+  with earlier versions are not comparable.
+- `vmgeom_vst_to_r()` maps the mean of the transformed magnitudes back onto
+  `r`.  Its constants are obtained by regressing `log(E[g])` on `log(E[t])`
+  under the model.  Inverting the power transformation algebraically would be
+  correct for a single meteor only: the estimator averages transformed
+  magnitudes, and the mean of a power is not the power of the mean.
+- `vmgeom_vst_to_r()` no longer restricts its argument to a calibrated window.
+  It extrapolates monotonically instead, and returns `NA` only for values that
+  cannot occur, that is negative ones and those above `4.52`.  This is aimed at
+  predictive models, where sparse data can yield an implausible `r`: such a
+  value is now returned inflated but ordered, instead of dropping out as `NA`.
+  The recovered `r` is strictly monotone in `tm` throughout, so the estimator
+  never saturates or folds back.
+- The back-transformation carries a small systematic deviation that does not
+  shrink as the sample grows.  Over `1.7 <= r <= 3.3`, the range met in
+  practice, it stays below `1.5%` and is negligible against the random error;
+  it shrinks towards smaller `r` and grows towards larger ones.  It stems from
+  a slight dependence of the transformed mean on the limiting magnitude; where
+  it matters, use the rate-based estimator or `vmgeom_glm()`.
+- The variance stabilization, unlike the above, remains two-sided and is what
+  the range `1.4 <= r <= 4` now describes: there the variance stays within
+  `0.19` of `1.0`, compared with `0.018` over `1.4 <= r <= 3.5` before.  It
+  bounds the use of the transformed magnitudes as a response in linear models,
+  not the reading of a single `r` off their mean.
+
 ## Performance
 
 - Fitting a model whose population index depends on covariates is roughly ten

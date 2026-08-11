@@ -512,16 +512,16 @@ cvmideal <- function(lm, psi, log = FALSE, perception_fun = vmperception) {
     }
 
     p <- mapply(\(lm, psi) {
-        if (Inf == lm & Inf == psi) {
+        if (Inf == lm && Inf == psi) {
             return(NA)
         }
-        if (-Inf == lm & -Inf == psi) {
+        if (-Inf == lm && -Inf == psi) {
             return(NA)
         }
-        if (Inf == lm & -Inf == psi) {
+        if (Inf == lm && -Inf == psi) {
             return(if (log) 0.0 else 1.0)
         }
-        if (Inf == psi & -Inf == lm) {
+        if (Inf == psi && -Inf == lm) {
             return(if (log) -Inf else 0.0)
         }
 

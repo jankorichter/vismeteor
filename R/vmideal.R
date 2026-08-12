@@ -545,9 +545,12 @@ cvmideal <- function(lm, psi, log = FALSE, perception_fun = vmperception) {
 .vmideal_upper_lm <- function(lm) {
     lm_round <- round(lm)
     offset <- lm - lm_round
-    if (-0.5 == offset) {
-        lm_round <- lm_round - 1L
-    }
+
+    # A limiting magnitude exactly halfway between two integers is resolved
+    # downwards, matching `.vmgeom_std()`. Vectorized, so that a whole model
+    # frame can be rounded at once.
+    idx <- -0.5 == offset
+    lm_round[idx] <- lm_round[idx] - 1L
 
     lm_round
 }
@@ -559,33 +562,40 @@ cvmideal <- function(lm, psi, log = FALSE, perception_fun = vmperception) {
     psi_exp <- 10.0
     r_lower <- 10^0.4
 
+    # Both arguments are recycled to a common length, so that every branch can
+    # subset them together. Subsetting `m` alone would silently pair a
+    # magnitude with the wrong parameter as soon as `psi` varies by element.
+    n <- max(length(m), length(psi))
+    m <- rep(m, length.out = n)
+    psi <- rep(psi, length.out = n)
+
     a <- -base::log(r_lower)
-    d <- rep(NA, length(m))
+    d <- rep(NA, n)
 
     idx <- m > (psi + psi_exp)
     if (any(idx)) {
         if (log) {
-            d[idx] <- base::log(1 - base::exp(1.5 * a)) + a * (1.5 * (m[idx] - psi) - 0.75)
+            d[idx] <- base::log(1 - base::exp(1.5 * a)) + a * (1.5 * (m[idx] - psi[idx]) - 0.75)
         } else {
-            d[idx] <- base::exp(a * (1.5 * (m[idx] - psi) - 0.75)) -
-                base::exp(a * (1.5 * (m[idx] - psi) + 0.75))
+            d[idx] <- base::exp(a * (1.5 * (m[idx] - psi[idx]) - 0.75)) -
+                base::exp(a * (1.5 * (m[idx] - psi[idx]) + 0.75))
         }
     }
 
     idx <- m < (psi - psi_exp)
     if (any(idx)) {
         if (log) {
-            d[idx] <- base::log(1.5) + a * (psi - m[idx] - 0.5) + base::log(1 - base::exp(a))
+            d[idx] <- base::log(1.5) + a * (psi[idx] - m[idx] - 0.5) + base::log(1 - base::exp(a))
         } else {
-            d[idx] <- 1.5 * base::exp(a * (psi - m[idx] - 0.5)) -
-                1.5 * base::exp(a * (psi - m[idx] + 0.5))
+            d[idx] <- 1.5 * base::exp(a * (psi[idx] - m[idx] - 0.5)) -
+                1.5 * base::exp(a * (psi[idx] - m[idx] + 0.5))
         }
     }
 
     idx <- is.na(d)
     if (any(idx)) {
-        d[idx] <- vismeteor::pmideal(m[idx] + 0.5, psi, lower.tail = TRUE) -
-            vismeteor::pmideal(m[idx] - 0.5, psi, lower.tail = TRUE)
+        d[idx] <- vismeteor::pmideal(m[idx] + 0.5, psi[idx], lower.tail = TRUE) -
+            vismeteor::pmideal(m[idx] - 0.5, psi[idx], lower.tail = TRUE)
 
         if (log) {
             d[idx] <- base::log(d[idx])

@@ -96,3 +96,30 @@ test_that("dvmideal", {
     expect_length(p, length(m))
     expect_equal(p, dvmgeom(m, lm, 10^0.4, log = TRUE))
 })
+
+test_that(".dmideal_int is vectorized over psi", {
+    # `psi` selects between the two asymptotic branches and the tabulated
+    # middle, so a value paired with the wrong magnitude lands in the wrong
+    # branch. dvmideal() splits to a scalar psi and never notices.
+    m <- c(0, 0, 0, 0)
+    psi <- c(-15.0, 5.0, 15.0, 5.0)
+
+    expect_equal(
+        .dmideal_int(m, psi),
+        mapply(\(m, psi) .dmideal_int(m, psi), m, psi)
+    )
+
+    # Every branch, both scales, and no recycling warning.
+    set.seed(17L)
+    m <- sample(seq(-40L, 20L), 400L, replace = TRUE)
+    psi <- runif(400L, -25.0, 25.0)
+
+    for (log in c(FALSE, TRUE)) {
+        expect_silent(d <- .dmideal_int(m, psi, log = log))
+        expect_equal(d, mapply(\(m, psi) .dmideal_int(m, psi, log = log), m, psi))
+    }
+
+    # The shorter argument is recycled, whichever one it is.
+    expect_equal(.dmideal_int(0.0, c(-15.0, 5.0, 15.0)), .dmideal_int(c(0.0, 0.0, 0.0), c(-15.0, 5.0, 15.0)))
+    expect_equal(.dmideal_int(c(-2.0, 0.0, 2.0), 5.0), .dmideal_int(c(-2.0, 0.0, 2.0), c(5.0, 5.0, 5.0)))
+})

@@ -16,6 +16,30 @@
   also returns standard errors and confidence limits, which are formed on the
   link scale and therefore never fall below `1`.
 - `vignette("vmgeom")` gained a section demonstrating the new model.
+- `vmideal_glm()` fits the ideal distribution of visual meteor magnitudes as a
+  generalized linear model, allowing the location parameter `psi` to be
+  modelled as a function of covariates.  The response is given as a two-column
+  matrix `cbind(magn, lim_magn)` and magnitude counts can be supplied as
+  `weights`, both as for `vmgeom_glm()`.  The link is the identity, since `psi`
+  is unrestricted on the real line.  Unlike the geometric model, the mean is
+  not a sufficient statistic for `psi`, so the fit is a quasi-likelihood
+  estimate: it is consistent, but not fully efficient.  How closely it tracks
+  the maximum likelihood estimate depends on the sample size and on how far
+  `psi` lies above the limiting magnitude — from a few hundredths for a few
+  thousand meteors at a moderate `psi` to a whole magnitude for small samples
+  near the limit of identifiability.  See `?vmideal_glm` for details.
+- `predict()` on such a fit returns `psi` (`type = "psi"`, the default) or the
+  linear predictor.  With `se.fit = TRUE` it also returns standard errors and
+  symmetric confidence limits.  Where the mean magnitude has reached the value
+  the ideal distribution converges to, no data can distinguish a larger `psi`
+  from a smaller one and `type = "psi"` returns `Inf`.  This is a result rather
+  than an error — the magnitudes are then geometric with `r = 10^0.4` — and it
+  also covers data too faint for the model at any `psi`.  The linear predictor
+  stays finite, so `type = "link"`, `summary()` and `anova()` remain usable.
+  Close to that point the mean barely moves with `psi` and the iteration can
+  run out of steps; such a fit is reported with a warning rather than returned
+  as if it had converged.
+- `vignette("vmideal")` gained a section demonstrating the new model.
 
 ## Changes
 

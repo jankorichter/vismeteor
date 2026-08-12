@@ -454,8 +454,15 @@ predict.vmgeom_glm <- function(
 
     # Observations sharing both offset and population index share their entire
     # table, so each combination is tabulated only once. `row_of` maps every
-    # observation back to its row.
-    key <- paste(offset, r)
+    # observation back to its row. The key is built numerically from the
+    # positions within the distinct values, because pasting one string per
+    # observation dominates the runtime of the whole fit. Unlike `paste()`,
+    # which rounds to 15 significant digits, this compares bitwise and may
+    # therefore split values agreeing to that many digits into separate
+    # groups. That is on the safe side: every group is still evaluated
+    # exactly, only a redundant tabulation may result.
+    offset_key <- match(offset, unique(offset))
+    key <- offset_key + (match(r, unique(r)) - 1L) * max(offset_key)
     unique_idx <- !duplicated(key)
     row_of <- match(key, key[unique_idx])
     offset <- offset[unique_idx]
@@ -532,7 +539,10 @@ predict.vmgeom_glm <- function(
     r_min <- r_range[1L]
     r_max <- r_range[2L]
 
-    key <- paste(mu, lim_magn)
+    # Each distinct pair of mean and limiting magnitude is inverted only once.
+    # The key is numeric for the same reason as in `.vmgeom_table()`.
+    mu_key <- match(mu, unique(mu))
+    key <- mu_key + (match(lim_magn, unique(lim_magn)) - 1L) * max(mu_key)
     idx <- !duplicated(key)
     r <- mapply(\(mu, lim_magn) {
         f <- \(r) .vmgeom_moments(lim_magn, r, perception_fun)$mu - mu

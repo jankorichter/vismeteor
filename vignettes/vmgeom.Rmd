@@ -239,6 +239,26 @@ and a smooth activity-dependent profile as
 vmgeom_glm(cbind(magn, lim_magn) ~ splines::ns(sl, df = 3), data = magnitudes, weights = Freq)
 ```
 
+Since the family reports the exact log-likelihood of the fitted distribution, `AIC()` also
+allows a comparison against a different magnitude distribution altogether. Fitting the ideal
+distribution to the same data with `vmideal_glm()` gives:
+
+```{r, echo=TRUE}
+result_ideal <- vmideal_glm(
+    cbind(magn, lim_magn) ~ 1,
+    data = magnitudes_obs,
+    weights = magnitudes_obs$Freq
+)
+print(c("geometric" = AIC(result_glm), "ideal" = AIC(result_ideal)))
+```
+
+Each model has one parameter, so the comparison reduces to their likelihoods. The ideal
+distribution attains the lower value here, though by a margin that this excerpt of
+`r sum(magnitudes$Freq)` meteors does not resolve — a difference of a few units is weak
+evidence, and the two models are hard to tell apart at the limiting magnitudes involved.
+Such a comparison is only valid when both fits use the same observations and the same
+response.
+
 Covariates can also be accommodated on a different basis, by transforming the
 magnitudes first; see the section on the variance-stabilizing transformation
 below.

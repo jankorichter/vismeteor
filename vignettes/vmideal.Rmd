@@ -177,157 +177,26 @@ While its maximum is indeed an asymptotically unbiased estimator, this does not 
 This is important in this context because the variance of the estimated $\psi$-value is derived from the curvature (the second derivative at the maximum) of the log-likelihood function.
 Therefore, the estimator for the variance of $\psi$ is far too small.
 
-## Generalized Linear Model
-
-The parameter can also be estimated with a generalized linear model, which
-becomes useful as soon as $\psi$ is no longer assumed to be constant.
-`vmideal_glm()` fits the ideal distribution through `glm()`.
-
-As for the geometric model, the response is passed as a two-column matrix
-holding the meteor magnitude and the corresponding limiting magnitude, so that
-the limiting magnitude is subsetted together with the remaining data whenever
-`glm()` drops rows. The observed frequencies enter as `weights`.
-
-```{r, echo=TRUE, results='hide'}
-# rows with a frequency of zero carry no information
-magnitudes_obs <- subset(magnitudes, magnitudes$Freq > 0)
-
-result_glm <- vmideal_glm(
-    cbind(magn, lim_magn) ~ 1,
-    data = magnitudes_obs,
-    weights = magnitudes_obs$Freq
-)
-```
-
-The link is the identity, since $\psi$ is unrestricted on the real line.
-`predict()` therefore returns $\psi$ itself.
-
-```{r, echo=TRUE}
-# the model has no covariates, so any single row predicts the global psi
-newdata <- data.frame(row.names = "")
-print(c(
-    "ML" = result$par,
-    "GLM" = as.numeric(predict(result_glm, newdata))
-))
-```
-
-Unlike `vmgeom_glm()`, the two estimates do not agree exactly, and this is a
-property of the model rather than of the implementation.
-
-A `glm()` fit works entirely through the expected magnitude
-$\mu = \mathrm{E}[M]$, which the model predicts for a given limiting magnitude
-and parameter. It compares each observed magnitude $m$ with that expectation
-and adjusts the parameter by the difference $m - \mu$. This reproduces the
-maximum likelihood estimate exactly whenever the deviation $m - \mu$ carries
-all the information the magnitude has about the parameter — in other words,
-whenever the mean is a *sufficient statistic*.
-
-For the geometric model that is the case: $\log f$ is linear in the magnitude,
-so a meteor twice as far from the expectation contributes twice as much. The
-density of the ideal distribution contains the term $r^\psi + r^m$, which makes
-$\log f$ non-linear in $m$. How much a faint meteor really tells us about
-$\psi$ therefore levels off, while the difference $m - \mu$ that `glm()` uses
-in its place keeps growing. The two stop being proportional, and the mean is
-not sufficient for $\psi$.
-
-`vmideal_glm()` is therefore a quasi-likelihood estimator. It is consistent, but
-not fully efficient, and how much it loses depends on how far $\psi$ lies above
-the limiting magnitude. While $\psi$ stays below it, the variance is within
-about ten percent of the Cramér-Rao bound; once $\psi$ exceeds it, the factor
-grows to roughly $1.4$ to $2.2$, the larger values belonging to the smaller
-limiting magnitudes.
-
-The difference of more than a magnitude seen above is a case in point. This
-excerpt contains only `r sum(magnitudes$Freq)` meteors at limiting magnitudes
-between `r min(magnitudes$lim_magn)` and `r max(magnitudes$lim_magn)`, and the
-estimate already sits above the mean limiting magnitude, where the mean of the
-distribution begins to flatten. The two estimators are then far less tightly
-coupled than they are for a few thousand meteors at a moderate $\psi$, where
-they typically differ by a few hundredths.
-
-The standard error reflects this honestly:
-
-```{r, echo=TRUE}
-print(predict(result_glm, newdata, se.fit = TRUE))
-```
-
-That is also the limit worth knowing. What the data can resolve is governed by
-the distance between $\psi$ and the limiting magnitude, not by $\psi$ itself.
-Up to about two to three magnitudes above the limiting magnitude $\psi$ is
-estimated reliably; beyond that the mean of the distribution flattens, and once
-it has reached the value it converges to, no data can tell a larger $\psi$ from
-a smaller one.
-
-This never fails silently. The standard error grows as the mean flattens, and
-where $\psi$ is no longer identified at all, `predict()` returns `Inf`:
-
-```{r, echo=TRUE}
-# magnitudes fainter than the ideal distribution can produce
-faint <- data.frame(magn = c(rep(3L, 40), rep(4L, 40), rep(5L, 20)), lim_magn = 5.5)
-result_faint <- vmideal_glm(cbind(magn, lim_magn) ~ 1, data = faint)
-psi_faint <- predict(result_faint, faint[1, ])
-print(psi_faint)
-```
-
-`Inf` is a result rather than an error: it says the magnitudes are as faint as
-the model can make them, so $\psi$ is bounded below by the fit rather than
-determined by it. Such data are either a small-sample accident or a sign that
-the ideal distribution is not the right model for them. The linear predictor
-stays finite in both cases, so `summary()` and `anova()` remain usable.
-
-Being a result, it can be used as one. `dvmideal()` and its companions accept an
-infinite $\psi$ and evaluate the distribution the ideal one converges to, so the
-prediction needs no special handling before it is passed on:
-
-```{r, echo=TRUE}
-print(dvmideal(seq(5L, 1L), 5.5, psi_faint))
-```
-
-Those are the probabilities of the geometric model with a population index of
-$r = 10^{0.4}$, which is what an unbounded $\psi$ means:
-
-```{r, echo=TRUE}
-print(identical(
-    dvmideal(seq(5L, 1L), 5.5, psi_faint),
-    dvmgeom(seq(5L, 1L), 5.5, 10^0.4)
-))
-```
-
-Just short of that point the mean moves so little with $\psi$ that the
-iteration can run out of steps. `vmideal_glm()` then warns instead of returning
-the value it happened to stop at; the estimate is unreliable there, and its
-standard error does not show it.
-
-For a single $\psi$-value the maximum likelihood approach remains preferable.
-The benefit of the linear model appears once covariates are added. Because the
-fit is an ordinary `glm` object, `summary()`, `anova()`, `AIC()`/`BIC()` and
-`select_knots()` can all be used. A model in which $\psi$ varies with solar
-longitude would be written as
-
-```r
-vmideal_glm(cbind(magn, lim_magn) ~ sl, data = magnitudes, weights = Freq)
-```
-
-and a smooth activity-dependent profile as
-
-```r
-vmideal_glm(cbind(magn, lim_magn) ~ splines::ns(sl, df = 3), data = magnitudes, weights = Freq)
-```
-
-## Variance-Stabilizing Transformation as an Alternative Method
+## Variance-Stabilizing Transformation
 
 Estimation based on the maximum likelihood principle is computationally demanding.
-As an alternative, a variance-stabilizing transformation can be applied.
-This transformation maps meteor magnitudes onto a different scale,
-yielding a distribution whose variance no longer depends on the parameter $\psi$.
+As an alternative to the method of the previous section, a variance-stabilizing
+transformation can be applied. It maps meteor magnitudes onto a different scale,
+yielding a distribution whose variance no longer depends on the parameter $\psi$,
+so that a plain mean of the transformed magnitudes estimates $\psi$.
 
-The variance-stabilizing transformation has the following additional advantages:
+What this buys is a fixed variance of `1.0`, and several things follow from it:
 
-- Since the variance does not depend on $\psi$, the accuracy of estimators (e.g., maximum likelihood estimators) is easier to assess,
-- Estimators such as the sample mean are homoscedastic, i.e., their dispersion is constant across the parameter space. As a result, many classical results of linear estimation theory (BLUE properties, Gauss–Markov theorem) hold without additional transformations,
-- Because the variance is fixed, the calculation of standard errors is independent of the unknown value of $\psi$,
-- Confidence intervals can be more easily standardized and are equally well calibrated across the entire parameter space,
-- Test statistics (e.g., likelihood ratio or score tests) exhibit a more uniform distribution, since the variance does not need to be treated as an additional unknown. This improves test power and simplifies asymptotic approximations.
+- Standard errors can be computed without knowing $\psi$, since the variance is no longer a function of the parameter,
+- Confidence intervals are equally well calibrated across the entire parameter space,
+- Observations made at different limiting magnitudes become directly comparable, because they now live on a common scale with the same dispersion,
+- Test statistics exhibit a more uniform distribution, since the variance does not need to be treated as an additional unknown.
+
+The mean of the transformed magnitudes is therefore a well-conditioned estimator, and its
+dispersion no longer depends on the parameter being estimated. It is worth being precise
+about what this does and does not mean: the sample mean becomes easy to work with, but the
+transformed magnitudes do not thereby become a quantity that is linear in covariates. The
+next paragraphs return to this point, because the distinction decides which tool applies.
 
 The resulting procedure is straightforward: it suffices to compute the mean of
 the transformed meteor magnitudes, from which an estimate of the parameter $\psi$ is obtained.
@@ -336,6 +205,21 @@ Note that the variance-stabilizing transformation yields a mean that can be dire
 but converting it back to the $\psi$ parameter requires applying the delta method.
 This accounts for the nonlinearity of the transformation and provides appropriate uncertainty
 estimates for $\psi$.
+
+Because the back-transformation returns $\psi$ relative to a limiting magnitude, a reference
+point has to be fixed before anything can be estimated. The transformed magnitude `tm`
+measures how far $\psi$ lies behind the limiting magnitude of the observation, so a value of
+`tm` on its own does not identify $\psi$ — only together with the limiting magnitude it
+refers to. The mean limiting magnitude of the data set is the natural choice, being the
+point at which the estimate is best supported.
+
+```{r, echo=TRUE}
+lim_magn_mean <- with(magnitudes, {
+    N <- sum(Freq)
+    sum(Freq * lim_magn) / N
+})
+print(paste("lim_magn_mean:", lim_magn_mean))
+```
 
 ```{r, echo=TRUE, results='show'}
 tm_mean <- with(magnitudes, {
@@ -403,31 +287,24 @@ Although the expected value is clearly above `0.0` and can therefore be used, it
 in this context to interpret the value as the median.
 
 ```{r, echo=TRUE}
-lim_magn_mean <- with(magnitudes, {
-    N <- sum(Freq)
-    sum(Freq * lim_magn) / N
-})
-print(paste("lim_magn_mean:", lim_magn_mean))
 print(paste("mean psi:", vmideal_vst_to_psi(tm_mean$val, lim_magn_mean)))
 ```
 
-The mean limiting magnitude `lim_magn_mean` is required to estimate the location parameter $\psi$.
-In visual meteor observations, different limiting magnitudes usually occur.
-In practice, the observed quantity is the difference between $\psi$ and the limiting magnitude
-for each observation. Since $\psi$ is unknown, one must assume that the mean `tm` is correlated
-with the limiting magnitude.
+This is the case the transformation is made for: a single, global $\psi$ that does not vary
+across the data set. What the observations resolve is the difference between $\psi$ and the
+limiting magnitude of each observation, and averaging the transformed magnitudes before
+converting them back estimates that difference at the reference point.
 
-If this correlation can be described by a simple linear regression, the mean limiting magnitude serves as
-a reliable reference point for estimating $\psi$. This is typically the case when the limiting magnitudes
-of the individual observations differ only slightly, or $\psi$ is smaller than or equal to
-the limiting magnitudes.
+One qualification belongs here. When the limiting magnitudes differ, the mean of the
+transformed magnitudes is not exactly the value that belongs to their mean, because the
+back-transformation is curved rather than straight. The resulting shift is small, and it
+shrinks the more similar the limiting magnitudes are. If all observations share the same
+limiting magnitude, no averaging over differing limiting magnitudes is involved at all,
+and the reference point is exact.
 
 By contrast, if $\psi$ is significantly larger than the limiting magnitude, estimation becomes problematic:
 $\psi$ effectively tends to infinity, and the observable magnitude distribution approaches
 the geometric model of visual meteor magnitudes with a population index of $r \approx 2.5$.
-
-Nevertheless, if all observations share the same limiting magnitude, no averaging over differing
-limiting magnitudes is involved, and the reference point is exact.
 
 In practice, however, it is preferable to use a confidence interval estimate.
 For example, one can estimate that $\psi$ is, with 10 percent probability, not smaller than:
@@ -436,44 +313,238 @@ For example, one can estimate that $\psi$ is, with 10 percent probability, not s
 print(vmideal_vst_to_psi(qnorm(0.90, tm_mean$val, tm_mean$sd), lim_magn_mean))
 ```
 
-Both `vmideal_vst_to_psi()` and `vmideal_glm()` estimate the same parameter, so it is worth
-saying when to reach for which. The transformation is by far the cheaper of the two — on the
-data set used here by about two orders of magnitude, since it is applied once per meteor and
-everything afterwards is an ordinary mean, whereas the linear model iterates over the
-distribution. That advantage grows with the size of the data set.
-
-Two separate things determine how accurate the result is. Over the range the transformation
+How accurate the result is depends on two separate things. Over the range the transformation
 covers — up to about three magnitudes above the limiting magnitude — it reproduces $\psi$ to
 within a few hundredths; this is the error of the back-transformation, and it stays well below
 the sampling error even for very large data sets, so it is not what limits an estimate. What
-does limit it is that sampling error, and here both alternatives are somewhat less precise than
-the maximum likelihood estimate of the first section, the two lying close to each other.
+does limit it is that sampling error, and here the transformation is somewhat less precise
+than the maximum likelihood estimate of the previous section.
 
-That range is no accident, and it is where both methods reach the same limit. Once $\psi$ rises
-about three magnitudes above the limiting magnitude, the mean of the distribution flattens and
-the data no longer pin the parameter down. Both methods say so rather than returning a value
-that is not supported: `vmideal_vst_to_psi()` reports `Inf` once the mean of the transformed
-magnitudes has fallen that far, as does `predict()` for `vmideal_glm()`. Neither is a failure of
-the method; both state that $\psi$ is bounded below by the data rather than determined by them.
+What it offers in exchange is speed. The transformation is applied once per meteor and
+everything afterwards is an ordinary mean, whereas maximizing the likelihood iterates over
+the distribution. For a single estimate this hardly matters, as both are fast enough in
+absolute terms. It becomes decisive as soon as the estimate is repeated: the bootstrap above
+draws fifty thousand replicates and still runs in a fraction of a second. The same applies
+when $\psi$ is estimated separately for many time intervals or showers.
 
-What separates the two is therefore not accuracy but what they can express. The strength of
-`vmideal_glm()` is that $\psi$ may depend on covariates, together with the machinery of a `glm`
-object described in the previous section. The strength of the transformation is that the
-transformed magnitudes are homoscedastic and can be passed directly to `lm()`. For a quick or
-exploratory estimate, and for large data sets, the transformation is the natural choice;
-`vmideal_glm()` whenever $\psi$ varies with a covariate; and `optim()` on `dvmideal()` when a
-single global $\psi$ is wanted as accurately as possible.
+It is tempting to go one step further. Since the transformed magnitudes are homoscedastic,
+they look like the ideal input for `lm()`, with the limiting magnitude and any covariate of
+interest entering as regressors. That step does not work, and it is worth saying why.
+
+The expected value of `tm` depends on $\psi$ and the limiting magnitude only through their
+difference, which is what makes a single reference point meaningful in the first place. That
+dependence, however, is not linear: it falls off roughly exponentially. A straight line on
+the `tm` scale is therefore a curve on the $\psi$ scale, and a $\psi$ profile that is in truth
+linear in a covariate comes back out of such a fit bent. The estimate is biased, not merely
+imprecise.
+
+What makes this worth a warning is that the usual diagnostics do not reveal it. Precisely
+because the transformation makes the residuals homoscedastic, such a fit looks unremarkable:
+the residual variance is where it should be, and tests for curvature rarely respond. The
+discrepancy sits in the expected value rather than in the dispersion, so a clean residual
+plot is no evidence that the model holds here. Nor does a change of scale help — taking
+logarithms, for instance, improves the shape but not the conclusion, because the influence
+of the limiting magnitude then depends on the very $\psi$ that is being estimated.
+
+The geometric model behaves differently in this respect, which is instructive. Its
+transformation is built on the ratio of the perception probabilities of two adjacent
+magnitude classes, whose mean is $1/r$ and, unlike the magnitudes themselves, no longer
+depends on the limiting magnitude at all. Accordingly `vmgeom_vst_to_r()` takes no limiting
+magnitude: there is no reference point to fix, and none to carry through a model. That is
+what makes the transformed magnitudes usable with `lm()` there, and it is precisely what the
+ideal distribution does not offer, since the limiting magnitude cannot be eliminated from
+$\psi$ but only measured against it.
+
+Beyond estimating $\psi$, the common scale is useful in its own right. Since transformed
+magnitudes carry the same variance regardless of the limiting magnitude they were observed
+at, subsets of the data can be compared with each other directly — the mean of `tm` per
+observer or per night, for instance — which is not possible on the raw magnitude scale,
+where any such comparison is confounded by the limiting magnitude.
+
+For a $\psi$ that varies with a covariate, neither this transformation nor the maximum
+likelihood estimate of the previous section is sufficient. That is the subject of the next
+section.
+
+## Generalized Linear Model
+
+Both methods so far assume that $\psi$ is a single constant. A generalized linear
+model lifts that restriction: it estimates $\psi$ as a function of covariates, and
+the limiting magnitude is carried along per observation instead of being reduced to
+a common reference point. `vmideal_glm()` fits the ideal distribution through
+`glm()`.
+
+As for the geometric model, the response is passed as a two-column matrix
+holding the meteor magnitude and the corresponding limiting magnitude, so that
+the limiting magnitude is subsetted together with the remaining data whenever
+`glm()` drops rows. The observed frequencies enter as `weights`.
+
+```{r, echo=TRUE, results='hide'}
+# rows with a frequency of zero carry no information
+magnitudes_obs <- subset(magnitudes, magnitudes$Freq > 0)
+
+result_glm <- vmideal_glm(
+    cbind(magn, lim_magn) ~ 1,
+    data = magnitudes_obs,
+    weights = magnitudes_obs$Freq
+)
+```
+
+The link is the identity, since $\psi$ is unrestricted on the real line.
+`predict()` therefore returns $\psi$ itself.
+
+```{r, echo=TRUE}
+# the model has no covariates, so any single row predicts the global psi
+newdata <- data.frame(row.names = "")
+print(c(
+    "ML" = result$par,
+    "GLM" = as.numeric(predict(result_glm, newdata))
+))
+```
+
+Unlike `vmgeom_glm()`, the two estimates do not agree exactly, and this is a
+property of the model rather than of the implementation.
+
+A `glm()` fit works entirely through the expected magnitude
+$\mu = \mathrm{E}[M]$, which the model predicts for a given limiting magnitude
+and parameter. It compares each observed magnitude $m$ with that expectation
+and adjusts the parameter by the difference $m - \mu$. This reproduces the
+maximum likelihood estimate exactly whenever the deviation $m - \mu$ carries
+all the information the magnitude has about the parameter — in other words,
+whenever the mean is a *sufficient statistic*.
+
+For the geometric model that is the case: $\log f$ is linear in the magnitude,
+so a meteor twice as far from the expectation contributes twice as much. The
+density of the ideal distribution contains the term $r^\psi + r^m$, which makes
+$\log f$ non-linear in $m$. How much a faint meteor really tells us about
+$\psi$ therefore levels off, while the difference $m - \mu$ that `glm()` uses
+in its place keeps growing. The two stop being proportional, and the mean is
+not sufficient for $\psi$.
+
+`vmideal_glm()` is therefore a quasi-likelihood estimator. It is consistent, but
+not fully efficient, and how much it loses depends on how far $\psi$ lies above
+the limiting magnitude. While $\psi$ stays below it, the variance is within
+about ten percent of the Cramér-Rao bound; once $\psi$ exceeds it, the factor
+grows to roughly $1.4$ to $2.2$, the larger values belonging to the smaller
+limiting magnitudes.
+
+The difference of more than a magnitude between the two estimates above is a
+case in point. This
+excerpt contains only `r sum(magnitudes$Freq)` meteors at limiting magnitudes
+between `r min(magnitudes$lim_magn)` and `r max(magnitudes$lim_magn)`, and the
+estimate already sits above the mean limiting magnitude, where the mean of the
+distribution begins to flatten. The two estimators are then far less tightly
+coupled than they are for a few thousand meteors at a moderate $\psi$, where
+they typically differ by a few hundredths.
+
+The standard error reflects this honestly:
+
+```{r, echo=TRUE}
+print(predict(result_glm, newdata, se.fit = TRUE))
+```
+
+That is also the limit worth knowing. What the data can resolve is governed by
+the distance between $\psi$ and the limiting magnitude, not by $\psi$ itself.
+Up to about two to three magnitudes above the limiting magnitude $\psi$ is
+estimated reliably; beyond that the mean of the distribution flattens, and once
+it has reached the value it converges to, no data can tell a larger $\psi$ from
+a smaller one.
+
+This never fails silently. The standard error grows as the mean flattens, and
+where $\psi$ is no longer identified at all, `predict()` returns `Inf`:
+
+```{r, echo=TRUE}
+# magnitudes fainter than the ideal distribution can produce
+faint <- data.frame(magn = c(rep(3L, 40), rep(4L, 40), rep(5L, 20)), lim_magn = 5.5)
+result_faint <- vmideal_glm(cbind(magn, lim_magn) ~ 1, data = faint)
+psi_faint <- predict(result_faint, faint[1, ])
+print(psi_faint)
+```
+
+`Inf` is a result rather than an error: it says the magnitudes are as faint as
+the model can make them, so $\psi$ is bounded below by the fit rather than
+determined by it. Such data are either a small-sample accident or a sign that
+the ideal distribution is not the right model for them. The linear predictor
+stays finite in both cases, so `summary()` and `anova()` remain usable.
+
+Being a result, it can be used as one. `dvmideal()` and its companions accept an
+infinite $\psi$ and evaluate the distribution the ideal one converges to, so the
+prediction needs no special handling before it is passed on:
+
+```{r, echo=TRUE}
+print(dvmideal(seq(5L, 1L), 5.5, psi_faint))
+```
+
+Those are the probabilities of the geometric model with a population index of
+$r = 10^{0.4}$, which is what an unbounded $\psi$ means:
+
+```{r, echo=TRUE}
+print(identical(
+    dvmideal(seq(5L, 1L), 5.5, psi_faint),
+    dvmgeom(seq(5L, 1L), 5.5, 10^0.4)
+))
+```
+
+Just short of that point the mean moves so little with $\psi$ that the
+iteration can run out of steps. `vmideal_glm()` then warns instead of returning
+the value it happened to stop at; the estimate is unreliable there, and its
+standard error does not show it.
+
+For a single global $\psi$ the two methods of the previous sections remain
+preferable — maximum likelihood for accuracy, the transformation for speed.
+The benefit of the linear model appears once covariates are added. Because the
+fit is an ordinary `glm` object, `summary()`, `anova()`, `AIC()`/`BIC()` and
+`select_knots()` can all be used. A model in which $\psi$ varies with solar
+longitude would be written as
+
+```r
+vmideal_glm(cbind(magn, lim_magn) ~ sl, data = magnitudes, weights = Freq)
+```
+
+and a smooth activity-dependent profile as
+
+```r
+vmideal_glm(cbind(magn, lim_magn) ~ splines::ns(sl, df = 3), data = magnitudes, weights = Freq)
+```
+
+Since the family reports the exact log-likelihood of the fitted distribution, `AIC()` is not
+restricted to comparing models of the same kind. The geometric model of visual meteor
+magnitudes can be fitted to the same data with `vmgeom_glm()` and compared directly:
+
+```{r, echo=TRUE}
+result_geom <- vmgeom_glm(
+    cbind(magn, lim_magn) ~ 1,
+    data = magnitudes_obs,
+    weights = magnitudes_obs$Freq
+)
+print(c("ideal" = AIC(result_glm), "geometric" = AIC(result_geom)))
+```
+
+Both models have one parameter here, so the comparison reduces to their likelihoods. The
+lower value belongs to the ideal distribution, but the two lie close enough together that
+this excerpt of `r sum(magnitudes$Freq)` meteors does not decide between them; a difference
+of a few units is weak evidence. The comparison is only meaningful because both fits use the
+same observations and the same response — a model fitted to a subset, or with the
+zero-frequency rows retained, is not comparable in this way.
 
 ## Residual Analysis
 
 So far, we have operated under the assumption that the real distribution of meteor magnitudes
 is exponential and that the perception probabilities are accurate.
 We now use the Chi-Square goodness-of-fit test to check whether the observed frequencies match
-the expected frequencies. Then, using the estimated parameter, we retrieve the relative
+the expected frequencies.
+
+The maximum likelihood estimate of the first section is used for this. What the test is meant
+to reveal is whether the model itself describes the data, and any inefficiency of the estimator
+would enter the result alongside it. Since the maximum likelihood estimate is the one that
+extracts all the information the magnitudes carry about $\psi$, a departure found here can be
+attributed to the model rather than to the way the parameter was obtained. The correction of
+the degrees of freedom applied below rests on the same assumption.
+
+Using the estimated parameter, we retrieve the relative
 frequencies `p` for each observation and add them to the data frame `magnitudes`:
 
 ```{r, echo=TRUE, results='asis'}
-psi_mean <- vmideal_vst_to_psi(tm_mean$val, lim_magn_mean)
+psi_mean <- result$par
 magnitudes$p <- with(magnitudes, dvmideal(m = magn, lm = lim_magn, psi_mean))
 ```
 

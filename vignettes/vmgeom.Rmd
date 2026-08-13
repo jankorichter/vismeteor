@@ -515,6 +515,47 @@ in linear models, but not the reading of a single $r$ off their mean.
 `vmgeom_vst_from_magn()` performs the mapping and `vmgeom_vst_to_r()` maps the mean of the
 transformed magnitudes back onto $r$.
 
+The mapping is monotonically decreasing: a bright meteor is far from the limiting magnitude
+and receives a large `tm`. Towards the bright end it runs into a ceiling, since $a$ cannot
+exceed `1` and the transformed value is therefore bounded by the factor of the power
+transformation. At the faint end it reaches zero half a magnitude below the limiting
+magnitude, where a meteor is no longer perceived. Shown here for a limiting magnitude of
+`6.0`.
+
+```{r, echo=TRUE, results='show'}
+with(new.env(), {
+    lim_magn <- 6.0
+    m <- seq(-2, 5.5, 0.05)
+    plot(m, vmgeom_vst_from_magn(m, lim_magn),
+        type = "l",
+        col = "blue",
+        xlab = "m",
+        ylab = "tm"
+    )
+})
+```
+
+The way back needs no limiting magnitude at all, since the statistic it rests on does not
+depend on one. On logarithmic axes the relation is a straight line, which is the additivity
+discussed further below.
+
+```{r, echo=TRUE, results='show'}
+with(new.env(), {
+    tm <- seq(1.5, 4.5, 0.01)
+    plot(tm, vmgeom_vst_to_r(tm),
+        type = "l",
+        col = "blue",
+        log = "xy",
+        xlab = "tm",
+        ylab = "r",
+        xaxt = "n",
+        yaxt = "n"
+    )
+    axis(1, at = c(1.5, 2, 3, 4), labels = c("1.5", "2", "3", "4"))
+    axis(2, at = c(1, 1.5, 2, 3, 4), labels = c("1", "1.5", "2", "3", "4"))
+})
+```
+
 The price is paid on the first moment. The transformation raises $a$ to a power, and the
 mean of a power is not the power of the mean, so the exact unbiasedness of the rate-based
 estimator is lost. This deviation is systematic: it does not average out, and it does not
@@ -608,7 +649,7 @@ the transformed meteor magnitudes, from which an estimate of the parameter `r` i
 
 To convert the mean of the transformed values back to the original `r` scale, we apply
 the delta method. This accounts for the nonlinearity of the back-transformation and
-provides both a bias correction (second-order term).
+provides both a bias correction (second-order term) and the variance of the estimate.
 
 ```{r, echo=TRUE, results='show'}
 result_vs <- with(magnitudes, {
@@ -629,7 +670,7 @@ result_vs <- with(magnitudes, {
 })
 ```
 
-Thus, one obtains the mean and the variance of the mean of `r``.
+Thus, one obtains the mean and the variance of the mean of `r`.
 
 ```{r, echo=TRUE, results='show'}
 print(paste("r mean:", result_vs$mean))

@@ -108,7 +108,7 @@ as `optim()` identifies a minimum.
 
 ```{r, echo=TRUE, results='hide'}
 # maximum likelihood estimation (MLE) of psi
-result <- with(magnitudes, {
+result_ml <- with(magnitudes, {
     # log likelihood function
     ll <- function(psi) -sum(Freq * dvmideal(magn, lim_magn, psi, log = TRUE))
     psi_start <- 6.0 # starting value
@@ -122,9 +122,9 @@ result <- with(magnitudes, {
 This gives the expected value and the variance of the parameter:
 
 ```{r, echo=TRUE}
-psi_mean <- result$par # mean of psi
+psi_mean <- result_ml$par # mean of psi
 print(psi_mean)
-psi_var <- 1 / result$hessian[1][1] # variance of psi
+psi_var <- 1 / result_ml$hessian[1][1] # variance of psi
 print(psi_var)
 ```
 
@@ -167,7 +167,7 @@ with(new.env(), {
         xlab = "psi",
         ylab = "likelihood"
     )
-    abline(v = result$par, col = "red", lwd = 1)
+    abline(v = result_ml$par, col = "red", lwd = 1)
 })
 ```
 
@@ -200,6 +200,50 @@ next paragraphs return to this point, because the distinction decides which tool
 
 The resulting procedure is straightforward: it suffices to compute the mean of
 the transformed meteor magnitudes, from which an estimate of the parameter $\psi$ is obtained.
+
+`vmideal_vst_from_magn()` performs the mapping. It is monotonically decreasing: a bright
+meteor is far from the limiting magnitude and receives a large `tm`, a faint one a small
+value. Shown here for a limiting magnitude of `6.0`.
+
+```{r, echo=TRUE, results='show'}
+with(new.env(), {
+    lim_magn <- 6.0
+    m <- seq(-4, 6, 0.05)
+    plot(m, vmideal_vst_from_magn(m, lim_magn),
+        type = "l",
+        col = "blue",
+        xlab = "m",
+        ylab = "tm"
+    )
+    abline(h = 0.0, lwd = 1)
+})
+```
+
+Note that `tm` becomes negative for meteors close to the limiting magnitude. This is where
+the transformation runs out: `vmideal_vst_to_psi()` maps the mean back onto $\psi$, and it
+is defined from `tm = 0.02` upwards, reporting `Inf` below that value. The two directions
+therefore cover different ranges of `tm`, which is not a defect but the statement that
+faint meteors no longer resolve a finite $\psi$.
+
+```{r, echo=TRUE, results='show'}
+with(new.env(), {
+    lim_magn <- 6.0
+    tm <- seq(0.02, 8.22, 0.02)
+    plot(tm, vmideal_vst_to_psi(tm, lim_magn),
+        type = "l",
+        col = "blue",
+        xlab = "tm",
+        ylab = "psi"
+    )
+    abline(h = lim_magn, col = "red", lwd = 1)
+})
+```
+
+The red line marks the limiting magnitude itself. Note that $\psi$ decreases as `tm` grows:
+the region above the line, where $\psi$ exceeds the limiting magnitude and the mean of the
+distribution begins to flatten, is therefore the narrow band at small `tm` on the left. That
+is where the estimate loses its resolution, and it is also why a larger `tm` corresponds to
+a smaller $\psi$ — a relation the confidence bound below relies on.
 
 Note that the variance-stabilizing transformation yields a mean that can be directly analyzed,
 but converting it back to the $\psi$ parameter requires applying the delta method.
@@ -241,8 +285,6 @@ print(paste("tm var:", tm_mean$var))
 
 Using the bootstrap method, it can be assessed whether the mean is normally distributed.
 
-
-
 ```{r, echo=TRUE, results='show'}
 tm_means <- with(magnitudes, {
     N <- sum(Freq)
@@ -283,8 +325,10 @@ There are two possible explanations:
 1. The distribution is not ideal, i.e., the observations do not fit the model as described above.
 2. Random variation led to this result.
 
-Although the expected value is clearly above `0.0` and can therefore be used, it is more appropriate
-in this context to interpret the value as the median.
+This data set is a case in point. The mean lies only about one standard deviation above
+`0.0`, and roughly a quarter of the bootstrap replicates fall below the threshold at which
+no finite $\psi$ is resolved. The point estimate is therefore better read as a median than
+as an expected value, and the confidence bound given below is the more honest statement.
 
 ```{r, echo=TRUE}
 print(paste("mean psi:", vmideal_vst_to_psi(tm_mean$val, lim_magn_mean)))
@@ -355,6 +399,13 @@ what makes the transformed magnitudes usable with `lm()` there, and it is precis
 ideal distribution does not offer, since the limiting magnitude cannot be eliminated from
 $\psi$ but only measured against it.
 
+The difference also shows in the form of the two back-transformations. For the geometric
+model it is a power relation, hence an exact straight line on the logarithmic scale, so
+that effects combine additively there. Here it is a calibrated polynomial in $\log
+(\texttt{tm})$ with no such form, and no change of scale produces one. Of the three
+properties by which transformations of this kind are classically judged — constant
+variance, symmetry and additivity — this one delivers the first and not the last.
+
 Beyond estimating $\psi$, the common scale is useful in its own right. Since transformed
 magnitudes carry the same variance regardless of the limiting magnitude they were observed
 at, subsets of the data can be compared with each other directly — the mean of `tm` per
@@ -396,7 +447,7 @@ The link is the identity, since $\psi$ is unrestricted on the real line.
 # the model has no covariates, so any single row predicts the global psi
 newdata <- data.frame(row.names = "")
 print(c(
-    "ML" = result$par,
+    "ML" = result_ml$par,
     "GLM" = as.numeric(predict(result_glm, newdata))
 ))
 ```
@@ -544,7 +595,7 @@ Using the estimated parameter, we retrieve the relative
 frequencies `p` for each observation and add them to the data frame `magnitudes`:
 
 ```{r, echo=TRUE, results='asis'}
-psi_mean <- result$par
+psi_mean <- result_ml$par
 magnitudes$p <- with(magnitudes, dvmideal(m = magn, lm = lim_magn, psi_mean))
 ```
 

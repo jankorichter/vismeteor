@@ -1,140 +1,51 @@
-# vismeteor unreleased
+# vismeteor 3.1.0
 
 ## New features
 
-- `vmgeom_glm()` fits the geometric model of visual meteor magnitudes as a
-  generalized linear model, allowing the population index `r` to be modelled
-  as a function of covariates.  The response is given as a
-  two-column matrix `cbind(magn, lim_magn)`, so that the limiting magnitude
-  is subsetted together with the remaining data.  The link function is
-  `logit(1/r)`, which enforces `r > 1` for every finite linear predictor.
-  Magnitude counts can be supplied as `weights`, which is equivalent to
-  repeating each row accordingly; the dispersion is fixed at `1`, so the
-  aggregated and the replicated form also agree in their standard errors.
-- `predict()` on such a fit returns the population index (`type = "r"`, the
-  default), `1/r`, `log(r)`, or the linear predictor.  With `se.fit = TRUE` it
-  also returns standard errors and confidence limits, which are formed on the
-  link scale and therefore never fall below `1`.
-- `vignette("vmgeom")` gained a section demonstrating the new model.
-- `vmideal_glm()` fits the ideal distribution of visual meteor magnitudes as a
-  generalized linear model, allowing the location parameter `psi` to be
-  modelled as a function of covariates.  The response is given as a two-column
-  matrix `cbind(magn, lim_magn)` and magnitude counts can be supplied as
-  `weights`, both as for `vmgeom_glm()`.  The link is the identity, since `psi`
-  is unrestricted on the real line.  Unlike the geometric model, the mean is
-  not a sufficient statistic for `psi`, so the fit is a quasi-likelihood
-  estimate: it is consistent, but not fully efficient.  How closely it tracks
-  the maximum likelihood estimate depends on the sample size and on how far
-  `psi` lies above the limiting magnitude — from a few hundredths for a few
-  thousand meteors at a moderate `psi` to a whole magnitude for small samples
-  near the limit of identifiability.  See `?vmideal_glm` for details.
-- `predict()` on such a fit returns `psi` (`type = "psi"`, the default) or the
-  linear predictor.  With `se.fit = TRUE` it also returns standard errors and
-  symmetric confidence limits.  Where the mean magnitude has reached the value
-  the ideal distribution converges to, no data can distinguish a larger `psi`
-  from a smaller one and `type = "psi"` returns `Inf`.  This is a result rather
-  than an error — the magnitudes are then geometric with `r = 10^0.4` — and it
-  also covers data too faint for the model at any `psi`.  The linear predictor
-  stays finite, so `type = "link"`, `summary()` and `anova()` remain usable.
-  Close to that point the mean barely moves with `psi` and the iteration can
-  run out of steps; such a fit is reported with a warning rather than returned
-  as if it had converged.
-- `vignette("vmideal")` gained a section demonstrating the new model, and a
-  closing discussion of when to prefer `vmideal_glm()`, the variance-stabilizing
-  transformation, or maximum likelihood.
-- `vignette("vismeteor")` now mentions how the parameters of the two magnitude
-  models are estimated, and links the two vignettes covering it.
+- `vmgeom_glm()` and `vmideal_glm()` fit the two magnitude models as
+  generalized linear models, so the population index `r` and the location
+  parameter `psi` can be modelled as functions of covariates.  Both take the
+  response as `cbind(magn, lim_magn)` and accept magnitude counts as
+  `weights`.  `predict()` returns the parameter on its natural scale by
+  default, with standard errors and confidence limits on request.  See
+  `?vmgeom_glm`, `?vmideal_glm`, and the corresponding vignettes, which also
+  discuss when to prefer a GLM over the variance-stabilizing transformation or
+  maximum likelihood.
 
-## Documentation
+## Breaking changes
 
-- `vignette("vmideal")` no longer claims that the variance bound of `psi`
-  depends only on the sample size once the magnitudes are transformed.  What
-  the transformation stabilizes is the variance of the transformed magnitudes;
-  the Cramér–Rao bound for `psi` itself does depend on `psi`, and at a limiting
-  magnitude of `6.0` it varies by a factor of three over the range met in
-  practice.
-- `vignette("vmideal")` no longer describes the estimate as exact when all
-  observations share the same limiting magnitude.  What is exact there is the
-  reference point, which no longer has to be averaged over differing limiting
-  magnitudes; the estimate itself still carries the sampling error and the
-  error of the back-transformation.
+- The variance-stabilizing transformations were recalibrated
+  (`vmideal_vst_*()`) and rebuilt on a new algorithm (`vmgeom_vst_*()`).
+  Arguments and usage are unchanged, but the transformed magnitudes live on a
+  different scale: `1.4 <= r <= 4` now maps to `tm` between about `1.59` and
+  `3.53`, previously `3.96` to `5.74`.  Transformed values and estimates
+  stored with earlier versions are not comparable — recompute them from the
+  raw magnitudes.
+- The accuracy of both transformations improved markedly inside their usable
+  range.  In exchange they are now explicit about their limits: a `psi` far
+  above the limiting magnitude used to be returned much too large without any
+  indication (at `lm = 6.0` and `psi = 12`, for instance, as `63.5`) and is now
+  reported as `Inf`.
 
 ## Changes
 
-- `dvmideal()`, `pvmideal()`, `qvmideal()` and `rvmideal()` accept a `psi` of
-  `Inf`, which denotes the geometric limit the ideal distribution converges to,
-  with a population index of `r = 10^0.4`.  The `Inf` that
-  `predict(type = "psi")` returns can therefore be passed on unchanged instead
-  of having to be intercepted by the caller.  The result is the geometric one
-  exactly, not an approximation of it, and a large finite `psi` was already
-  evaluated that way.  A `psi` of `-Inf` remains an error, as the distribution
-  has no limit there.
-- `dvmideal()`, `pvmideal()` and `qvmideal()` keep a `perception_fun` given to
-  them when the location parameter is large enough for the geometric model to
-  answer.  Previously they fell back to `vmperception()` in that case.
-- `vmideal_vst_to_psi()` returns `Inf` for a `tm` below `0.02`, where it
-  previously returned `NA`.  A vanishing mean of the transformed magnitudes is
-  what an unbounded `psi` produces, and the estimate can now say so instead of
-  reporting the parameter as unknown.  The result may be passed straight to
-  `dvmideal()`.  The upper end above `8.22` stays `NA`, as do the derivatives
-  used for the delta method wherever `psi` is not finite.
-- `vmideal_vst_from_magn()` and `vmideal_vst_to_psi()` were recalibrated.  The
-  polynomial of the back-transformation is now fitted over a `psi` grid that
-  stops where the parameter is still identifiable, instead of reaching into the
-  region where the mean of the distribution has flattened.  Accuracy inside the
-  usable range improves by roughly an order of magnitude; beyond it the
-  estimate is reported as `Inf` or `NA` rather than as a number the data do not
-  support.  Previously a `psi` well above the limiting magnitude could be
-  returned far too large without any indication — at a limiting magnitude of
-  `6.0` and a `psi` of `12`, for instance, as `63.5`.  Transformed values and
-  estimates are not comparable with those of earlier versions.
-- The documented range of the transformation follows the limiting magnitude,
-  since what it resolves is the difference between `psi` and `lm`: `psi` is
-  recovered from about `lm - 16.5` up to about `lm + 3`, which at a limiting
-  magnitude of `6.0` means `-10 <= psi <= 9`.  Within that range the round trip
-  is accurate to a few hundredths of a magnitude.  The previous upper bound of
-  `12` was not attained.
-- `vmgeom_vst_from_magn()` and `vmgeom_vst_to_r()` use a new algorithm.  The
-  transformation is now derived from the rate-based statistic
-  `f(lm - m - 1) / f(lm - m)`, whose expectation is `1/r`, and stabilises its
-  variance with a power transformation.  This replaces the interpolated table
-  of fitted parameters.  Both functions keep their arguments and their usage
-  unchanged; `vignette("vmgeom")` explains the relation to the rate-based
-  method.
-- The scale of the transformed magnitudes changed accordingly: `1.4 <= r <= 4`
-  now corresponds to `tm` between about `1.59` and `3.53`, previously `3.96` and
-  `5.74` over the narrower range `1.4 <= r <= 3.5`.  Transformed values stored
-  with earlier versions are not comparable.
-- `vmgeom_vst_to_r()` maps the mean of the transformed magnitudes back onto
-  `r`.  Its constants are obtained by regressing `log(E[g])` on `log(E[t])`
-  under the model.  Inverting the power transformation algebraically would be
-  correct for a single meteor only: the estimator averages transformed
-  magnitudes, and the mean of a power is not the power of the mean.
-- `vmgeom_vst_to_r()` no longer restricts its argument to a calibrated window.
-  It extrapolates monotonically instead, and returns `NA` only for values that
-  cannot occur, that is negative ones and those above `4.52`.  This is aimed at
-  predictive models, where sparse data can yield an implausible `r`: such a
-  value is now returned inflated but ordered, instead of dropping out as `NA`.
-  The recovered `r` is strictly monotone in `tm` throughout, so the estimator
-  never saturates or folds back.
-- The back-transformation carries a small systematic deviation that does not
-  shrink as the sample grows.  Over `1.7 <= r <= 3.3`, the range met in
-  practice, it stays below `1.5%` and is negligible against the random error;
-  it shrinks towards smaller `r` and grows towards larger ones.  It stems from
-  a slight dependence of the transformed mean on the limiting magnitude; where
-  it matters, use the rate-based estimator or `vmgeom_glm()`.
-- The variance stabilization, unlike the above, remains two-sided and is what
-  the range `1.4 <= r <= 4` now describes: there the variance stays within
-  `0.19` of `1.0`, compared with `0.018` over `1.4 <= r <= 3.5` before.  It
-  bounds the use of the transformed magnitudes as a response in linear models,
-  not the reading of a single `r` off their mean.
+- `psi = Inf` is now a valid value throughout.  It denotes the geometric limit
+  the ideal distribution converges to (`r = 10^0.4`), is accepted by
+  `dvmideal()`, `pvmideal()`, `qvmideal()` and `rvmideal()`, and is returned by
+  `vmideal_vst_to_psi()` and `predict()` where the data cannot distinguish a
+  larger `psi` from a smaller one.  Such an estimate can therefore be passed on
+  unchanged instead of being intercepted.  Previously this case yielded `NA`.
+- `vmgeom_vst_to_r()` no longer returns `NA` outside a calibrated window.  It
+  extrapolates monotonically, so sparse data in a predictive model yield an
+  inflated but correctly ordered `r` rather than a dropout.
+- `dvmideal()`, `pvmideal()` and `qvmideal()` now honour a `perception_fun`
+  given to them in the geometric limit, where they previously fell back to
+  `vmperception()`.
 
 ## Performance
 
 - Fitting a model whose population index depends on covariates is roughly ten
-  times faster.  The perception probabilities depend on the fractional part of
-  the limiting magnitude alone, and are now evaluated once per distinct value
-  instead of once per observation.  The results are unchanged.
+  times faster, with unchanged results.
 
 # vismeteor 3.0.1
 

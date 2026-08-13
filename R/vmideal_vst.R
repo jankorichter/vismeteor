@@ -31,10 +31,14 @@
 #' the mean of the transformed magnitudes directly provides an estimate of `psi`
 #' using the function `vmideal_vst_to_psi`.
 #'
-#' This transformation is valid for \eqn{-10 \le \texttt{psi} \le 12} at a
-#' limiting magnitude of around `6.0`. Both bounds shift with the limiting
-#' magnitude, since what the transformation resolves is the difference between
-#' `psi` and `lm`.
+#' What the transformation resolves is the difference between `psi` and `lm`,
+#' so its range follows the limiting magnitude: `psi` is recovered from about
+#' \eqn{\texttt{lm} - 16.5} up to about \eqn{\texttt{lm} + 3}. At a limiting
+#' magnitude of around `6.0` this amounts to \eqn{-10 \le \texttt{psi} \le 9}.
+#' Within that range the estimate is accurate to a few hundredths of a
+#' magnitude, degrading towards the upper end, where the mean of the
+#' distribution begins to flatten. Outside it `vmideal_vst_to_psi` returns `NA`
+#' or `Inf` rather than an unreliable value; see below.
 #' The numerical form of the transformation is version-specific and may change
 #' substantially in future releases. Do not rely on equality of transformed
 #' values across package versions.
@@ -45,12 +49,14 @@
 #'   the mean of `tm`.
 #' The argument `deriv_degree` can be used to apply the delta method.
 #'
-#' `vmideal_vst_to_psi` returns `Inf` for a `tm` below `0.001`. A vanishing mean
+#' `vmideal_vst_to_psi` returns `Inf` for a `tm` below `0.02`. A vanishing mean
 #' of the transformed magnitudes is what an unbounded `psi` produces, and the
 #' magnitudes are then geometric with \eqn{r = 10^{0.4}}, which
 #' [dvmideal][vismeteor::vmideal] evaluates for an infinite `psi`. The
-#' derivatives do not exist there and are `NA`, as is the estimate itself
-#' outside the range the transformation covers.
+#' derivatives do not exist there and are `NA`. Above the range the
+#' transformation covers, at a `tm` beyond `8.22`, the estimate is `NA` as
+#' well: a `psi` that far below the limiting magnitude is not a limit but
+#' simply out of range.
 #'
 #' @note
 #' The internal approximations used here are derived from the perception
@@ -145,25 +151,30 @@ vmideal_vst_from_magn <- function(m, lm) {
 #' @export
 vmideal_vst_to_psi <- function(tm, lm, deriv_degree = 0L) {
     poly_coef0 <- c(
-        -2.97086442804517, -2.72858043751615, -0.683184284791628, -0.1971973188227,
-        -0.0707494993259986, -0.0267813318470729, -0.00482163891332698,
-        -1.03296948649241e-05, 6.01391927719714e-05
+        -2.97081142349313, -2.72861507781908, -0.683119285080101, -0.197203754814882,
+        -0.0707733355336266, -0.0267800890185785, -0.00481827712622998,
+        -1.03426983830783e-05, 5.99984544744159e-05
     )
     names(poly_coef0) <- seq_along(poly_coef0) - 1 # exponents
 
     # A vanishing mean of the transformed magnitudes is what an unbounded `psi`
     # produces, so it is reported as such rather than as a failure of the
-    # transformation. The threshold lies well inside that limit: the polynomial
-    # still yields a `psi` above 107 there, whichever limiting magnitude it is
-    # evaluated at, while the ideal distribution already equals its geometric
-    # limit from about `lm + 10` onwards.
-    unbound <- !is.na(tm) & tm < 0.001
+    # transformation. Below the threshold the polynomial has left the range it
+    # was fitted on, while the mean is already so flat that no finite `psi` is
+    # resolved: the ideal distribution equals its geometric limit from about
+    # `lm + 10` onwards, and the mean stops distinguishing values well before
+    # that.
+    #
+    # The threshold is the same one that bounds the polynomial below, so that
+    # every `tm` too small for it is answered with the limit rather than with a
+    # missing value.
+    unbound <- !is.na(tm) & tm < 0.02
 
-    # x min 0.001 (psi approx 13 at limiting maginitde of 5.8)
+    # x min 0.02 (psi approx 9 at limiting magnitude of 6.0)
     # x max 8.22(psi approx -10 at limiting maginitde of 6.5)
     # The lower end is excluded here as well, so that a negative `tm` does not
     # warn about a `NaN` that the limit replaces further down.
-    tm[tm < 0.001 | tm > 8.22] <- NA
+    tm[tm < 0.02 | tm > 8.22] <- NA
     y <- log(tm)
 
     if (deriv_degree > 0L) {

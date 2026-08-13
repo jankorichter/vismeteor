@@ -324,7 +324,6 @@ yielding a distribution whose variance no longer depends on the parameter $\psi$
 The variance-stabilizing transformation has the following additional advantages:
 
 - Since the variance does not depend on $\psi$, the accuracy of estimators (e.g., maximum likelihood estimators) is easier to assess,
-- The variance bound (Cramér–Rao lower bound) then often depends only on the sample size `n`, but not on the true value of $\psi$,
 - Estimators such as the sample mean are homoscedastic, i.e., their dispersion is constant across the parameter space. As a result, many classical results of linear estimation theory (BLUE properties, Gauss–Markov theorem) hold without additional transformations,
 - Because the variance is fixed, the calculation of standard errors is independent of the unknown value of $\psi$,
 - Confidence intervals can be more easily standardized and are equally well calibrated across the entire parameter space,
@@ -392,7 +391,8 @@ with(new.env(), {
 })
 ```
 
-A mean value of `0.0` implies that $\psi$ lies at infinity.
+A mean value approaching `0.0` implies that $\psi$ lies at infinity, and `vmideal_vst_to_psi()`
+reports `Inf` once it has fallen below `0.02`, where no finite $\psi$ is resolved any more.
 Negative values can be interpreted as a kind of “beyond infinity”, which is not meaningful.
 There are two possible explanations:
 
@@ -426,7 +426,8 @@ By contrast, if $\psi$ is significantly larger than the limiting magnitude, esti
 $\psi$ effectively tends to infinity, and the observable magnitude distribution approaches
 the geometric model of visual meteor magnitudes with a population index of $r \approx 2.5$.
 
-Nevertheless, if all observations share the same limiting magnitude, the procedure yields an exact estimate.
+Nevertheless, if all observations share the same limiting magnitude, no averaging over differing
+limiting magnitudes is involved, and the reference point is exact.
 
 In practice, however, it is preferable to use a confidence interval estimate.
 For example, one can estimate that $\psi$ is, with 10 percent probability, not smaller than:
@@ -434,6 +435,34 @@ For example, one can estimate that $\psi$ is, with 10 percent probability, not s
 ```{r, echo=TRUE}
 print(vmideal_vst_to_psi(qnorm(0.90, tm_mean$val, tm_mean$sd), lim_magn_mean))
 ```
+
+Both `vmideal_vst_to_psi()` and `vmideal_glm()` estimate the same parameter, so it is worth
+saying when to reach for which. The transformation is by far the cheaper of the two — on the
+data set used here by about two orders of magnitude, since it is applied once per meteor and
+everything afterwards is an ordinary mean, whereas the linear model iterates over the
+distribution. That advantage grows with the size of the data set.
+
+Two separate things determine how accurate the result is. Over the range the transformation
+covers — up to about three magnitudes above the limiting magnitude — it reproduces $\psi$ to
+within a few hundredths; this is the error of the back-transformation, and it stays well below
+the sampling error even for very large data sets, so it is not what limits an estimate. What
+does limit it is that sampling error, and here both alternatives are somewhat less precise than
+the maximum likelihood estimate of the first section, the two lying close to each other.
+
+That range is no accident, and it is where both methods reach the same limit. Once $\psi$ rises
+about three magnitudes above the limiting magnitude, the mean of the distribution flattens and
+the data no longer pin the parameter down. Both methods say so rather than returning a value
+that is not supported: `vmideal_vst_to_psi()` reports `Inf` once the mean of the transformed
+magnitudes has fallen that far, as does `predict()` for `vmideal_glm()`. Neither is a failure of
+the method; both state that $\psi$ is bounded below by the data rather than determined by them.
+
+What separates the two is therefore not accuracy but what they can express. The strength of
+`vmideal_glm()` is that $\psi$ may depend on covariates, together with the machinery of a `glm`
+object described in the previous section. The strength of the transformation is that the
+transformed magnitudes are homoscedastic and can be passed directly to `lm()`. For a quick or
+exploratory estimate, and for large data sets, the transformation is the natural choice;
+`vmideal_glm()` whenever $\psi$ varies with a covariate; and `optim()` on `dvmideal()` when a
+single global $\psi$ is wanted as accurately as possible.
 
 ## Residual Analysis
 

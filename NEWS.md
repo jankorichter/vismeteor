@@ -39,7 +39,25 @@
   Close to that point the mean barely moves with `psi` and the iteration can
   run out of steps; such a fit is reported with a warning rather than returned
   as if it had converged.
-- `vignette("vmideal")` gained a section demonstrating the new model.
+- `vignette("vmideal")` gained a section demonstrating the new model, and a
+  closing discussion of when to prefer `vmideal_glm()`, the variance-stabilizing
+  transformation, or maximum likelihood.
+- `vignette("vismeteor")` now mentions how the parameters of the two magnitude
+  models are estimated, and links the two vignettes covering it.
+
+## Documentation
+
+- `vignette("vmideal")` no longer claims that the variance bound of `psi`
+  depends only on the sample size once the magnitudes are transformed.  What
+  the transformation stabilizes is the variance of the transformed magnitudes;
+  the Cramér–Rao bound for `psi` itself does depend on `psi`, and at a limiting
+  magnitude of `6.0` it varies by a factor of three over the range met in
+  practice.
+- `vignette("vmideal")` no longer describes the estimate as exact when all
+  observations share the same limiting magnitude.  What is exact there is the
+  reference point, which no longer has to be averaged over differing limiting
+  magnitudes; the estimate itself still carries the sampling error and the
+  error of the back-transformation.
 
 ## Changes
 
@@ -54,12 +72,28 @@
 - `dvmideal()`, `pvmideal()` and `qvmideal()` keep a `perception_fun` given to
   them when the location parameter is large enough for the geometric model to
   answer.  Previously they fell back to `vmperception()` in that case.
-- `vmideal_vst_to_psi()` returns `Inf` for a `tm` below `0.001`, where it
+- `vmideal_vst_to_psi()` returns `Inf` for a `tm` below `0.02`, where it
   previously returned `NA`.  A vanishing mean of the transformed magnitudes is
   what an unbounded `psi` produces, and the estimate can now say so instead of
   reporting the parameter as unknown.  The result may be passed straight to
   `dvmideal()`.  The upper end above `8.22` stays `NA`, as do the derivatives
   used for the delta method wherever `psi` is not finite.
+- `vmideal_vst_from_magn()` and `vmideal_vst_to_psi()` were recalibrated.  The
+  polynomial of the back-transformation is now fitted over a `psi` grid that
+  stops where the parameter is still identifiable, instead of reaching into the
+  region where the mean of the distribution has flattened.  Accuracy inside the
+  usable range improves by roughly an order of magnitude; beyond it the
+  estimate is reported as `Inf` or `NA` rather than as a number the data do not
+  support.  Previously a `psi` well above the limiting magnitude could be
+  returned far too large without any indication — at a limiting magnitude of
+  `6.0` and a `psi` of `12`, for instance, as `63.5`.  Transformed values and
+  estimates are not comparable with those of earlier versions.
+- The documented range of the transformation follows the limiting magnitude,
+  since what it resolves is the difference between `psi` and `lm`: `psi` is
+  recovered from about `lm - 16.5` up to about `lm + 3`, which at a limiting
+  magnitude of `6.0` means `-10 <= psi <= 9`.  Within that range the round trip
+  is accurate to a few hundredths of a magnitude.  The previous upper bound of
+  `12` was not attained.
 - `vmgeom_vst_from_magn()` and `vmgeom_vst_to_r()` use a new algorithm.  The
   transformation is now derived from the rate-based statistic
   `f(lm - m - 1) / f(lm - m)`, whose expectation is `1/r`, and stabilises its

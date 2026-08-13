@@ -55,6 +55,30 @@ test_that("vmideal_vst", {
     expect_true(abs(y - stats::integrate(f, 4.5, 5.5)$value) < 1e-10)
 })
 
+test_that("vmideal_vst_to_psi covers the documented range of psi", {
+    # What the transformation resolves is the distance between `psi` and the
+    # limiting magnitude, so the range is stated relative to it. These bounds
+    # are the ones the documentation gives; the estimate has to be usable
+    # throughout and must not degrade silently at the edges.
+    m <- seq(-200, 6, 1)
+    round_trip <- function(psi, limmag) {
+        p <- dvmideal(m, limmag, psi)
+        tm <- sum(p * vmideal_vst_from_magn(m, limmag))
+        as.vector(vmideal_vst_to_psi(tm, limmag))
+    }
+
+    for (limmag in c(5.5, 6.0, 6.5)) {
+        for (delta in c(-16, -10, -5, 0, 1, 2, 3)) {
+            psi <- limmag + delta
+            expect_equal(round_trip(psi, limmag), psi, tolerance = 0.15)
+        }
+    }
+
+    # Beyond the upper end the mean no longer identifies `psi`, which is
+    # reported as the limit rather than as a value the data do not support.
+    expect_equal(round_trip(6.0 + 6, 6.0), Inf)
+})
+
 test_that("vmideal_vst_to_psi reports an unbounded psi", {
     # A vanishing mean of the transformed magnitudes is what an unbounded `psi`
     # produces, and is reported as such rather than as a missing value.
@@ -71,10 +95,17 @@ test_that("vmideal_vst_to_psi reports an unbounded psi", {
         vismeteor::dvmgeom(m, 5.5, 10^0.4)
     )
 
+    # Everything below the threshold is the limit, not a missing value. The
+    # threshold that bounds the polynomial and the one that reports an
+    # unbounded `psi` are the same, so no band between them is left as `NA`.
+    expect_equal(as.vector(vmideal_vst_to_psi(0.001, 5.5)), Inf)
+    expect_equal(as.vector(vmideal_vst_to_psi(0.005, 5.5)), Inf)
+    expect_equal(as.vector(vmideal_vst_to_psi(0.016, 5.5)), Inf)
+    expect_equal(as.vector(vmideal_vst_to_psi(0.0199, 5.5)), Inf)
+
     # The threshold is exclusive: at and above it the polynomial answers.
-    expect_false(is.na(vmideal_vst_to_psi(0.001, 5.5)))
-    expect_false(is.na(vmideal_vst_to_psi(0.005, 5.5)))
-    expect_false(is.na(vmideal_vst_to_psi(0.016, 5.5)))
+    expect_false(is.na(vmideal_vst_to_psi(0.02, 5.5)))
+    expect_false(is.na(vmideal_vst_to_psi(0.05, 5.5)))
 
     # The upper threshold is untouched.
     expect_false(is.na(vmideal_vst_to_psi(8.22, 6.5)))

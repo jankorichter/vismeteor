@@ -53,6 +53,23 @@
 ##   regression at the end of this script; keep the valid x‑domain checks in
 ##   mind when reusing the mapping.
 ##
+## Range of validity
+## - The transformation resolves the difference psi − limmag, so its range
+##   follows the limiting magnitude: psi is recovered from about limmag − 16.5
+##   up to about limmag + 3, which at limmag 6.0 means −10 <= psi <= 9. Within
+##   that range the round trip is accurate to a few hundredths of a magnitude.
+## - The upper end is set by the `psi` grid the regression is fitted on (see
+##   the `psi` vector below). Widening that grid does not extend the usable
+##   range: past roughly limmag + 3 the mean of the transformed magnitudes
+##   barely moves with psi, so the inverse becomes ill‑conditioned and fitting
+##   further out only degrades accuracy inside. The domain check in
+##   myVmidealVstToPsi is what keeps that region from being reported as a
+##   number, and the bound there has to match the grid used here.
+## - After changing the grid or the coefficients, re‑check both bounds and
+##   mirror them into the domain check and the roxygen block of
+##   `R/vmideal_vst.R`, plus the test in `tests/testthat/test_vmideal_vst.R`
+##   that asserts the documented range.
+##
 # Approximation of the Variance-stabilizing transformation
 library(vismeteor)
 
@@ -243,12 +260,17 @@ data.t.fun <- function(param.df, limmag, psi) {
         mapply(function(psi, limmag) {
             p <- dvmideal(m, limmag, psi)
             t <- myVmidealVstFromMagn(m, limmag, param.df)
+            g <- vmperception(limmag - m - 1) / vmperception(limmag - m)
+            g.mean <- sum(p * g)
+            g.var <- sum(p * (g - g.mean)^2)
             t.mean <- sum(p * t)
             t.var <- sum(p * (t - t.mean)^2)
 
             list(
                 psi = psi,
                 limmag = limmag,
+                g.mean = g.mean,
+                g.var = g.var,
                 t.mean = t.mean,
                 t.var = t.var
             )
@@ -265,8 +287,8 @@ param.df$intercept <- c(0.0318278656993037, 0.0299076409185304, 0.02846558149741
     0.000925136964883697, 0.000504234344480941, -0.00707058067955687,
     -0.0387371640018533, -0.0367814650209238
 )
-limmag <- c(5.5, 5.52, 5.55, seq(5.6, 6.4, 0.1), 6.45, 6.48, 6.5)
-psi <- c(-100, seq(-10, 15, 0.25))
+limmag <- c(5.51, 5.52, 5.55, seq(5.6, 6.4, 0.1), 6.45, 6.48, 6.5)
+psi <- c(-100, seq(-10, 9, 0.25))
 
 if (FALSE) {
     # Fine‑tune the intercept per offset by minimizing squared error in the
@@ -290,7 +312,8 @@ param.df$intercept <- param.df$intercept + min(data.t.fun(param.df, limmag, 1000
 #' Map x = E[t] to psi via polynomial in log(x)
 #'
 #' Arguments
-#' - x: positive numeric vector (E[t]). Values outside [0.016, 8.22] are set NA.
+#' - x: positive numeric vector (E[t]). Values outside [0.02, 8.22] are set NA.
+#'   Below the lower bound psi is unbounded and Inf is returned instead.
 #' - limmag: corresponding limiting magnitudes.
 #' - poly.coef: numeric coefficients of a polynomial in log(x). The k-th entry
 #'   corresponds to exponent (k-1).
@@ -301,11 +324,11 @@ param.df$intercept <- param.df$intercept + min(data.t.fun(param.df, limmag, 1000
 #' - psi (same shape as x) or its derivative if deriv = TRUE.
 myVmidealVstToPsi <- function(x, limmag, poly.coef, deriv = FALSE) {
     names(poly.coef) <- seq_along(poly.coef) - 1 # exponents
-    # x min 0.016 (psi approx 9 at limiting maginitde of 5.5)
-    # x max 8.22(psi approx -10 at limiting maginitde of 6.5)
+    # x min 0.02 (psi approx 9 at limiting magnitude of 6.0)
+    # x max 8.22(psi approx -10 at limiting magnitude of 6.5)
 
-    unbound <- !is.na(x) & x < 0.001
-    x[x < 0.001 | x > 8.22] <- NA
+    unbound <- !is.na(x) & x < 0.02
+    x[x < 0.02 | x > 8.22] <- NA
     x <- log(x)
 
     psi <- if(deriv) {

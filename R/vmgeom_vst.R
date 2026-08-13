@@ -157,7 +157,7 @@ vmgeom_vst_to_r <- function(tm, log = FALSE, deriv_degree = 0L) {
     # `g` is a ratio of a monotonically increasing function and therefore
     # bounded by 0 and 1, which bounds `tm` by 0 and `a`.
     # Both limits follow from the model, not from a calibration range.
-    tm[tm < 0.0 | tm > .vmgeom_vst_params$a] <- NA
+    tm[tm < 0.0 | tm > .vmgeom_vst_params$a] <- NA_real_
 
     if (deriv_degree > 2L) {
         stop(paste("deriv_degree", deriv_degree, "not implemented!"))

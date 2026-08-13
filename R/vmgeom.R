@@ -362,7 +362,7 @@ qvmgeom <- function(p, lm, r, lower.tail = TRUE, perception_fun = vmperception) 
         offset <- data$offset[1]
         p_geom <- data$p_geom[1]
         r <- data$r[1]
-        m <- rep(NA, length(p))
+        m <- rep(NA_real_, length(p))
 
         if (lower.tail) {
             m[1.0 == p] <- 0L
@@ -394,7 +394,7 @@ qvmgeom <- function(p, lm, r, lower.tail = TRUE, perception_fun = vmperception) 
                 p0 <- vismeteor::pvmgeom(m0, offset, r, lower.tail = FALSE, perception_fun = perception_fun)
                 p_idx <- findInterval(p[idx], p0, left.open = TRUE) + 1
                 m[idx] <- -m0[p_idx]
-                m[m < 0] <- NA
+                m[m < 0] <- NA_real_
             }
         }
 
@@ -432,7 +432,7 @@ rvmgeom <- function(n, lm, r, perception_fun = vmperception) {
     perception_fun <- match.fun(perception_fun)
 
     p <- stats::runif(n)
-    m <- rep(NA, n)
+    m <- rep(NA_real_, n)
     idx <- p < 0.5
 
     if (any(idx)) {

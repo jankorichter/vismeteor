@@ -95,7 +95,7 @@
 #' @export
 dmideal <- function(m, psi = 0.0, log = FALSE) {
     a <- -base::log(10.0) / 2.5
-    d <- rep(NA, length(m))
+    d <- rep(NA_real_, length(m))
     psi_exp <- 10.0
     m <- m - psi
 
@@ -142,7 +142,7 @@ pmideal <- function(m, psi = 0.0, lower.tail = TRUE, log = FALSE) {
     psi_exp <- 10.0
 
     m <- m - psi
-    p <- rep(NA, length(m))
+    p <- rep(NA_real_, length(m))
 
     if (lower.tail) {
         spline_knods <- c(
@@ -272,7 +272,7 @@ qmideal <- function(p, psi = 0.0, lower.tail = TRUE) {
     a <- -base::log(10.0) / 2.5
     psi_exp <- 10.0
 
-    m <- rep(NA, length(p))
+    m <- rep(NA_real_, length(p))
     apply_idx <- !is.na(p) & p > 0.0 & p < 1.0
 
     if (lower.tail) {
@@ -400,7 +400,7 @@ qmideal <- function(p, psi = 0.0, lower.tail = TRUE) {
 #' @export
 rmideal <- function(n, psi = 0.0) {
     p <- stats::runif(n)
-    m <- rep(NA, n)
+    m <- rep(NA_real_, n)
 
     idx <- p < 0.5
     if (any(idx)) {

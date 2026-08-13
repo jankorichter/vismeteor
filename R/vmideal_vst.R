@@ -124,7 +124,7 @@ vmideal_vst_from_magn <- function(m, lm) {
         )
         sx <- params$sx
         f_spline <- stats::splinefun(sx, sy)
-        y <- rep(NA, length(x))
+        y <- rep(NA_real_, length(x))
 
         idx <- x < sx[1]
         if (any(idx)) {
@@ -174,7 +174,7 @@ vmideal_vst_to_psi <- function(tm, lm, deriv_degree = 0L) {
     # x max 8.22(psi approx -10 at limiting maginitde of 6.5)
     # The lower end is excluded here as well, so that a negative `tm` does not
     # warn about a `NaN` that the limit replaces further down.
-    tm[tm < 0.02 | tm > 8.22] <- NA
+    tm[tm < 0.02 | tm > 8.22] <- NA_real_
     y <- log(tm)
 
     if (deriv_degree > 0L) {
@@ -199,7 +199,7 @@ vmideal_vst_to_psi <- function(tm, lm, deriv_degree = 0L) {
     # not exist as finite numbers. They serve the delta method, which needs a
     # finite `psi` to be applied to in the first place, and are reported as
     # missing instead of being continued.
-    psi[unbound] <- if (0L == deriv_degree) Inf else NA
+    psi[unbound] <- if (0L == deriv_degree) Inf else NA_real_
 
     psi
 }

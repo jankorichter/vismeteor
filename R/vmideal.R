@@ -399,7 +399,7 @@ qvmideal <- function(p, lm, psi, lower.tail = TRUE, perception_fun = vmperceptio
 
         m_upper <- .vmideal_upper_lm(lm)
         m_lower <- m_upper - m_max
-        m <- rep(NA, length(p))
+        m <- rep(NA_real_, length(p))
 
         if (lower.tail) {
             m[0.0 == p] <- -Inf
@@ -491,7 +491,7 @@ rvmideal <- function(n, lm, psi, perception_fun = vmperception) {
     perception_fun <- match.fun(perception_fun)
 
     p <- stats::runif(n)
-    m <- rep(NA, n)
+    m <- rep(NA_real_, n)
 
     idx <- p < 0.5
     if (any(idx)) {
@@ -531,10 +531,10 @@ cvmideal <- function(lm, psi, log = FALSE, perception_fun = vmperception) {
 
     p <- mapply(\(lm, psi) {
         if (Inf == lm && Inf == psi) {
-            return(NA)
+            return(NA_real_)
         }
         if (-Inf == lm && -Inf == psi) {
-            return(NA)
+            return(NA_real_)
         }
         if (Inf == lm && -Inf == psi) {
             return(if (log) 0.0 else 1.0)
@@ -588,7 +588,7 @@ cvmideal <- function(lm, psi, log = FALSE, perception_fun = vmperception) {
     psi <- rep(psi, length.out = n)
 
     a <- -base::log(r_lower)
-    d <- rep(NA, n)
+    d <- rep(NA_real_, n)
 
     idx <- m > (psi + psi_exp)
     if (any(idx)) {

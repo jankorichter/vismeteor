@@ -69,7 +69,9 @@
 #' All arguments are vectorized; standard R recycling rules apply.
 #'
 #' Since the distribution is discrete, `qvmideal` and `rvmideal` always return integer values.
-#' `qvmideal` may return `NaN` with a warning.
+#' `qvmideal` returns `NA` with a warning for probabilities outside \eqn{[0, 1]}.
+#' `cvmideal` returns `NA` with a warning if `lm` and `psi` are both `Inf` or
+#' both `-Inf`, as the convolution is then indeterminate.
 #' @seealso [vismeteor::mideal]
 #'   [vismeteor::vmperception]
 #'
@@ -467,7 +469,7 @@ qvmideal <- function(p, lm, psi, lower.tail = TRUE, perception_fun = vmperceptio
     m <- unsplit(m, data_f)
 
     if (anyNA(m)) {
-        warning("NaNs produced")
+        warning("NAs produced")
     }
 
     m
@@ -551,7 +553,7 @@ cvmideal <- function(lm, psi, log = FALSE, perception_fun = vmperception) {
     }, lm, psi, SIMPLIFY = TRUE)
 
     if (anyNA(p)) {
-        warning("NaNs produced")
+        warning("NAs produced")
     }
 
     p

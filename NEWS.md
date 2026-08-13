@@ -26,6 +26,13 @@
   above the limiting magnitude used to be returned much too large without any
   indication (at `lm = 6.0` and `psi = 12`, for instance, as `63.5`) and is now
   reported as `Inf`.
+- `dmideal()`, `pmideal()` and `qmideal()` reject missing values in `m`/`p` and
+  `psi` with `stop("NA's are not allowed!")`, consistent with `qvmgeom()`,
+  `qvmideal()` and `cvmideal()`.  Previously `qmideal()` warned and returned
+  `NA` for a missing probability and silently returned `NaN` or `NA` for a
+  `psi` of `NaN` or `NA`, while `dmideal()` and `pmideal()` failed with the
+  internal message `missing value where TRUE/FALSE needed`.  Infinite
+  magnitudes remain valid.
 
 ## Changes
 
@@ -41,6 +48,11 @@
 - `dvmideal()`, `pvmideal()` and `qvmideal()` now honour a `perception_fun`
   given to them in the geometric limit, where they previously fell back to
   `vmperception()`.
+- The warning issued by `qmideal()`, `qvmgeom()`, `qvmideal()` and `cvmideal()`
+  reads `NAs produced` instead of `NaNs produced`.  These functions return `NA`,
+  never `NaN`; the documentation claimed otherwise and now also states when the
+  missing value arises.  Code that filters warnings on the exact message needs
+  updating.
 
 ## Performance
 

@@ -88,3 +88,17 @@ test_that("qvmideal with an infinite psi", {
 
     expect_error(vismeteor::qvmideal(p, lm, -Inf), "psi")
 })
+
+test_that("qvmideal warns and returns NA for probabilities outside [0, 1]", {
+    lm <- 6.0
+    psi <- 4.0
+
+    expect_warning(vismeteor::qvmideal(-0.5, lm, psi), "NAs produced")
+    expect_warning(vismeteor::qvmideal(1.5, lm, psi), "NAs produced")
+
+    q <- suppressWarnings(vismeteor::qvmideal(c(-0.5, 0.5, 1.5), lm, psi))
+    expect_type(q, "double")
+    expect_length(q, 3)
+    expect_equal(is.na(q), c(TRUE, FALSE, TRUE))
+    expect_false(any(is.nan(q)))
+})

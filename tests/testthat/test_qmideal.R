@@ -39,3 +39,22 @@ test_that("qmideal", {
     m <- 14 + stats::qexp(p / p_max, 1.5 * 0.4 * log(10), lower.tail = FALSE)
     expect_equal(round(m, 3), m_expected)
 })
+
+test_that("qmideal warns and returns NA for probabilities outside [0, 1]", {
+    psi <- 4.0
+
+    expect_warning(vismeteor::qmideal(-0.5, psi), "NAs produced")
+    expect_warning(vismeteor::qmideal(1.5, psi), "NAs produced")
+
+    m <- suppressWarnings(vismeteor::qmideal(c(-0.5, 0.5, 1.5), psi))
+    expect_type(m, "double")
+    expect_length(m, 3)
+    expect_equal(is.na(m), c(TRUE, FALSE, TRUE))
+    expect_false(any(is.nan(m)))
+})
+
+test_that("qmideal rejects missing values", {
+    expect_error(vismeteor::qmideal(0.5, NaN), "NA")
+    expect_error(vismeteor::qmideal(0.5, NA_real_), "NA")
+    expect_error(vismeteor::qmideal(NA_real_, 4.0), "NA")
+})

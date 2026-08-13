@@ -56,3 +56,16 @@ test_that("cvmideal", {
     expect_equal(p[3], 0.0)
     expect_true(is.na(p[4]))
 })
+
+test_that("cvmideal warns and returns NA for indeterminate infinite arguments", {
+    expect_warning(vismeteor::cvmideal(Inf, Inf), "NAs produced")
+    expect_warning(vismeteor::cvmideal(-Inf, -Inf), "NAs produced")
+
+    p <- suppressWarnings(
+        vismeteor::cvmideal(c(Inf, Inf, -Inf), c(Inf, -Inf, -Inf))
+    )
+    expect_type(p, "double")
+    expect_length(p, 3)
+    expect_equal(is.na(p), c(TRUE, FALSE, TRUE))
+    expect_false(any(is.nan(p)))
+})

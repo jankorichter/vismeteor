@@ -67,3 +67,17 @@ test_that("qvmgeom", {
     expect_length(m, length(m))
     expect_equal(stats::qgeom(p, 1 - 1 / r, lower.tail = FALSE), 6 - m)
 })
+
+test_that("qvmgeom warns and returns NA for probabilities outside [0, 1]", {
+    lm <- 6.0
+    r <- 2.0
+
+    expect_warning(vismeteor::qvmgeom(-0.5, lm, r), "NAs produced")
+    expect_warning(vismeteor::qvmgeom(1.5, lm, r), "NAs produced")
+
+    q <- suppressWarnings(vismeteor::qvmgeom(c(-0.5, 0.5, 1.5), lm, r))
+    expect_type(q, "double")
+    expect_length(q, 3)
+    expect_equal(is.na(q), c(TRUE, FALSE, TRUE))
+    expect_false(any(is.nan(q)))
+})

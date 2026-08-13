@@ -28,7 +28,7 @@
 #' The length of the result is determined by `n` for `rmideal`, and is the maximum
 #' of the lengths of the numerical vector arguments for the other functions.
 #'
-#' `qmideal` can return `NaN` value with a warning.
+#' `qmideal` returns `NA` with a warning for probabilities outside \eqn{[0, 1]}.
 #' @references Richter, J. (2018) \emph{About the mass and magnitude distributions of meteor showers}.
 #'   WGN, Journal of the International Meteor Organization, vol. 46, no. 1, p. 34-38
 #' @examples
@@ -94,6 +94,10 @@
 #' @rdname mideal
 #' @export
 dmideal <- function(m, psi = 0.0, log = FALSE) {
+    if (anyNA(m) || anyNA(psi)) {
+        stop("NA's are not allowed!")
+    }
+
     a <- -base::log(10.0) / 2.5
     d <- rep(NA_real_, length(m))
     psi_exp <- 10.0
@@ -138,6 +142,10 @@ dmideal <- function(m, psi = 0.0, log = FALSE) {
 #' @rdname mideal
 #' @export
 pmideal <- function(m, psi = 0.0, lower.tail = TRUE, log = FALSE) {
+    if (anyNA(m) || anyNA(psi)) {
+        stop("NA's are not allowed!")
+    }
+
     a <- -base::log(10.0) / 2.5
     psi_exp <- 10.0
 
@@ -269,6 +277,10 @@ pmideal <- function(m, psi = 0.0, lower.tail = TRUE, log = FALSE) {
 #' @rdname mideal
 #' @export
 qmideal <- function(p, psi = 0.0, lower.tail = TRUE) {
+    if (anyNA(p) || anyNA(psi)) {
+        stop("NA's are not allowed!")
+    }
+
     a <- -base::log(10.0) / 2.5
     psi_exp <- 10.0
 
@@ -390,7 +402,7 @@ qmideal <- function(p, psi = 0.0, lower.tail = TRUE) {
     }
 
     if (anyNA(m)) {
-        warning("NaNs produced")
+        warning("NAs produced")
     }
 
     m <- m + psi

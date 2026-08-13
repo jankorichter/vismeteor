@@ -27,3 +27,8 @@ test_that("rmideal", {
     est <- optim(2, llr, method = "Brent", lower = 0, upper = 8, hessian = TRUE)
     expect_equal(round(est$par, 2), psi)
 })
+
+test_that("rmideal rejects a missing psi", {
+    expect_error(vismeteor::rmideal(2, NaN), "NA")
+    expect_error(vismeteor::rmideal(2, NA_real_), "NA")
+})

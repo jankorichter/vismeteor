@@ -42,3 +42,9 @@ test_that("dmideal", {
     est <- optim(2, ll, method = "Brent", lower = 0, upper = 7, hessian = TRUE)
     expect_equal(round(est$par, 6), psi)
 })
+
+test_that("dmideal rejects missing values", {
+    expect_error(vismeteor::dmideal(NA_real_, 0.0), "NA")
+    expect_error(vismeteor::dmideal(NaN, 0.0), "NA")
+    expect_error(vismeteor::dmideal(1.0, NA_real_), "NA")
+})

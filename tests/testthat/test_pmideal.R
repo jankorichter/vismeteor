@@ -78,3 +78,12 @@ test_that("pmideal", {
         round(log(p_max) + stats::pexp(m - 15, 1.5 * 0.4 * log(10), lower.tail = FALSE, log = TRUE), 3)
     )
 })
+
+test_that("pmideal rejects missing values", {
+    expect_error(vismeteor::pmideal(NA_real_, 0.0), "NA")
+    expect_error(vismeteor::pmideal(1.0, NA_real_), "NA")
+
+    # infinite magnitudes remain valid
+    expect_equal(vismeteor::pmideal(-Inf, 0.0), 0.0)
+    expect_equal(vismeteor::pmideal(Inf, 0.0), 1.0)
+})

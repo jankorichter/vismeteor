@@ -62,7 +62,7 @@
 #' All arguments are vectorized; standard R recycling rules apply.
 #'
 #' Since the distribution is discrete, `qvmgeom` and `rvmgeom` always return integer values.
-#' `qvmgeom` may return `NaN` with a warning.
+#' `qvmgeom` returns `NA` with a warning for probabilities outside \eqn{[0, 1]}.
 #' @seealso [vismeteor::vmperception]
 #'   [stats::Geometric]
 #' @examples
@@ -404,7 +404,7 @@ qvmgeom <- function(p, lm, r, lower.tail = TRUE, perception_fun = vmperception) 
     m <- lm - unsplit(m, data_f)
 
     if (anyNA(m)) {
-        warning("NaNs produced")
+        warning("NAs produced")
     }
 
     as.numeric(m)

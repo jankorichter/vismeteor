@@ -31,7 +31,10 @@
 #' the mean of the transformed magnitudes directly provides an estimate of `psi`
 #' using the function `vmideal_vst_to_psi`.
 #'
-#' This transformation is valid for \eqn{-10 \le \texttt{psi} \le 9}.
+#' This transformation is valid for \eqn{-10 \le \texttt{psi} \le 12} at a
+#' limiting magnitude of around `6.0`. Both bounds shift with the limiting
+#' magnitude, since what the transformation resolves is the difference between
+#' `psi` and `lm`.
 #' The numerical form of the transformation is version-specific and may change
 #' substantially in future releases. Do not rely on equality of transformed
 #' values across package versions.
@@ -41,6 +44,13 @@
 #' * `vmideal_vst_to_psi`: a numeric value of the parameter `psi`, derived from
 #'   the mean of `tm`.
 #' The argument `deriv_degree` can be used to apply the delta method.
+#'
+#' `vmideal_vst_to_psi` returns `Inf` for a `tm` below `0.001`. A vanishing mean
+#' of the transformed magnitudes is what an unbounded `psi` produces, and the
+#' magnitudes are then geometric with \eqn{r = 10^{0.4}}, which
+#' [dvmideal][vismeteor::vmideal] evaluates for an infinite `psi`. The
+#' derivatives do not exist there and are `NA`, as is the estimate itself
+#' outside the range the transformation covers.
 #'
 #' @note
 #' The internal approximations used here are derived from the perception
@@ -141,9 +151,19 @@ vmideal_vst_to_psi <- function(tm, lm, deriv_degree = 0L) {
     )
     names(poly_coef0) <- seq_along(poly_coef0) - 1 # exponents
 
-    # x min 0.016 (psi approx 9 at limiting maginitde of 5.5)
+    # A vanishing mean of the transformed magnitudes is what an unbounded `psi`
+    # produces, so it is reported as such rather than as a failure of the
+    # transformation. The threshold lies well inside that limit: the polynomial
+    # still yields a `psi` above 107 there, whichever limiting magnitude it is
+    # evaluated at, while the ideal distribution already equals its geometric
+    # limit from about `lm + 10` onwards.
+    unbound <- !is.na(tm) & tm < 0.001
+
+    # x min 0.001 (psi approx 13 at limiting maginitde of 5.8)
     # x max 8.22(psi approx -10 at limiting maginitde of 6.5)
-    tm[tm < 0.016 | tm > 8.22] <- NA
+    # The lower end is excluded here as well, so that a negative `tm` does not
+    # warn about a `NaN` that the limit replaces further down.
+    tm[tm < 0.001 | tm > 8.22] <- NA
     y <- log(tm)
 
     if (deriv_degree > 0L) {
@@ -156,13 +176,21 @@ vmideal_vst_to_psi <- function(tm, lm, deriv_degree = 0L) {
         stop(paste("deriv_degree", deriv_degree, "not implemented!"))
     }
 
-    if (2L == deriv_degree) {
+    psi <- if (2L == deriv_degree) {
         (.f_polynomial(y, poly_coef2) - .f_polynomial(y, poly_coef1)) / tm^2
     } else if (1L == deriv_degree) {
         .f_polynomial(y, poly_coef1) / tm
     } else {
         lm + .f_polynomial(y, poly_coef0)
     }
+
+    # `psi` is unbounded rather than merely large there, so its derivatives do
+    # not exist as finite numbers. They serve the delta method, which needs a
+    # finite `psi` to be applied to in the first place, and are reported as
+    # missing instead of being continued.
+    psi[unbound] <- if (0L == deriv_degree) Inf else NA
+
+    psi
 }
 
 #' @keywords internal

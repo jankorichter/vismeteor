@@ -92,8 +92,10 @@
 #' such a fit is reported with a warning rather than returned as if it had
 #' converged.
 #'
-#' An infinite `psi_range` bound is permitted here, unlike in
-#' [dvmideal][vismeteor::vmideal], where an infinite `psi` is rejected.
+#' An infinite `psi_range` bound is permitted, and so is the `Inf` that
+#' `predict(type = "psi")` returns: it may be passed straight to
+#' [dvmideal][vismeteor::vmideal] and its companions, which evaluate the
+#' geometric limit there.
 #'
 #' Predictions and their uncertainties are obtained on the scale of the linear
 #' predictor. Since the link is the identity, the confidence limits are the
@@ -593,7 +595,15 @@ predict.vmideal_glm <- function(
         stop("NA's are not allowed!")
     }
 
-    degenerate <- !is.finite(psi)
+    # Only the upper end is a limit. As `psi` falls without bound the mean
+    # diverges rather than converging, so `-Inf` has no limiting distribution
+    # to be handed to; answering it with the geometric one would return the
+    # moments of the opposite end.
+    if (any(-Inf == psi)) {
+        stop("psi must not be -Inf!")
+    }
+
+    degenerate <- Inf == psi
 
     # The normalization depends on `psi` only through its distance from the
     # limiting magnitude, and stays normal until that distance reaches about

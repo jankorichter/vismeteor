@@ -74,3 +74,17 @@ test_that("qvmideal", {
     expect_length(m, length(m))
     expect_equal(vismeteor::qvmgeom(p, lm, 10^0.4, lower.tail = FALSE), m)
 })
+
+test_that("qvmideal with an infinite psi", {
+    p <- c(0.0, 0.1, 0.5, 0.9, 1.0)
+    lm <- 6.5
+
+    for (lower.tail in c(TRUE, FALSE)) {
+        expect_equal(
+            vismeteor::qvmideal(p, lm, Inf, lower.tail = lower.tail),
+            vismeteor::qvmgeom(p, lm, 10^0.4, lower.tail = lower.tail)
+        )
+    }
+
+    expect_error(vismeteor::qvmideal(p, lm, -Inf), "psi")
+})

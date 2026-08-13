@@ -43,6 +43,23 @@
 
 ## Changes
 
+- `dvmideal()`, `pvmideal()`, `qvmideal()` and `rvmideal()` accept a `psi` of
+  `Inf`, which denotes the geometric limit the ideal distribution converges to,
+  with a population index of `r = 10^0.4`.  The `Inf` that
+  `predict(type = "psi")` returns can therefore be passed on unchanged instead
+  of having to be intercepted by the caller.  The result is the geometric one
+  exactly, not an approximation of it, and a large finite `psi` was already
+  evaluated that way.  A `psi` of `-Inf` remains an error, as the distribution
+  has no limit there.
+- `dvmideal()`, `pvmideal()` and `qvmideal()` keep a `perception_fun` given to
+  them when the location parameter is large enough for the geometric model to
+  answer.  Previously they fell back to `vmperception()` in that case.
+- `vmideal_vst_to_psi()` returns `Inf` for a `tm` below `0.001`, where it
+  previously returned `NA`.  A vanishing mean of the transformed magnitudes is
+  what an unbounded `psi` produces, and the estimate can now say so instead of
+  reporting the parameter as unknown.  The result may be passed straight to
+  `dvmideal()`.  The upper end above `8.22` stays `NA`, as do the derivatives
+  used for the delta method wherever `psi` is not finite.
 - `vmgeom_vst_from_magn()` and `vmgeom_vst_to_r()` use a new algorithm.  The
   transformation is now derived from the rate-based statistic
   `f(lm - m - 1) / f(lm - m)`, whose expectation is `1/r`, and stabilises its

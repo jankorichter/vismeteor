@@ -499,6 +499,12 @@ test_that("vmideal_glm validates the range of psi", {
     # with one.
     expect_error(.vmideal_is_geometric(6.0, NA_real_, vmperception), "NA")
 
+    # Only the upper end is a limit. `-Inf` would otherwise be handed the
+    # moments of the geometric model, which belong to the opposite end.
+    expect_true(.vmideal_is_geometric(6.0, Inf, vmperception))
+    expect_error(.vmideal_is_geometric(6.0, -Inf, vmperception), "psi")
+    expect_error(.vmideal_moments(6.0, -Inf, vmperception), "psi")
+
     # A finite range must reach the family and restrict the fit.
     set.seed(9L)
     lim_magn <- rep(c(5.8, 6.1, 6.4), each = 200L)

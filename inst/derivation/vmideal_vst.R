@@ -266,7 +266,7 @@ param.df$intercept <- c(0.0318278656993037, 0.0299076409185304, 0.02846558149741
     -0.0387371640018533, -0.0367814650209238
 )
 limmag <- c(5.5, 5.52, 5.55, seq(5.6, 6.4, 0.1), 6.45, 6.48, 6.5)
-psi <- c(-100, seq(-10, 9, 0.25))
+psi <- c(-100, seq(-10, 15, 0.25))
 
 if (FALSE) {
     # Fine‑tune the intercept per offset by minimizing squared error in the
@@ -303,15 +303,21 @@ myVmidealVstToPsi <- function(x, limmag, poly.coef, deriv = FALSE) {
     names(poly.coef) <- seq_along(poly.coef) - 1 # exponents
     # x min 0.016 (psi approx 9 at limiting maginitde of 5.5)
     # x max 8.22(psi approx -10 at limiting maginitde of 6.5)
-    x[x < 0.016 | x > 8.22] <- NA
+
+    unbound <- !is.na(x) & x < 0.001
+    x[x < 0.001 | x > 8.22] <- NA
     x <- log(x)
 
-    if(deriv) {
-        poly.coef1 <- vismeteor:::f.polynomial.coef(poly.coef, deriv.degree = 1L)
-        vismeteor:::f.polynomial(x, poly.coef1) / x
-    } else {
-        limmag + vismeteor:::f.polynomial(x, poly.coef)
+    psi <- if(deriv) {
+        poly.coef1 <- vismeteor:::.f_polynomial_coef(poly.coef, deriv.degree = 1L)
+        vismeteor:::.f_polynomial(x, poly.coef1) / x
+        } else {
+        limmag + vismeteor:::.f_polynomial(x, poly.coef)
     }
+
+    psi[unbound] <- if (0L == deriv) Inf else NA
+
+    psi
 }
 
 # evaluate vmideal expectations with the current spline/intercept set.

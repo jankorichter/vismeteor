@@ -128,6 +128,26 @@ psi_var <- 1 / result$hessian[1][1] # variance of psi
 print(psi_var)
 ```
 
+`optim()` requires both bounds to be finite, so `psi_upper` cannot be set to
+infinity. That bound is an assumption, and it is worth testing rather than
+trusting: an estimate that has merely run into it would be reported like any
+other. Since `dvmideal()` accepts an infinite $\psi$, the likelihood can be
+evaluated at the limit itself and compared with the estimate.
+
+```{r, echo=TRUE}
+ll_at <- function(psi) with(magnitudes, sum(Freq * dvmideal(magn, lim_magn, psi, log = TRUE)))
+print(c("psi_hat" = ll_at(psi_mean), "Inf" = ll_at(Inf)))
+```
+
+The estimate is the better of the two, so the maximum lies within the interval
+and $\psi$ is identified. Had the limit won instead, the maximum likelihood
+estimate would be `Inf`: the magnitudes are then geometric with
+$r = 10^{0.4}$, and no finite $\psi$ describes them better. Raising `psi_upper`
+would not help in that case, and beyond about `35` it becomes actively harmful
+here — the likelihood is flat above $\psi \approx 16.5$, and once that plateau
+dominates the search interval, `optim()` settles on it instead of finding the
+maximum.
+
 We can additionally visualize the likelihood function here.
 
 ```{r, echo=TRUE, results='hide'}
@@ -244,7 +264,9 @@ where $\psi$ is no longer identified at all, `predict()` returns `Inf`:
 ```{r, echo=TRUE}
 # magnitudes fainter than the ideal distribution can produce
 faint <- data.frame(magn = c(rep(3L, 40), rep(4L, 40), rep(5L, 20)), lim_magn = 5.5)
-predict(vmideal_glm(cbind(magn, lim_magn) ~ 1, data = faint), faint[1, ])
+result_faint <- vmideal_glm(cbind(magn, lim_magn) ~ 1, data = faint)
+psi_faint <- predict(result_faint, faint[1, ])
+print(psi_faint)
 ```
 
 `Inf` is a result rather than an error: it says the magnitudes are as faint as
@@ -252,6 +274,24 @@ the model can make them, so $\psi$ is bounded below by the fit rather than
 determined by it. Such data are either a small-sample accident or a sign that
 the ideal distribution is not the right model for them. The linear predictor
 stays finite in both cases, so `summary()` and `anova()` remain usable.
+
+Being a result, it can be used as one. `dvmideal()` and its companions accept an
+infinite $\psi$ and evaluate the distribution the ideal one converges to, so the
+prediction needs no special handling before it is passed on:
+
+```{r, echo=TRUE}
+print(dvmideal(seq(5L, 1L), 5.5, psi_faint))
+```
+
+Those are the probabilities of the geometric model with a population index of
+$r = 10^{0.4}$, which is what an unbounded $\psi$ means:
+
+```{r, echo=TRUE}
+print(identical(
+    dvmideal(seq(5L, 1L), 5.5, psi_faint),
+    dvmgeom(seq(5L, 1L), 5.5, 10^0.4)
+))
+```
 
 Just short of that point the mean moves so little with $\psi$ that the
 iteration can run out of steps. `vmideal_glm()` then warns instead of returning

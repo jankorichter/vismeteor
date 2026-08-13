@@ -123,3 +123,63 @@ test_that(".dmideal_int is vectorized over psi", {
     expect_equal(.dmideal_int(0.0, c(-15.0, 5.0, 15.0)), .dmideal_int(c(0.0, 0.0, 0.0), c(-15.0, 5.0, 15.0)))
     expect_equal(.dmideal_int(c(-2.0, 0.0, 2.0), 5.0), .dmideal_int(c(-2.0, 0.0, 2.0), c(5.0, 5.0, 5.0)))
 })
+
+test_that("dvmideal with an infinite psi", {
+    m <- seq(6L, -4L)
+    lm <- 6.5
+
+    # `Inf` is the geometric limit itself, not an approximation of it, so it
+    # has to agree with the geometric model exactly rather than closely.
+    expect_identical(
+        vismeteor::dvmideal(m, lm, Inf),
+        vismeteor::dvmgeom(m, lm, 10^0.4)
+    )
+    expect_identical(
+        vismeteor::dvmideal(m, lm, Inf, log = TRUE),
+        vismeteor::dvmgeom(m, lm, 10^0.4, log = TRUE)
+    )
+
+    # A large finite `psi` reaches the same limit, so the two must not differ.
+    expect_equal(vismeteor::dvmideal(m, lm, Inf), vismeteor::dvmideal(m, lm, 30.0))
+
+    # The limit is taken per observation. An infinite `psi` in one row must
+    # leave the remaining rows where they are.
+    d <- vismeteor::dvmideal(c(3L, 3L, 3L), lm, c(4.0, Inf, 4.0))
+    expect_equal(d[1], d[3])
+    expect_false(isTRUE(all.equal(d[1], d[2])))
+
+    # The geometric branch has to keep the perception probability function it
+    # was given instead of falling back to the default.
+    perception_fun <- function(x) vismeteor::vmperception(x)^0.9
+    expect_equal(
+        vismeteor::dvmideal(m, lm, Inf, perception_fun = perception_fun),
+        vismeteor::dvmgeom(m, lm, 10^0.4, perception_fun = perception_fun)
+    )
+
+    # There is no limiting distribution at the opposite end.
+    expect_error(vismeteor::dvmideal(m, lm, -Inf), "psi")
+})
+
+test_that("dvmideal falls back to the geometric model for a large finite psi", {
+    m <- seq(6L, -4L)
+    lm <- 6.5
+
+    # The switch is `lm + 10 < psi`. Just below it the distribution is still
+    # tabulated, just above it the geometric model answers, and both sides have
+    # to agree -- otherwise the fallback would introduce a step.
+    expect_equal(
+        vismeteor::dvmideal(m, lm, lm + 10.0 - 0.1),
+        vismeteor::dvmideal(m, lm, lm + 10.0 + 0.1)
+    )
+    expect_identical(
+        vismeteor::dvmideal(m, lm, lm + 10.0 + 0.1),
+        vismeteor::dvmgeom(m, lm, 10^0.4)
+    )
+
+    for (log in c(FALSE, TRUE)) {
+        expect_equal(
+            vismeteor::dvmideal(m, lm, 20.0, log = log),
+            vismeteor::dvmgeom(m, lm, 10^0.4, log = log)
+        )
+    }
+})

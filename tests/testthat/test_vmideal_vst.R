@@ -54,3 +54,54 @@ test_that("vmideal_vst", {
     y <- vmideal_vst_to_psi(5.5, 6.0, deriv_degree = 1L) - vmideal_vst_to_psi(4.5, 6.0, deriv_degree = 1L)
     expect_true(abs(y - stats::integrate(f, 4.5, 5.5)$value) < 1e-10)
 })
+
+test_that("vmideal_vst_to_psi reports an unbounded psi", {
+    # A vanishing mean of the transformed magnitudes is what an unbounded `psi`
+    # produces, and is reported as such rather than as a missing value.
+    # The result carries the 1d-array shape the function has always returned.
+    expect_equal(as.vector(vmideal_vst_to_psi(0.0005, 5.5)), Inf)
+    expect_equal(as.vector(vmideal_vst_to_psi(0.0, 5.5)), Inf)
+
+    # `psi` there is the geometric limit, which `dvmideal()` evaluates for an
+    # infinite location parameter. This is what makes `Inf` the answer rather
+    # than an approximation of one.
+    m <- seq(5L, 1L)
+    expect_identical(
+        vismeteor::dvmideal(m, 5.5, as.vector(vmideal_vst_to_psi(0.0005, 5.5))),
+        vismeteor::dvmgeom(m, 5.5, 10^0.4)
+    )
+
+    # The threshold is exclusive: at and above it the polynomial answers.
+    expect_false(is.na(vmideal_vst_to_psi(0.001, 5.5)))
+    expect_false(is.na(vmideal_vst_to_psi(0.005, 5.5)))
+    expect_false(is.na(vmideal_vst_to_psi(0.016, 5.5)))
+
+    # The upper threshold is untouched.
+    expect_false(is.na(vmideal_vst_to_psi(8.22, 6.5)))
+    expect_true(is.na(vmideal_vst_to_psi(8.23, 6.5)))
+
+    # The derivatives serve the delta method, which needs a finite `psi`.
+    for (deriv_degree in c(1L, 2L)) {
+        expect_true(is.na(vmideal_vst_to_psi(0.0005, 5.5, deriv_degree = deriv_degree)))
+        expect_false(is.na(vmideal_vst_to_psi(0.5, 5.5, deriv_degree = deriv_degree)))
+    }
+
+    # Vectorized, and a missing `tm` stays missing rather than turning into a
+    # limit.
+    psi <- vmideal_vst_to_psi(c(0.5, 0.0005, NA, 9.0), 5.5)
+    expect_false(is.na(psi[1]))
+    expect_equal(as.vector(psi[2]), Inf)
+    expect_true(is.na(psi[3]))
+    expect_true(is.na(psi[4]))
+
+    # `psi` is unbounded whatever the limiting magnitude is.
+    expect_equal(
+        as.vector(vmideal_vst_to_psi(c(0.0005, 0.0005), c(5.5, 6.5))),
+        c(Inf, Inf)
+    )
+
+    # The threshold is one-sided. A negative mean lies below it as well, and is
+    # answered with the same limit rather than with a separate value.
+    expect_equal(as.vector(vmideal_vst_to_psi(-0.001, 5.5)), Inf)
+    expect_equal(as.vector(vmideal_vst_to_psi(-1.0, 5.5)), Inf)
+})

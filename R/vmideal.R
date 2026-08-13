@@ -9,6 +9,12 @@
 #' Density, distribution function, quantile function, and random generation
 #' for the ideal distribution of visual meteor magnitudes.
 #' @param psi numeric; the location parameter of the probability distribution.
+#'     `Inf` is permitted and denotes the geometric limit the distribution
+#'     converges to as `psi` grows without bound, with a population index of
+#'     \eqn{r = 10^{0.4}}. It is the value [predict.vmideal_glm][vismeteor::vmideal_glm]
+#'     reports where the data no longer determine `psi`, and may be passed on
+#'     unchanged. `-Inf` is not permitted, as no limiting distribution exists
+#'     there.
 #' @param m integer; visual meteor magnitude.
 #' @param lm numeric; limiting magnitude.
 #' @param p numeric; probability.
@@ -141,8 +147,8 @@ dvmideal <- function(m, lm, psi, log = FALSE, perception_fun = vmperception) {
         stop("Infinite limiting magnitudes are not allowed!")
     }
 
-    if (any(is.infinite(psi))) {
-        stop("Infinite psi values are not allowed!")
+    if (any(-Inf == psi)) {
+        stop("psi must not be -Inf!")
     }
 
     is_wholenumber <- function(x, tol = .Machine$double.eps^0.5) all(is.infinite(x) | abs(x - round(x)) < tol)
@@ -163,8 +169,10 @@ dvmideal <- function(m, lm, psi, log = FALSE, perception_fun = vmperception) {
     # density function
     f_density <- function(m, lm, psi, log) {
         psi_exp <- 10.0
+        # `psi` of `Inf` satisfies this as well, which is deliberate: it is the
+        # geometric limit itself rather than an approximation of it.
         if (lm + psi_exp < psi) {
-            return(vismeteor::dvmgeom(m, lm, 10^0.4, log = log))
+            return(vismeteor::dvmgeom(m, lm, 10^0.4, log = log, perception_fun = perception_fun))
         }
 
         norm_res <- .vmideal_norm(lm, psi, perception_fun)
@@ -235,8 +243,8 @@ pvmideal <- function(m, lm, psi, lower.tail = TRUE, log = FALSE, perception_fun 
         stop("Infinite limiting magnitudes are not allowed!")
     }
 
-    if (any(is.infinite(psi))) {
-        stop("Infinite psi values are not allowed!")
+    if (any(-Inf == psi)) {
+        stop("psi must not be -Inf!")
     }
 
     is_wholenumber <- function(x, tol = .Machine$double.eps^0.5) all(is.infinite(x) | abs(x - round(x)) < tol)
@@ -257,8 +265,13 @@ pvmideal <- function(m, lm, psi, lower.tail = TRUE, log = FALSE, perception_fun 
     # probability function
     f_prob <- function(m, lm, psi, log) {
         psi_exp <- 10.0
+        # `psi` of `Inf` satisfies this as well, which is deliberate: it is the
+        # geometric limit itself rather than an approximation of it.
         if (lm + psi_exp < psi) {
-            return(vismeteor::pvmgeom(m, lm, 10^0.4, lower.tail = lower.tail, log = log))
+            return(vismeteor::pvmgeom(
+                m, lm, 10^0.4,
+                lower.tail = lower.tail, log = log, perception_fun = perception_fun
+            ))
         }
 
         norm_res <- .vmideal_norm(lm, psi, perception_fun)
@@ -355,8 +368,8 @@ qvmideal <- function(p, lm, psi, lower.tail = TRUE, perception_fun = vmperceptio
         stop("Infinite limiting magnitudes are not allowed!")
     }
 
-    if (any(is.infinite(psi))) {
-        stop("Infinite psi values are not allowed!")
+    if (any(-Inf == psi)) {
+        stop("psi must not be -Inf!")
     }
 
     perception_fun <- match.fun(perception_fun)
@@ -374,9 +387,14 @@ qvmideal <- function(p, lm, psi, lower.tail = TRUE, perception_fun = vmperceptio
         m_max <- 15L
         psi_exp <- 10.0
 
+        # `psi` of `Inf` satisfies this as well, which is deliberate: it is the
+        # geometric limit itself rather than an approximation of it.
         if (lm + psi_exp < psi) {
             r_lower <- 10^0.4
-            return(vismeteor::qvmgeom(p, lm, r_lower, lower.tail = lower.tail))
+            return(vismeteor::qvmgeom(
+                p, lm, r_lower,
+                lower.tail = lower.tail, perception_fun = perception_fun
+            ))
         }
 
         m_upper <- .vmideal_upper_lm(lm)
@@ -466,8 +484,8 @@ rvmideal <- function(n, lm, psi, perception_fun = vmperception) {
         stop("Infinite limiting magnitudes are not allowed!")
     }
 
-    if (any(is.infinite(psi))) {
-        stop("Infinite psi values are not allowed!")
+    if (any(-Inf == psi)) {
+        stop("psi must not be -Inf!")
     }
 
     perception_fun <- match.fun(perception_fun)

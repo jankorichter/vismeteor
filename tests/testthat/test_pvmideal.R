@@ -139,3 +139,27 @@ test_that("pvmideal", {
     expect_length(p, length(m))
     expect_equal(p, pvmgeom(m, lm, 10^0.4, lower.tail = FALSE, log = TRUE))
 })
+
+test_that("pvmideal with an infinite psi", {
+    m <- seq(6L, -4L)
+    lm <- 6.5
+
+    for (lower.tail in c(TRUE, FALSE)) {
+        expect_identical(
+            vismeteor::pvmideal(m, lm, Inf, lower.tail = lower.tail),
+            vismeteor::pvmgeom(m, lm, 10^0.4, lower.tail = lower.tail)
+        )
+        expect_equal(
+            vismeteor::pvmideal(m, lm, Inf, lower.tail = lower.tail),
+            vismeteor::pvmideal(m, lm, 30.0, lower.tail = lower.tail)
+        )
+    }
+
+    perception_fun <- function(x) vismeteor::vmperception(x)^0.9
+    expect_equal(
+        vismeteor::pvmideal(m, lm, Inf, perception_fun = perception_fun),
+        vismeteor::pvmgeom(m, lm, 10^0.4, perception_fun = perception_fun)
+    )
+
+    expect_error(vismeteor::pvmideal(m, lm, -Inf), "psi")
+})

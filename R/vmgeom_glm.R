@@ -96,7 +96,8 @@
 #'   [stats::glm].
 #' * `predict`: a numeric vector of predictions, or a list with the components
 #'   `fit`, `se.fit`, `lwr` and `upr` if `se.fit = TRUE`.
-#' @seealso [vismeteor::vmgeom] [vismeteor::vmperception] [stats::glm] [stats::predict.glm]
+#' @seealso [vismeteor::vmgeom] [vismeteor::vmperception] [vismeteor::vmgeom_vst_lm]
+#'   [stats::glm] [stats::predict.glm]
 #' @examples
 #' # Simulate magnitudes whose population index depends on a covariate
 #' set.seed(1)

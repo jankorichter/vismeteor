@@ -39,7 +39,8 @@
 #' The variance is close to `1.0` over \eqn{1.4 \le r \le 4.0}, which covers the
 #' \eqn{1.7 \le r \le 3.3} met in practice, and degrades outside that window.
 #' This matters when the transformed magnitudes are used as a response in a
-#' linear model; it does not affect reading a single `r` off their mean.
+#' linear model, as [vismeteor::vmgeom_vst_lm] does; it does not affect reading
+#' a single `r` off their mean.
 #'
 #' The back-transformation carries a small systematic deviation that does not
 #' shrink as the sample grows. In the practical range it stays below `1.5%` of
@@ -79,7 +80,7 @@
 #' removed beforehand.
 #'
 #' @seealso [vismeteor::vmgeom] [vismeteor::vmperception] [vismeteor::vmgeom_glm]
-#'   `vignette("vmgeom")`
+#'   [vismeteor::vmgeom_vst_lm] `vignette("vmgeom")`
 #' @examples
 #' N <- 100
 #' r <- 2.0

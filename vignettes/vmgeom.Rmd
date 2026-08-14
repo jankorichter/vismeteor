@@ -611,10 +611,20 @@ per meteor by construction; for the mean of the transformed magnitudes it holds 
 accuracy stated above, which is what the calibration of `vmgeom_vst_to_r()` rests on.
 
 This is what makes the transformed magnitudes usable as a response in ordinary linear
-models. A profile in which $r$ varies with a covariate can be fitted with `lm()` on the
-transformed magnitudes, and the estimated coefficients translate back into changes of
-$\log r$ up to the constant factor $\beta$ — with residuals that are homoscedastic by
-construction, which is precisely what such models assume.
+models, with residuals that are homoscedastic by construction — precisely what such models
+assume. `vmgeom_vst_lm()` fits them, and the estimation below is already of that form:
+taking the mean of the transformed magnitudes *is* an intercept-only linear model. A
+profile in which $r$ varies with a covariate only extends the right-hand side of the
+formula, so that
+
+```r
+vmgeom_vst_lm(cbind(magn, lim_magn) ~ sl, data = magnitudes, weights = Freq)
+```
+
+fits a solar-longitude dependence in the same way `vmgeom_glm()` does above. The estimated
+coefficients translate back into changes of $\log r$ up to the constant factor $\beta$.
+Since the back-transformation is $\log r = c + d \log t$, that factor is $\beta = -1/d$,
+which the calibration of `vmgeom_vst_to_r()` fixes at about `0.75`.
 
 That makes this approach a lightweight alternative to `vmgeom_glm()`, and the choice
 between them is a trade-off. In favour of the transformation is its cost: on the data set
@@ -644,35 +654,64 @@ A constant variance carries a few further consequences worth noting:
 - Since the sample mean is homoscedastic, the classical results of linear estimation theory (BLUE properties, Gauss–Markov theorem) apply without further transformation,
 - Test statistics such as likelihood ratio or score tests follow a more uniform distribution, because the variance need not be treated as an additional unknown. This improves test power and simplifies asymptotic approximations.
 
-The resulting procedure is straightforward: it suffices to compute the mean of
-the transformed meteor magnitudes, from which an estimate of the parameter `r` is obtained.
-
-To convert the mean of the transformed values back to the original `r` scale, we apply
-the delta method. This accounts for the nonlinearity of the back-transformation and
-provides both a bias correction (second-order term) and the variance of the estimate.
+The resulting procedure is straightforward: all that is needed is the mean of the
+transformed meteor magnitudes, from which an estimate of the parameter `r` is obtained.
+`vmgeom_vst_lm()` does both in one step. It applies the transformation and fits the result
+as the intercept-only linear model announced above, so that the step to a covariate is a
+matter of extending the formula. The response is passed as `cbind(magn, lim_magn)` and the
+observed frequencies as `weights`, exactly as for `vmgeom_glm()`.
 
 ```{r, echo=TRUE, results='show'}
-result_vs <- with(magnitudes, {
-    N <- sum(Freq)
-    tm <- vmgeom_vst_from_magn(magn, lim_magn)
-    tm_mean <- sum(Freq * tm) / N
-    tm_var <- sum(Freq * (tm - tm_mean)^2) / (N - 1)
-    tm_mean_var <- tm_var / N
-
-    # Delta method: variance and variance of r
-    r_hat <- vmgeom_vst_to_r(tm_mean)
-    dr_dtm <- vmgeom_vst_to_r(tm_mean, deriv_degree = 1L)
-    d2r_dtm2 <- vmgeom_vst_to_r(tm_mean, deriv_degree = 2L)
-    r_hat <- r_hat - 0.5 * d2r_dtm2 * tm_mean_var
-    r_var <- dr_dtm^2 * tm_mean_var + 0.5 * d2r_dtm2^2 * tm_mean_var^2
-
-    list("mean" = r_hat, "var" = r_var)
-})
+result_vs <- vmgeom_vst_lm(
+    cbind(magn, lim_magn) ~ 1,
+    data = magnitudes,
+    weights = magnitudes$Freq
+)
 ```
+
+`predict()` converts the fitted mean back to the `r` scale. It applies the delta method,
+which accounts for the nonlinearity of the back-transformation, and returns the standard
+error alongside the estimate.
+
+```{r, echo=TRUE, results='show'}
+# the model has no covariates, so any single row predicts the global r-value
+newdata <- data.frame(row.names = "")
+prediction <- predict(result_vs, newdata, se.fit = TRUE, bias_correction = TRUE)
+```
+
+Two of the arguments deserve a comment. Passing the frequencies as `weights` is the
+correct and complete way to supply aggregated counts — nothing is lost by it, and there is
+no separate mechanism one ought to be using instead. The coefficients it produces are
+exactly those of a data set holding one row per meteor.
+
+What differs is only how the residual variance is *read back*. R has no notion of
+frequency weights in `lm()`: weights are taken to express precision, so the residual
+variance is normalized by the number of rows. `summary()` therefore reports a standard
+error that refers to the `r nrow(magnitudes[magnitudes$Freq > 0, ])` magnitude classes
+rather than to the `r sum(magnitudes$Freq)` meteors behind them — here about `40%` too
+large, with the confidence interval correspondingly too wide. The same applies to
+`glm(family = gaussian())`.
+
+`predict()` takes care of this: it derives the residual scale from the sum of the weights
+and thus reports the standard error of the meteors. Nothing needs to be done differently
+when calling the function — but the standard errors of `summary(result_vs)` should not be
+used, since they carry the row-based normalization.
+
+Expanding the rows into one meteor each would settle the question at the source, and for
+integer counts it gives exactly the same result as the correction applied here. Visual
+observations, however, may contain half meteors, which makes that route unavailable.
+
+`bias_correction = TRUE` adds the second-order term of the delta method. It is not the
+default — `predict()` methods in R report a first-order standard error, and so does
+`vmgeom_glm()` above — but it is what this section is about. The term is small here, well
+below the random error at this sample size, and it corrects the *curvature* of the
+back-transformation, not the systematic deviation described further above. That deviation
+is a property of the calibration and does not shrink as the sample grows.
 
 Thus, one obtains the mean and the variance of the mean of `r`.
 
 ```{r, echo=TRUE, results='show'}
+result_vs <- list(mean = unname(prediction$fit), var = unname(prediction$se.fit)^2)
 print(paste("r mean:", result_vs$mean))
 print(paste("r var:", result_vs$var))
 ```

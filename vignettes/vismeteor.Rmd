@@ -201,7 +201,10 @@ The population index `r` can be estimated by maximizing the likelihood of `dvmge
 depend on covariates such as the solar longitude. A cheaper alternative is the
 variance-stabilizing transformation: `vmgeom_vst_from_magn()` maps the magnitudes onto a scale
 whose variance no longer depends on `r`, so that the mean of the transformed magnitudes yields
-an estimate, which `vmgeom_vst_to_r()` converts back.
+an estimate, which `vmgeom_vst_to_r()` converts back. Since that scale is homoscedastic, the
+transformed magnitudes can also serve as the response of an ordinary linear model:
+`vmgeom_vst_lm()` fits them with `lm()` and its `predict()` returns `r` directly, covariates
+included.
 
 See `?vmgeom` and `vignette("vmgeom")` for more information.
 

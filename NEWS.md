@@ -11,6 +11,13 @@
   `?vmgeom_glm`, `?vmideal_glm`, and the corresponding vignettes, which also
   discuss when to prefer a GLM over the variance-stabilizing transformation or
   maximum likelihood.
+- `vmgeom_vst_lm()` fits the variance-stabilized magnitudes of the geometric
+  model as an ordinary linear model, so the whole toolbox around `lm()` becomes
+  available at a fraction of the cost of `vmgeom_glm()`.  `predict()` returns
+  the population index on the scale of `r`, `1/r` or `log(r)`.  Magnitude
+  counts are accepted as `weights`, and the residual scale is derived from the
+  number of meteors rather than the number of rows.  See `?vmgeom_vst_lm` and
+  `vignette("vmgeom")`.
 
 ## Breaking changes
 

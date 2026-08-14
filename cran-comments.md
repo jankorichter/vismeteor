@@ -1,18 +1,23 @@
 ## Release summary
 
-This is a patch release (3.0.1) with one bug fix and no API changes:
+This is a minor release (3.1.0) adding regression interfaces for the two
+magnitude models:
 
-* `load_vmdb_rates()` and `load_vmdb_magnitudes()` now correctly request
-  the per-magnitude-class frequencies from the imo-vmdb REST API.  The
-  previous release sent `include=magnitudes`, which on `/magnitudes`
-  returned `HTTP 400` and on `/rates` produced a response shape the
-  internal parser could not handle.  The functions now send
-  `include=magnitude_details`, restoring the documented behaviour.
-  This requires imo-vmdb >= 2.0.0 on the server side; older servers reject the new include combination with `HTTP 400`.
+* `vmgeom_glm()` and `vmideal_glm()` fit the geometric model and the ideal
+  distribution as generalized linear models, so the population index `r` and
+  the location parameter `psi` can depend on covariates.
+* `vmgeom_vst_lm()` fits the variance-stabilized magnitudes of the geometric
+  model with `lm()`, with `predict()` returning `r`, `1/r` or `log(r)`.
+
+The release also recalibrates both variance-stabilizing transformations. The
+transformed magnitudes therefore live on a different scale than in 3.0.1, and
+`dmideal()`, `pmideal()` and `qmideal()` now reject missing values instead of
+returning `NA`/`NaN`. Both changes are documented under "Breaking changes" in
+NEWS.md.
 
 ## Test environments
 
-* local macOS (Darwin 26.4), R 4.6.0 — R CMD check --as-cran
+* local macOS (Darwin 25.6), R 4.6.1 — R CMD check --as-cran
 * GitHub Actions: ubuntu-latest, windows-latest, macOS-latest;
   R-release and R-devel
 

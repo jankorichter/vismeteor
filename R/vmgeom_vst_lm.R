@@ -258,9 +258,12 @@ predict.vmgeom_vst_lm <- function(
 
 #' transformations of the variance-stabilized magnitudes
 #'
-#' Every scale is a power of the transformed magnitude, so the derivatives are
-#' available in closed form. `vmgeom_vst_to_r` provides them for `r` and
-#' `log_r`; `inv_r` is the reciprocal of `r` and is differentiated here.
+#' Every scale derives from the transformed magnitude in closed form.
+#' `vmgeom_vst_to_r` provides the derivatives for `r` and `log_r`; `inv_r` is
+#' the reciprocal of `r` and applies the quotient rule to them. Going through
+#' `vmgeom_vst_to_r` rather than restating the parameters keeps the definition
+#' of the back-transformation in one place, so that a recalibration cannot
+#' leave this branch behind.
 #'
 #' @noRd
 .vmgeom_vst_transform <- function(type) {
@@ -280,16 +283,19 @@ predict.vmgeom_vst_lm <- function(
             deriv = \(tm) vmgeom_vst_to_r(tm, log = TRUE, deriv_degree = 1L),
             deriv2 = \(tm) vmgeom_vst_to_r(tm, log = TRUE, deriv_degree = 2L)
         ),
-        # 1/r = exp(-c) * tm^(-d), the reciprocal of the power relation
+        # the reciprocal of `r`, differentiated by the quotient rule so that
+        # the parameters stay confined to `vmgeom_vst_to_r`
         "inv_r" = list(
             fun = \(tm) 1.0 / vmgeom_vst_to_r(tm),
             deriv = \(tm) {
-                d <- .vmgeom_vst_params$d
-                -d * exp(-.vmgeom_vst_params$c) * tm^(-d - 1.0)
+                r <- vmgeom_vst_to_r(tm)
+                -vmgeom_vst_to_r(tm, deriv_degree = 1L) / r^2
             },
             deriv2 = \(tm) {
-                d <- .vmgeom_vst_params$d
-                d * (d + 1.0) * exp(-.vmgeom_vst_params$c) * tm^(-d - 2.0)
+                r <- vmgeom_vst_to_r(tm)
+                r1 <- vmgeom_vst_to_r(tm, deriv_degree = 1L)
+                r2 <- vmgeom_vst_to_r(tm, deriv_degree = 2L)
+                (2.0 * r1^2 - r * r2) / r^3
             }
         )
     )

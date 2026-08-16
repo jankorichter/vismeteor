@@ -72,7 +72,7 @@ test_that("vmgeom_vst_lm fits the transformed magnitudes", {
         data = magnitudes,
         weights = magnitudes$Freq
     )
-    expect_equal(unname(stats::coef(fit)), 2.482395, tolerance = 1e-06)
+    expect_equal(unname(stats::coef(fit)), 2.403632, tolerance = 1e-06)
 })
 
 test_that("predict.vmgeom_vst_lm rescales to the number of meteors", {
@@ -87,11 +87,11 @@ test_that("predict.vmgeom_vst_lm rescales to the number of meteors", {
     newdata <- data.frame(row.names = "")
 
     pred <- stats::predict(fit, newdata, type = "tm", se.fit = TRUE)
-    expect_equal(unname(pred$fit), 2.482395, tolerance = 1e-06)
+    expect_equal(unname(pred$fit), 2.403632, tolerance = 1e-06)
 
     # the standard error refers to the meteors, not to the rows: `lm()` alone
-    # would report 0.1171802 here
-    expect_equal(unname(pred$se.fit), 0.08199124, tolerance = 1e-06)
+    # would report 0.1184959 here
+    expect_equal(unname(pred$se.fit), 0.08291184, tolerance = 1e-06)
 
     tm <- vismeteor::vmgeom_vst_from_magn(magnitudes$magn, magnitudes$lim_magn)
     tm_mean <- sum(magnitudes$Freq * tm) / n
@@ -127,7 +127,7 @@ test_that("predict.vmgeom_vst_lm returns the population index", {
     r <- stats::predict(fit, newdata)
     expect_type(r, "double")
     expect_length(r, 1L)
-    expect_equal(unname(r), 2.262779, tolerance = 1e-06)
+    expect_equal(unname(r), 2.266466, tolerance = 1e-06)
 
     # the scales are consistent with each other
     expect_equal(
@@ -160,8 +160,8 @@ test_that("predict.vmgeom_vst_lm applies the bias correction", {
     )
 
     # the values `vignette("vmgeom")` reports
-    expect_equal(unname(pred$fit), 2.2589086734166, tolerance = 1e-09)
-    expect_equal(unname(pred$se.fit^2), 0.0100592098794041, tolerance = 1e-09)
+    expect_equal(unname(pred$fit), 2.2626945205389, tolerance = 1e-09)
+    expect_equal(unname(pred$se.fit^2), 0.0103330446554, tolerance = 1e-09)
 
     # the correction is exactly the second-order term of the delta method
     tm <- stats::predict(fit, newdata, type = "tm", se.fit = TRUE)
@@ -193,10 +193,10 @@ test_that("predict.vmgeom_vst_lm orders the confidence limits", {
     newdata <- data.frame(row.names = "")
 
     # the limits rest on the t-distribution of the linear model; the normal
-    # approximation would give 2.321695 and 2.643095 here
+    # approximation would give 2.241127 and 2.566136 here
     limits <- stats::predict(fit, newdata, type = "tm", interval = "confidence")
-    expect_equal(unname(limits[1L, "lwr"]), 2.319644, tolerance = 1e-06)
-    expect_equal(unname(limits[1L, "upr"]), 2.645146, tolerance = 1e-06)
+    expect_equal(unname(limits[1L, "lwr"]), 2.239053, tolerance = 1e-06)
+    expect_equal(unname(limits[1L, "upr"]), 2.568210, tolerance = 1e-06)
 
     # `r` and `log_r` decrease with `tm` while `inv_r` increases, so the limits
     # have to be reordered on some scales but not on others
@@ -210,8 +210,8 @@ test_that("predict.vmgeom_vst_lm orders the confidence limits", {
     }
 
     limits <- stats::predict(fit, newdata, interval = "confidence")
-    expect_equal(unname(limits[1L, "lwr"]), 2.0782, tolerance = 1e-05)
-    expect_equal(unname(limits[1L, "upr"]), 2.478014, tolerance = 1e-05)
+    expect_equal(unname(limits[1L, "lwr"]), 2.078839, tolerance = 1e-05)
+    expect_equal(unname(limits[1L, "upr"]), 2.483967, tolerance = 1e-05)
 })
 
 test_that("predict.vmgeom_vst_lm accepts covariates", {

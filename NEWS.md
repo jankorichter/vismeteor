@@ -14,57 +14,52 @@
 - `vmgeom_vst_lm()` fits the variance-stabilized magnitudes of the geometric
   model as an ordinary linear model, so the whole toolbox around `lm()` becomes
   available at a fraction of the cost of `vmgeom_glm()`.  `predict()` returns
-  the population index on the scale of `r`, `1/r` or `log(r)`.  Magnitude
-  counts are accepted as `weights`, and the residual scale is derived from the
-  number of meteors rather than the number of rows.  See `?vmgeom_vst_lm` and
+  the population index as `r`, `1/r` or `log(r)`, or the transformed magnitude
+  itself.  Magnitude counts are accepted as `weights`; note that the standard
+  errors of `predict()` refer to the number of meteors, whereas those of
+  `summary()` refer to the number of rows.  See `?vmgeom_vst_lm` and
   `vignette("vmgeom")`.
 
 ## Breaking changes
 
-- The variance-stabilizing transformations were recalibrated
-  (`vmideal_vst_*()`) and rebuilt on a new algorithm (`vmgeom_vst_*()`).
-  Arguments and usage are unchanged, but the transformed magnitudes live on a
-  different scale: `1.4 <= r <= 4` now maps to `tm` between about `1.59` and
-  `3.53`, previously `3.96` to `5.74`.  Transformed values and estimates
-  stored with earlier versions are not comparable — recompute them from the
-  raw magnitudes.
-- The accuracy of both transformations improved markedly inside their usable
-  range.  In exchange they are now explicit about their limits: a `psi` far
-  above the limiting magnitude used to be returned much too large without any
-  indication (at `lm = 6.0` and `psi = 12`, for instance, as `63.5`) and is now
-  reported as `Inf`.
+- Both variance-stabilizing transformations were rebuilt.  Arguments and usage
+  are unchanged, but `vmgeom_vst_from_magn()` returns values on a different
+  scale: `1.4 <= r <= 4` now maps to `tm` between about `1.52` and `3.44`,
+  where the old transformation gave `3.77` to `5.74`.  Transformed values and
+  estimates stored with earlier versions are not comparable — recompute them
+  from the raw magnitudes.
+- `vmgeom_vst_*()` is documented for `1.4 <= r <= 4`, previously
+  `1.4 <= r <= 3.5`, and stays usable outside it: at a limiting magnitude of
+  `6.0` an `r` of `1.2` or `5.0` is now recovered to within `0.005`, where the
+  old transformation returned `NA`.  Inside `1.7 <= r <= 3.3` the old one was
+  somewhat more accurate — it carried a separate parameter set per limiting
+  magnitude, which the single one used now replaces.
 - `dmideal()`, `pmideal()` and `qmideal()` reject missing values in `m`/`p` and
   `psi` with `stop("NA's are not allowed!")`, consistent with `qvmgeom()`,
-  `qvmideal()` and `cvmideal()`.  Previously `qmideal()` warned and returned
-  `NA` for a missing probability and silently returned `NaN` or `NA` for a
-  `psi` of `NaN` or `NA`, while `dmideal()` and `pmideal()` failed with the
-  internal message `missing value where TRUE/FALSE needed`.  Infinite
-  magnitudes remain valid.
+  `qvmideal()` and `cvmideal()`.  Previously they either returned a missing
+  value or failed with an unhelpful message.  Infinite magnitudes remain
+  valid.
 
 ## Changes
 
 - `psi = Inf` is now a valid value throughout.  It denotes the geometric limit
-  the ideal distribution converges to (`r = 10^0.4`), is accepted by
-  `dvmideal()`, `pvmideal()`, `qvmideal()` and `rvmideal()`, and is returned by
-  `vmideal_vst_to_psi()` and `predict()` where the data cannot distinguish a
-  larger `psi` from a smaller one.  Such an estimate can therefore be passed on
-  unchanged instead of being intercepted.  Previously this case yielded `NA`.
+  the ideal distribution converges to and is accepted by `dvmideal()`,
+  `pvmideal()`, `qvmideal()` and `rvmideal()`, which previously rejected it
+  with `stop("Infinite psi values are not allowed!")`.  `vmideal_vst_to_psi()`
+  and `predict()` return it where the data cannot distinguish a larger `psi`
+  from a smaller one — a case that used to yield `NA` — so such an estimate can
+  be passed on unchanged instead of being intercepted.
 - `vmgeom_vst_to_r()` no longer returns `NA` outside a calibrated window.  It
-  extrapolates monotonically, so sparse data in a predictive model yield an
-  inflated but correctly ordered `r` rather than a dropout.
+  now rejects only values the model cannot produce at all, so sparse data in a
+  predictive model yield an implausibly large but correctly ordered `r` rather
+  than a dropout.
 - `dvmideal()`, `pvmideal()` and `qvmideal()` now honour a `perception_fun`
-  given to them in the geometric limit, where they previously fell back to
+  given to them also for `psi = Inf`, where they previously fell back to
   `vmperception()`.
 - The warning issued by `qmideal()`, `qvmgeom()`, `qvmideal()` and `cvmideal()`
-  reads `NAs produced` instead of `NaNs produced`.  These functions return `NA`,
-  never `NaN`; the documentation claimed otherwise and now also states when the
-  missing value arises.  Code that filters warnings on the exact message needs
-  updating.
-
-## Performance
-
-- Fitting a model whose population index depends on covariates is roughly ten
-  times faster, with unchanged results.
+  reads `NAs produced` instead of `NaNs produced`, matching what these
+  functions actually return.  Code that filters warnings on the exact message
+  needs updating.
 
 # vismeteor 3.0.1
 

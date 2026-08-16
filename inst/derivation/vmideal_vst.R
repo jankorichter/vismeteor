@@ -1,95 +1,45 @@
 ##
-## Script for deriving/validating the variance-stabilizing transformation
-## for the ideal magnitude model (vmideal).
+## Derivation of the variance-stabilizing transformation for the ideal
+## magnitude model (vmideal). Developer notes -- not part of the user
+## documentation.
 ##
-## Purpose
-## - Provide a smooth approximation t(m; limmag) for vmideal using a
-##   spline in x = limmag − m. The spline shape depends on the fractional
-##   component (offset) of limmag.
-## - Choose parameters so that Var[t] under vmideal is approximately constant
-##   across a wide range of psi, and align an intercept to a convenient
-##   reference (via regression/optimization).
-## - Fit a regression mapping from log(E[t]) to psi − limmag for quick
-##   inversion (myVmidealVstToPsi).
+## Method
+##   t(m; limmag) is a cubic spline in x = limmag - m with anchors at
+##   sx = {1, 2, 4, 6, 8, 10}, chosen so that Var[t] under vmideal is roughly
+##   constant across psi. The anchor values depend on the fractional part of
+##   limmag (the `offset`) by linear interpolation, plus an offset-specific
+##   intercept. psi is recovered from a degree-8 polynomial in log(E[t]).
 ##
-## Contents
-## - myVmidealVstFromMagn(): variance‑stabilizing transform t for vmideal,
-##   built from a cubic spline with anchors at sx = {1, 2, 4, 6, 8, 10}.
-##   Coefficients depend on limmag offset via linear interpolation.
-## - param.df: precomputed coefficients for offsets derived from limmag in
-##   [5.5, 6.5]; columns '1'..'6' are spline values at sx; 'intercept' is the
-##   alignment term; 'offset' is limmag − round(limmag).
-## - data.t.fun(): generates E[t] and Var[t] over grids of psi and limmag.
-## - Optimization blocks (guarded by if(FALSE)) to refine coefficients.
-## - myVmidealVstToPsi(): polynomial mapping from log(x) with x = E[t] to
-##   psi, including optional derivative for Jacobians.
-##
-## Usage / workflow
-## 1. Execute the script sequentially. Activate the `if (FALSE)` sections only
-##    when you need to recompute spline anchors or intercepts; they can be slow.
-## 2. Copy the updated `param.df` (columns `1`..`6`, `intercept`, `offset`) and
-##    the regression coefficients `lm.coeff` into `R/vmideal_vst.R` (see
-##    `vmidealVstFromMagn` and `vmidealVstToPsi`). The package keeps these
-##    values inline for speed and reproducibility.
-## 3. Validate the new values with `devtools::load_all()` followed by the
-##    relevant unit tests (for example `test_vmideal_vst.R`) before committing
-##    the changes.
-##
-## Output locations in the package
-## - `param.df` → embedded table inside `R/vmideal_vst.R`.
-## - `lm.coeff` → polynomial used by `vmidealVstToPsi` in
-##   `R/vmideal_vst.R`.
-## - Intermediate diagnostics (`data.t`, `lm.res`) are for exploratory use and
-##   are not saved automatically.
-##
-## Dependencies
-## - Requires 'vismeteor' for dvmideal and helper polynomial functions,
-##   and base R.
-##
-## Notes on execution
-## - if (FALSE) sections contain time‑consuming optimization and are not run by
-##   default. Coefficients below are precomputed and used as is.
-## - myVmidealVstToPsi expects polynomial coefficients as produced by the
-##   regression at the end of this script; keep the valid x‑domain checks in
-##   mind when reusing the mapping.
+## Workflow
+## 1. Run top-to-bottom. The `if (FALSE)` blocks re-optimise the spline
+##    anchors and the intercepts; set them to TRUE to recompute, they are slow.
+## 2. Copy `param.df` (columns `1`..`6`, `intercept`, `offset`) and `lm.coeff`
+##    into `R/vmideal_vst.R`.
+## 3. Re-run devtools::load_all() and tests/testthat/test_vmideal_vst.R.
 ##
 ## Range of validity
-## - The transformation resolves the difference psi − limmag, so its range
-##   follows the limiting magnitude: psi is recovered from about limmag − 16.5
-##   up to about limmag + 3, which at limmag 6.0 means −10 <= psi <= 9. Within
-##   that range the round trip is accurate to a few hundredths of a magnitude.
-## - The upper end is set by the `psi` grid the regression is fitted on (see
-##   the `psi` vector below). Widening that grid does not extend the usable
-##   range: past roughly limmag + 3 the mean of the transformed magnitudes
-##   barely moves with psi, so the inverse becomes ill‑conditioned and fitting
-##   further out only degrades accuracy inside. The domain check in
-##   myVmidealVstToPsi is what keeps that region from being reported as a
-##   number, and the bound there has to match the grid used here.
-## - After changing the grid or the coefficients, re‑check both bounds and
-##   mirror them into the domain check and the roxygen block of
-##   `R/vmideal_vst.R`, plus the test in `tests/testthat/test_vmideal_vst.R`
-##   that asserts the documented range.
+##   The transformation resolves psi - limmag, so its range follows the
+##   limiting magnitude: psi is recovered from about limmag - 16.5 up to about
+##   limmag + 3, at limmag 6.0 therefore -10 <= psi <= 9, to a few hundredths
+##   of a magnitude.
+##
+##   The upper end is set by the `psi` grid below and cannot be extended by
+##   widening it: past roughly limmag + 3, E[t] barely moves with psi, so the
+##   inverse becomes ill-conditioned and fitting further out only degrades the
+##   accuracy inside. The domain check in myVmidealVstToPsi keeps that region
+##   from being reported as a number and has to match the grid used here.
+##
+##   After changing the grid or the coefficients, mirror both bounds into the
+##   domain check and the roxygen block of `R/vmideal_vst.R`, and into the
+##   range assertion in `tests/testthat/test_vmideal_vst.R`.
 ##
 # Approximation of the Variance-stabilizing transformation
 library(vismeteor)
 
 m <- seq(6, -200, -1)
 
-#' Variance‑stabilizing transform approximation for vmideal
-#'
-#' Builds t(m; limmag) from a cubic spline in x = limmag − m with anchor
-#' points sx = {1, 2, 4, 6, 8, 10}. The spline values at sx depend on the
-#' fractional component (offset) of limmag via linear interpolation of
-#' param.df columns '1'..'6'. An offset‑specific intercept is subtracted so
-#' that the transformation is centered consistently across offsets.
-#'
-#' Arguments
-#' - m: numeric vector of magnitudes.
-#' - limmag: scalar or vector of limiting magnitudes corresponding to m.
-#' - param.df: data.frame with columns 'offset', '1'..'6', and 'intercept'.
-#'
-#' Returns
-#' - Numeric vector t with the same length as m.
+# t(m; limmag), the spline described in the header. The intercept is
+# subtracted so that the transformation is centred alike across offsets.
 myVmidealVstFromMagn <- function(m, limmag, param.df) {
     offset <- limmag - round(limmag)
     if (1L == length(limmag)) {
@@ -152,8 +102,7 @@ myVmidealVstFromMagn <- function(m, limmag, param.df) {
     unsplit(y, data.f)
 }
 
-# NOTE: Mirror any edits of this table into `R/vmideal_vst.R::vmidealVstFromMagn`.
-# The runtime code uses a literal copy of these coefficients.
+# keep in sync with the literal copy in `R/vmideal_vst.R`
 param.df <- structure(list(limmag = c(5.5, 5.52, 5.55, 5.6, 5.7, 5.8, 5.9,
     6, 6.1, 6.2, 6.3, 6.4, 6.45, 6.48, 6.5), `1` = c(0.379578706193683,
     0.380865978506213, 0.383646581863156, 0.386594955357005, 0.384516871380943,
@@ -244,15 +193,7 @@ if (FALSE) {
     dput(param.df)
 }
 
-#' Generate E[t] and Var[t] over grids of psi and limmag for vmideal
-#'
-#' Arguments
-#' - param.df: parameter frame with columns 'offset', '1'..'6', 'intercept'.
-#' - limmag: vector of limiting magnitudes.
-#' - psi: vector of vmideal shape parameters.
-#'
-#' Returns
-#' - data.frame with columns psi, limmag, t.mean, t.var.
+# moments of g and t under vmideal over a grid of psi and limmag
 data.t.fun <- function(param.df, limmag, psi) {
     model <- expand.grid(psi = psi, limmag = limmag)
     model <- do.call(
@@ -278,9 +219,8 @@ data.t.fun <- function(param.df, limmag, psi) {
     )
 }
 
-# Intercept calibration (example MSE ~ 8.696629e-05 during tuning)
-# Intercepts are offset-specific shifts; keep them synchronised with the
-# constant column in `vmidealVstFromMagn`.
+# offset-specific shifts from the calibration below (MSE ~ 8.7e-05);
+# keep in sync with the constant column in `vmidealVstFromMagn`
 param.df$intercept <- c(0.0318278656993037, 0.0299076409185304, 0.0284655814974199,
     0.025667223534113, 0.0158031837415663, 0.00504408335887503, 0.0226347191720595,
     -0.00235692008208782, -0.0082983458149825, -0.0258911028895704,
@@ -291,8 +231,8 @@ limmag <- c(5.51, 5.52, 5.55, seq(5.6, 6.4, 0.1), 6.45, 6.48, 6.5)
 psi <- c(-100, seq(-10, 9, 0.25))
 
 if (FALSE) {
-    # Fine‑tune the intercept per offset by minimizing squared error in the
-    # regression psi - limmag ~ poly(log(E[t]), 8).
+    # Fine-tune the intercept per offset against the regression below.
+    # Set the guard to TRUE to recompute.
     opt.res <- optim(param.df$intercept, fn = function(intercept) {
         param.df$intercept <- intercept
         data.t <- data.t.fun(param.df, limmag, psi)
@@ -305,23 +245,13 @@ if (FALSE) {
     dput(opt.res[["par"]])
     param.df$intercept <- opt.res[["par"]]
 }
-# Align intercepts by adding the minimal E[t] at high psi so that log(E[t])
-# is well‑behaved for the subsequent regression/inversion mapping.
+# shift by the minimal E[t] at high psi, so that log(E[t]) stays well-behaved
+# for the regression below
 param.df$intercept <- param.df$intercept + min(data.t.fun(param.df, limmag, 1000)$t.mean)
 
-#' Map x = E[t] to psi via polynomial in log(x)
-#'
-#' Arguments
-#' - x: positive numeric vector (E[t]). Values outside [0.02, 8.22] are set NA.
-#'   Below the lower bound psi is unbounded and Inf is returned instead.
-#' - limmag: corresponding limiting magnitudes.
-#' - poly.coef: numeric coefficients of a polynomial in log(x). The k-th entry
-#'   corresponds to exponent (k-1).
-#' - deriv: if TRUE, return derivative d psi / d x (scaled by 1/x) using the
-#'   derivative polynomial.
-#'
-#' Returns
-#' - psi (same shape as x) or its derivative if deriv = TRUE.
+# x = E[t] back to psi, a polynomial in log(x); deriv = TRUE gives dpsi/dx.
+# Outside [0.02, 8.22] the inverse is ill-conditioned (see header): NA above,
+# Inf below, where psi is unbounded.
 myVmidealVstToPsi <- function(x, limmag, poly.coef, deriv = FALSE) {
     names(poly.coef) <- seq_along(poly.coef) - 1 # exponents
     # x min 0.02 (psi approx 9 at limiting magnitude of 6.0)
@@ -343,7 +273,7 @@ myVmidealVstToPsi <- function(x, limmag, poly.coef, deriv = FALSE) {
     psi
 }
 
-# evaluate vmideal expectations with the current spline/intercept set.
+# the regression that inverts the transformation
 data.t <- data.t.fun(param.df, limmag, psi)
 data.t$psi.delta <- data.t$psi - data.t$limmag
 data.t$x <- log(data.t$t.mean)

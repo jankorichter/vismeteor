@@ -48,12 +48,12 @@ test_that("vmgeom_vst", {
         c(vmgeom_vst_from_magn(2, 6.0), NA_real_)
     )
 
-    expect_true(all(abs(model$t.var - 1.0) < 0.19))
-    expect_true(all(abs(subset(model, r <= 3.5)$t.var - 1.0) < 0.15))
+    expect_true(all(abs(model$t.var - 1.0) < 0.17))
+    expect_true(all(abs(subset(model, r <= 3.5)$t.var - 1.0) < 0.16))
 
     # the perception probability increases monotonically, hence the ratio it is
-    # built from lies between 0 and 1 and the transform is bounded by the
-    # factor `a` of the transformation
+    # built from lies between 0 and 1, which bounds the transform by the value
+    # it takes at that ratio
     tm_max <- vmgeom_vst_from_magn(-100, 0)
     dm <- seq(-1.0, 200.0, 0.01)
     expect_true(all(vmgeom_vst_from_magn(0.0, dm) <= tm_max))
@@ -70,12 +70,12 @@ test_that("vmgeom_vst", {
     # q = log(r) is the scale the deviation is even on; in r it grows with r
     # itself, which is why the bound below is the looser one of the two
     model$q_est <- vmgeom_vst_to_r(model$t.mean, log = TRUE)
-    expect_true(all(abs(model$q - model$q_est) < 0.03))
+    expect_true(all(abs(model$q - model$q_est) < 0.015))
 
     model$r_est <- vmgeom_vst_to_r(model$t.mean)
-    expect_true(all(abs(model$r - model$r_est) < 0.12))
+    expect_true(all(abs(model$r - model$r_est) < 0.05))
     expect_true(all(abs(subset(model, r <= 3.5)$r -
-        subset(model, r <= 3.5)$r_est) < 0.07))
+        subset(model, r <= 3.5)$r_est) < 0.03))
 
     # The estimator must be consistent: the error may not survive an
     # arbitrarily large sample. The delta-method correction of the vignette
@@ -96,13 +96,30 @@ test_that("vmgeom_vst", {
         }
     })
 
-    # the upper bound of tm corresponds to the degenerate case r = 1,
-    # so the geometric model's requirement r >= 1 holds by construction
+    # the upper bound of tm corresponds to the degenerate case r = 1, which
+    # the back-transformation is constrained to reproduce, so the geometric
+    # model's requirement r >= 1 holds over the whole domain
     expect_true(vmgeom_vst_to_r(tm_max) >= 1.0)
+    expect_equal(vmgeom_vst_to_r(tm_max), 1.0, tolerance = 1e-05)
+
+    # The back-transformation carries a term in `tm` beside the one in
+    # log(tm). It must not cost monotonicity anywhere in (0, tm_max], since
+    # `vmgeom_vst_to_r` promises an ordered answer for every value the model
+    # can produce -- a curved form fitted without care turns around instead.
+    with(new.env(), {
+        tm_grid <- seq(tm_max / 1e04, tm_max, length.out = 20000L)
+        r_grid <- vmgeom_vst_to_r(tm_grid)
+        expect_true(all(diff(r_grid) < 0.0))
+        expect_true(all(r_grid >= 1.0))
+        # and r -> Inf at the faint end, not towards some finite value
+        expect_true(vmgeom_vst_to_r(1e-08) > 1e06)
+    })
 
     # unlike the former polynomial there is no calibration window:
-    # the inverse stays finite and monotonic between its bounds
-    tm_probe <- c(0.5, 1.72, 3.53, 4.5)
+    # the inverse stays finite and monotonic between its bounds. The last
+    # probe is the upper bound itself, so that the range is covered whatever
+    # the calibration makes of it.
+    tm_probe <- c(0.5, 1.72, 3.53, tm_max)
     expect_true(all(is.finite(vmgeom_vst_to_r(tm_probe))))
     expect_true(all(diff(vmgeom_vst_to_r(tm_probe)) < 0.0))
 

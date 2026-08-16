@@ -43,7 +43,7 @@
 #' a single `r` off their mean.
 #'
 #' The back-transformation carries a small systematic deviation that does not
-#' shrink as the sample grows. In the practical range it stays below `1.5%` of
+#' shrink as the sample grows. In the practical range it stays below `0.8%` of
 #' `r`, and is negligible against the random error, but it grows for larger `r`
 #' and comes to dominate in very large samples. Where this matters, the
 #' rate-based estimator shown in `vignette("vmgeom")` is unbiased for `1/r`,
@@ -134,7 +134,8 @@
 #' @export
 vmgeom_vst_from_magn <- function(m, lm) {
     a <- .vmgeom_vst_params$a
-    b <- .vmgeom_vst_params$b
+    lambda <- .vmgeom_vst_params$lambda
+    s <- .vmgeom_vst_params$s
 
     # ratio of the perception probabilities one magnitude apart;
     # it is zero where the numerator or the denominator vanishes
@@ -146,7 +147,9 @@ vmgeom_vst_from_magn <- function(m, lm) {
         g[known] <- ifelse(den > 0.0, vmperception(dm[known] - 1.0) / den, 0.0)
     }
 
-    a * g^b
+    # shifted Box-Cox: the shift keeps `g = 0` finite, and subtracting
+    # `s^lambda` maps it to 0, where the faintest class belongs
+    a * ((g + s)^lambda - s^lambda) / lambda
 }
 
 #' @rdname vmgeom_vst
@@ -154,43 +157,50 @@ vmgeom_vst_from_magn <- function(m, lm) {
 vmgeom_vst_to_r <- function(tm, log = FALSE, deriv_degree = 0L) {
     c <- .vmgeom_vst_params$c
     d <- .vmgeom_vst_params$d
+    e <- .vmgeom_vst_params$e
 
     # `g` is a ratio of a monotonically increasing function and therefore
-    # bounded by 0 and 1, which bounds `tm` by 0 and `a`.
+    # bounded by 0 and 1, which bounds `tm` by 0 and `tm_max`.
     # Both limits follow from the model, not from a calibration range.
-    tm[tm < 0.0 | tm > .vmgeom_vst_params$a] <- NA_real_
+    tm[tm < 0.0 | tm > .vmgeom_vst_params$tm_max] <- NA_real_
 
     if (deriv_degree > 2L) {
         stop(paste("deriv_degree", deriv_degree, "not implemented!"))
     }
 
+    # log(r) and its derivatives; `r` follows from them through the chain rule,
+    # since r = exp(log_r) gives r' = r * log_r' and r'' = r * (log_r'^2 + log_r'')
     # `log` masks base::log() here, hence the qualified calls below
+    log_r <- c + d * base::log(tm) + e * tm
+    log_r1 <- d / tm + e
+    log_r2 <- -d / tm^2
+
     if (log) {
         if (2L == deriv_degree) {
-            -d / tm^2
+            log_r2
         } else if (1L == deriv_degree) {
-            d / tm
+            log_r1
         } else {
-            c + d * base::log(tm)
+            log_r
         }
     } else {
         if (2L == deriv_degree) {
-            d * (d - 1.0) * exp(c) * tm^(d - 2.0)
+            exp(log_r) * (log_r1^2 + log_r2)
         } else if (1L == deriv_degree) {
-            d * exp(c) * tm^(d - 1.0)
+            exp(log_r) * log_r1
         } else {
-            exp(c) * tm^d
+            exp(log_r)
         }
     }
 }
 
 #' Parameters of the variance-stabilizing transformation.
 #'
-#' `a` and `b` define the transformation, `c` and `d` the back-transformation.
-#' Since `g` cannot exceed 1, the factor `a` is at the same time the upper
-#' bound of the transformed magnitudes.
+#' `a`, `lambda` and `s` define the transformation, `c`, `d` and `e` the
+#' back-transformation. `tm_max` is the upper bound of the transformed
+#' magnitudes, derived from the first three.
 #'
-#' Derivation of `c` and `d`
+#' Derivation of `c`, `d` and `e`
 #'
 #' The transformation is built on the ratio of the perception probabilities of
 #' two magnitude classes one apart,
@@ -199,33 +209,55 @@ vmgeom_vst_to_r <- function(tm, log = FALSE, deriv_degree = 0L) {
 #'
 #' which is the statistic of the rate-based estimator. It is unbiased for
 #' `1/r` and, unlike the magnitudes themselves, no longer depends on the
-#' limiting magnitude. The transformation is the power transformation
+#' limiting magnitude. The transformation is a shifted Box-Cox transformation
 #'
-#'     t = a * g^b,
+#'     t = a * ((g + s)^lambda - s^lambda) / lambda,
 #'
-#' whose sole purpose is to make the variance independent of `r`.
+#' whose sole purpose is to make the variance independent of `r`. The shift
+#' `s` is what a plain power `a * g^b` lacks: `g = 0` occurs with positive
+#' probability, and the shift lets that value pass through, while subtracting
+#' `s^lambda` keeps `t = 0` there. Since `g` cannot exceed 1, `t` is bounded
+#' by `tm_max`, the value taken at `g = 1`.
 #'
-#' Inverting `t = a * g^b` algebraically would only be correct per meteor.
-#' Applied to a mean it is not, because `b` is not 1 and therefore
-#' `mean(g^b) != mean(g)^b`. Since the estimator averages the transformed
-#' magnitudes, the back-transformation has to map `mean(t)` onto `mean(g)`,
-#' and that relation is obtained by regression rather than by rearranging:
+#' Inverting the transformation algebraically would only be correct per
+#' meteor. Applied to a mean it is not, because the transformation is
+#' non-linear and therefore `mean(t(g)) != t(mean(g))`. Since the estimator
+#' averages the transformed magnitudes, the back-transformation has to map
+#' `mean(t)` onto `mean(g)`, and that relation is obtained by regression
+#' rather than by rearranging:
 #'
-#'     lm(log(mean(g)) ~ log(mean(t)))  =>  log(g) = k0 + k1 * log(t),
+#'     log(r) = c + d * log(t) + e * t,
 #'
-#' evaluated over a grid of `r` and `lm` under the geometric model. With
-#' `log(r) = -log(g)` this gives
+#' fitted over a grid of `r` and `lm` under the geometric model, subject to
+#' \eqn{r = 1} at `tm_max`.
 #'
-#'     log(r) = -k0 - k1 * log(t) = c + d * log(t),
+#' The relation is curved, which a straight line in `log(t)` leaves behind. The
+#' extra term is deliberately in `t` and not in `log(t)`: it has to vanish as
+#' `t` approaches 0, so that `r` still tends to infinity there, and with
+#' `d < 0` and `e < 0` the derivative `d/t + e` stays negative throughout.
+#' Monotonicity over the whole domain is therefore structural. A quadratic in
+#' `log(t)` fits marginally better but turns around inside the attainable
+#' range and returns `r` below 1, which the model excludes.
 #'
-#' hence `c = -k0` and `d = -k1`. See `inst/derivation/vmgeom_vst.R`.
+#' The constraint at `tm_max` is exact rather than cosmetic: the bound is
+#' reached at `g = 1`, where both perception probabilities are equal, and that
+#' is \eqn{r = 1}. See `inst/derivation/vmgeom_vst.R`.
 #'
 #' @noRd
 .vmgeom_vst_params <- (\() {
+    a <- 3.0086
+    lambda <- 0.3714
+    s <- 0.1731
+
     list(
-        a = 4.52,
-        b = 0.68,
-        c = 2.034928,
-        d = -1.339972
+        a = a,
+        lambda = lambda,
+        s = s,
+        # `g` is bounded by 1, hence so is `t`; derived rather than stored
+        # separately so that it cannot fall out of step with the parameters
+        tm_max = a * ((1.0 + s)^lambda - s^lambda) / lambda,
+        c = 1.979932,
+        d = -1.111345,
+        e = -0.077833
     )
 })()

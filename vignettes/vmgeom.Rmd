@@ -508,7 +508,7 @@ method is needed to convert $\bar{a}$ into an estimate of $r$ at all.
 
 The variance-stabilizing transformation removes exactly this weakness. It maps $a$ onto a
 scale on which the variance is approximately `1.0` regardless of $r$ — over
-$1.4 \le r \le 4$ it stays within about `0.2` of that value, comfortably covering the
+$1.4 \le r \le 4$ it stays within about `0.16` of that value, comfortably covering the
 $1.7 \le r \le 3.3$ met in visual meteor work. Outside that window the stabilization
 degrades on both sides, which bounds the use of the transformed magnitudes as a response
 in linear models, but not the reading of a single $r$ off their mean.
@@ -517,8 +517,8 @@ transformed magnitudes back onto $r$.
 
 The mapping is monotonically decreasing: a bright meteor is far from the limiting magnitude
 and receives a large `tm`. Towards the bright end it runs into a ceiling, since $a$ cannot
-exceed `1` and the transformed value is therefore bounded by the factor of the power
-transformation. At the faint end it reaches zero half a magnitude below the limiting
+exceed `1` and the transformed value is therefore bounded by what the transformation makes
+of that limit. At the faint end it reaches zero half a magnitude below the limiting
 magnitude, where a meteor is no longer perceived. Shown here for a limiting magnitude of
 `6.0`.
 
@@ -536,12 +536,12 @@ with(new.env(), {
 ```
 
 The way back needs no limiting magnitude at all, since the statistic it rests on does not
-depend on one. On logarithmic axes the relation is a straight line, which is the additivity
+depend on one. On logarithmic axes the relation is nearly a straight line, which is the additivity
 discussed further below.
 
 ```{r, echo=TRUE, results='show'}
 with(new.env(), {
-    tm <- seq(1.5, 4.5, 0.01)
+    tm <- seq(1.5, 4.3, 0.01)
     plot(tm, vmgeom_vst_to_r(tm),
         type = "l",
         col = "blue",
@@ -556,20 +556,20 @@ with(new.env(), {
 })
 ```
 
-The price is paid on the first moment. The transformation raises $a$ to a power, and the
-mean of a power is not the power of the mean, so the exact unbiasedness of the rate-based
-estimator is lost. This deviation is systematic: it does not average out, and it does not
-shrink as the sample grows.
+The price is paid on the first moment. The transformation is non-linear in $a$, and the
+mean of a non-linear function is not that function of the mean, so the exact unbiasedness
+of the rate-based estimator is lost. This deviation is systematic: it does not average out,
+and it does not shrink as the sample grows.
 
 Its cause is a slight dependence of the transformed mean on the limiting magnitude, which
 the statistic $a$ itself does not have. Over $1.7 \le r \le 3.3$, the range met in visual
-meteor work, it amounts to at most `1.5%` of $r$.
+meteor work, it amounts to at most `0.8%` of $r$.
 
 What matters in practice is how that compares with the random error, and this depends on
 the number of meteors. The random error shrinks as the sample grows while the systematic
 one does not, so the two meet at a certain sample size: for a few hundred meteors the
-random error still dominates by a factor of three, at a few thousand the two are
-comparable, and beyond roughly ten thousand the systematic part sets the accuracy — no
+random error still dominates by a factor of five or more, at a few thousand by roughly
+two, and only beyond some ten thousand does the systematic part set the accuracy — no
 matter how many more meteors are added. Visual meteor data sets of that size are the
 exception, so for most analyses the deviation can be ignored.
 
@@ -598,17 +598,19 @@ with a simple structure. Classically, transformations of this kind are judged by
 criteria, which Box and Cox (1964, *An Analysis of Transformations*, J. R. Stat. Soc. B
 26, 211–252) treat together: constant variance, an approximately symmetric distribution,
 and *additivity*, meaning that effects combine linearly on the transformed scale. The
-third one holds here in a strict sense. The transformation is a power of $a$, and $a$
-estimates $1/r$, so
+third one is what the transformation is built around. It belongs to the Box-Cox family
+itself, applied to $a$, and $a$ estimates $1/r$, so
 
 $$
 \log t \;=\; \mathrm{const.} - \beta \, \log r
 $$
 
-with a fixed $\beta > 0$: the relation is linear on the logarithmic scale. A multiplicative
-change of the population index therefore becomes an additive shift of $\log t$. This holds
-per meteor by construction; for the mean of the transformed magnitudes it holds to the
-accuracy stated above, which is what the calibration of `vmgeom_vst_to_r()` rests on.
+with $\beta > 0$: the relation is close to linear on the logarithmic scale. A multiplicative
+change of the population index therefore becomes an approximately additive shift of
+$\log t$. Over the range of $r$ the calibration covers this is what the mean of the
+transformed magnitudes follows, to the accuracy stated above, and it is what the
+calibration of `vmgeom_vst_to_r()` rests on. The departure from exact linearity is slight
+but systematic, and the back-transformation accounts for it explicitly — see below.
 
 This is what makes the transformed magnitudes usable as a response in ordinary linear
 models, with residuals that are homoscedastic by construction — precisely what such models
@@ -622,9 +624,12 @@ vmgeom_vst_lm(cbind(magn, lim_magn) ~ sl, data = magnitudes, weights = Freq)
 ```
 
 fits a solar-longitude dependence in the same way `vmgeom_glm()` does above. The estimated
-coefficients translate back into changes of $\log r$ up to the constant factor $\beta$.
-Since the back-transformation is $\log r = c + d \log t$, that factor is $\beta = -1/d$,
-which the calibration of `vmgeom_vst_to_r()` fixes at about `0.75`.
+coefficients translate back into changes of $\log r$ up to the factor $\beta$. The
+back-transformation is $\log r = c + d \log t + e\,t$, so that factor is
+$\beta = -1/(d + e\,t)$, which over the range met in practice runs from about `0.73` to
+`0.81`. The term in $t$ is what captures the curvature of the relation; a straight line
+through it would leave a systematic error about `1.7` times as large, and it is the reason
+`vmgeom_vst_to_r()` reproduces $r = 1$ exactly at the upper bound of `tm`.
 
 That makes this approach a lightweight alternative to `vmgeom_glm()`, and the choice
 between them is a trade-off. In favour of the transformation is its cost: on the data set
@@ -640,7 +645,7 @@ with `n = 500` the two standard deviations agree to within a few percent over
 $2 \le r \le 4$. What the transformation costs is not variance but the systematic
 deviation of the back-transformation described above, which adds to the total error and,
 unlike the random part, does not shrink with the sample size. At `n = 500` and $r = 3$ it
-raises the root mean squared error by roughly `6%` over that of the maximum likelihood
+raises the root mean squared error by roughly `3%` over that of the maximum likelihood
 estimate; for larger samples its share grows. `vmgeom_glm()`, fitting
 the exact likelihood, carries no such deviation and additionally provides the
 inferential machinery of a `glm` object — `summary()`, `anova()`, information criteria.

@@ -455,9 +455,7 @@ r_means <- with(magnitudes, {
     a <- vmperception(lim_magn - magn - 1) / vmperception(lim_magn - magn)
     replicate(50000, {
         s <- sample(a, size = N, replace = TRUE, prob = Freq)
-        s_mean <- mean(s)
-        s_var <- var(s) / N
-        1 / s_mean - s_var / s_mean^3
+        1 / mean(s)
     })
 })
 ```
@@ -730,12 +728,7 @@ r_means <- with(magnitudes, {
     tm <- vmgeom_vst_from_magn(magn, lim_magn)
     replicate(50000, {
         s <- sample(tm, size = N, replace = TRUE, prob = Freq)
-        s_mean <- mean(s)
-        s_var <- var(s) / N
-
-        r_hat <- vmgeom_vst_to_r(s_mean)
-        d2r_ds2 <- vmgeom_vst_to_r(s_mean, deriv_degree = 2L)
-        r_hat - 0.5 * d2r_ds2 * s_var
+        vmgeom_vst_to_r(mean(s))
     })
 })
 ```

@@ -334,6 +334,16 @@ as an expected value, and the confidence bound given below is the more honest st
 print(paste("mean psi:", vmideal_vst_to_psi(tm_mean$val, lim_magn_mean)))
 ```
 
+No second-order term of the delta method is applied here, and this is the same
+circumstance seen from another side. `vmideal_vst_to_psi()` supplies the necessary
+derivatives through `deriv_degree`, as `vignette("vmgeom")` uses them, but such a
+correction presupposes that the back-transformation is nearly straight over the range
+the estimate covers. Here it is not: the second-order term amounts to some nine percent
+of $\psi$, and the lower end of the interval falls below the threshold where $\psi$
+ceases to be finite. A correction of that size no longer corrects anything — it reports
+that the expansion it comes from does not apply. Where the estimate is well separated
+from the threshold the term is legitimate, and then it is too small to matter.
+
 This is the case the transformation is made for: a single, global $\psi$ that does not vary
 across the data set. What the observations resolve is the difference between $\psi$ and the
 limiting magnitude of each observation, and averaging the transformed magnitudes before
